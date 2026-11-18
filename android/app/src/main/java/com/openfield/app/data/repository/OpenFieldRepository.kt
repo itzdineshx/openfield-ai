@@ -189,15 +189,33 @@ class OpenFieldRepository(
     }
 
     /**
-     * Ensures the LiteRT engine is loaded in memory before running inference.
-     * Returns null if a model is installed and ready (or ready after loading), otherwise an error message.
+     * Returns null if the engine is already loaded and ready for inference, or a user-facing
+     * error message otherwise.
+     *
+     * Important: this function does NOT trigger native engine initialization on its own.
+     * LiteRT-LM's `nativeCreateEngine` can and does abort the process (SIGABRT) on container-
+     * version mismatch or GPU-delegate op failure — not throw an exception — so initializing
+     * silently from inside `sendMessage` would make the first user prompt kill the app without
+     * the user ever seeing which action caused it. The user must explicitly load the model from
+     * AI Model Management before chat is unlocked.
      */
-    private suspend fun ensureEngineReady(): String? {
+    private fun ensureEngineReady(): String? {
         if (aiEngine.isReady()) return null
+        if (modelRepository.getActiveModelFile() == null) {
+            return "No on-device AI model is installed. Open AI Model Management to download or import the model."
+        }
+        return "The AI model is installed but has not been loaded yet. Open AI Model Management and tap \"Load model\" to initialize it."
+    }
+
+    /**
+     * User-triggered engine initialization. Call from a visible UI action (the "Load model"
+     * button in AI Model Management), never from the chat-send path, so that a native abort
+     * is attributable to a specific user action.
+     */
+    suspend fun loadActiveModel(): Result<Unit> {
         val file = modelRepository.getActiveModelFile()
-            ?: return "No local AI model is installed. Open AI Model Management to download or import the model."
-        val result = aiEngine.initialize(file)
-        return if (result.isSuccess) null else "Could not load model: ${result.exceptionOrNull()?.message ?: "unknown error"}"
+            ?: return Result.failure(IllegalStateException("No model installed"))
+        return aiEngine.initialize(file)
     }
 
     private fun initTools() {

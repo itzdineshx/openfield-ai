@@ -1,5 +1,19 @@
 package com.openfield.app.feature.ai.model
 
+// IMPORTANT — LiteRT-LM runtime vs. .litertlm container compatibility
+// -------------------------------------------------------------------
+// The Gemma-family on-device `.litertlm` artifacts stamp a container version
+// (`major_version` / `minor_version`) in their header. The native LiteRT-LM
+// loader will mmap and walk every section of a container it does not fully
+// support, and then call abort() from inside `nativeCreateEngine` when it
+// tries to wire a sub-engine (audio adapter / vision adapter / tokenizer) up
+// to a backend plan. That is a SIGABRT, not a Java Throwable — it cannot be
+// caught in Kotlin. If this app starts to SIGABRT on first inference, confirm
+// in logcat that the container version printed by `LitertLmLoader::Initialize`
+// matches a runtime version this build actually depends on (see
+// `litertlm` in gradle/libs.versions.toml). Mismatches here are the single
+// most common cause of the "model downloads but chat crashes" bug.
+
 data class ModelInfo(
     val id: String,
     val displayName: String,

@@ -39,7 +39,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
@@ -65,6 +69,10 @@ fun ModelManagementDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val state by modelRepository.installationState.collectAsState()
+    val repository = com.openfield.app.data.repository.OpenFieldRepository.getInstance()
+    val engineState by repository.aiEngine.engineState.collectAsState()
+    var isLoadingEngine by remember { mutableStateOf(false) }
+    var engineLoadError by remember { mutableStateOf<String?>(null) }
 
     val filePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -264,6 +272,114 @@ fun ModelManagementDialog(
                                             tint = Color(0xFFD94A4A),
                                             modifier = Modifier.size(18.dp)
                                         )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Engine load status — the model is on disk, but LiteRT-LM
+                            // native initialization is a separate step. We do NOT call it
+                            // implicitly from the chat path because the native layer can
+                            // abort the whole process on container-version mismatch or
+                            // GPU-delegate failures.
+                            val engineReady = engineState is com.openfield.app.feature.ai.engine.AiEngineState.Ready
+                            val engineLoading = engineState is com.openfield.app.feature.ai.engine.AiEngineState.Loading || isLoadingEngine
+                            val engineErrorState = engineState as? com.openfield.app.feature.ai.engine.AiEngineState.Error
+
+                            when {
+                                engineReady -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = OpenFieldPrimaryBlueLight,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = OpenFieldSuccess,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "Engine loaded. Inference ready.",
+                                                fontSize = 12.sp,
+                                                color = OpenFieldNavyText,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                                engineLoading -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = OpenFieldPrimaryBlueLight,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            CircularProgressIndicator(
+                                                color = OpenFieldPrimaryBlue,
+                                                strokeWidth = 2.dp,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column {
+                                                Text(
+                                                    text = "Loading engine into memory…",
+                                                    fontSize = 12.sp,
+                                                    color = OpenFieldNavyText,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = "If the app closes during this step, the model is incompatible with the installed LiteRT-LM runtime. See logs for details.",
+                                                    fontSize = 10.sp,
+                                                    color = OpenFieldSecondaryText,
+                                                    lineHeight = 13.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    val lastError = engineLoadError ?: engineErrorState?.message
+                                    if (lastError != null) {
+                                        Surface(
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = Color(0xFFFEE2E2),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 6.dp)
+                                        ) {
+                                            Text(
+                                                text = lastError,
+                                                color = Color(0xFF991B1B),
+                                                fontSize = 11.sp,
+                                                modifier = Modifier.padding(10.dp)
+                                            )
+                                        }
+                                    }
+                                    Button(
+                                        onClick = {
+                                            engineLoadError = null
+                                            isLoadingEngine = true
+                                            scope.launch {
+                                                val result = repository.loadActiveModel()
+                                                isLoadingEngine = false
+                                                engineLoadError = result.exceptionOrNull()?.message
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = OpenFieldPrimaryBlue),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Load model", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             }
