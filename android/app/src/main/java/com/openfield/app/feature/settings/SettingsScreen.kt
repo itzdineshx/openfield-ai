@@ -1,0 +1,406 @@
+package com.openfield.app.feature.settings
+
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.openfield.app.core.components.ScreenTopBar
+import com.openfield.app.core.theme.CardShape
+import com.openfield.app.core.theme.OpenFieldBackground
+import com.openfield.app.core.theme.OpenFieldCardBorder
+import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.data.repository.OpenFieldRepository
+import com.openfield.app.feature.ai.model.ModelManagementDialog
+
+@Composable
+fun SettingsScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToAbout: () -> Unit,
+    modifier: Modifier = Modifier,
+    repository: OpenFieldRepository = OpenFieldRepository.getInstance()
+) {
+    val context = LocalContext.current
+    val settings by repository.settings.collectAsState()
+    val packs by repository.knowledgePacks.collectAsState()
+    val installedPacksCount = packs.count { it.isInstalled }
+    val documents by repository.documents.collectAsState()
+    val modelState by repository.modelRepository.installationState.collectAsState()
+
+    var showModelDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            ScreenTopBar(
+                title = "Settings",
+                canNavigateBack = true,
+                onNavigateBack = onNavigateBack
+            )
+        },
+        modifier = modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(OpenFieldBackground)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Section: AI Engine & Offline
+            SettingsSectionHeader(title = "AI Engine & Offline Mode")
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+                border = BorderStroke(1.dp, OpenFieldCardBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    // Offline Switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.WifiOff)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Offline Mode",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                Text(
+                                    text = "Operate 100% on-device without internet",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Switch(
+                            checked = settings.offlineMode,
+                            onCheckedChange = { repository.updateOfflineMode(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = OpenFieldPrimaryBlue
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Model Selector
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showModelDialog = true }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Memory)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Active Local Model",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                val modelLabel = when (val s = modelState) {
+                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Installed ->
+                                        "${s.activeModel.displayName} · Installed"
+                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading ->
+                                        "Downloading ${s.progressPercent}%"
+                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Verifying ->
+                                        "Verifying..."
+                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Error ->
+                                        "Error — tap to retry"
+                                    else -> "Tap to download or import model"
+                                }
+                                Text(
+                                    text = modelLabel,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldPrimaryBlue,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: Storage & Knowledge
+            SettingsSectionHeader(title = "Storage & Installed Data")
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+                border = BorderStroke(1.dp, OpenFieldCardBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SettingsIconBadge(icon = Icons.Default.Storage)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Installed Knowledge Packs",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OpenFieldNavyText
+                                )
+                            )
+                            Text(
+                                text = "$installedPacksCount installed · ${documents.size} imported documents",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = OpenFieldSecondaryText,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                repository.clearAppCache(context)
+                                Toast.makeText(context, "Temporary cache cleared", Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.CleaningServices)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Clear Cache & Temporary Files",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                Text(
+                                    text = "Frees temporary scratch and preview bitmaps",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: Preferences & About
+            SettingsSectionHeader(title = "App Information & Privacy")
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+                border = BorderStroke(1.dp, OpenFieldCardBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToAbout() }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Info)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "About OpenField",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                Text(
+                                    text = "Version 1.0.0",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SettingsIconBadge(icon = Icons.Default.Security)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Zero Telemetry & Local Privacy",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OpenFieldNavyText
+                                )
+                            )
+                            Text(
+                                text = "All prompts, images and documents remain on this phone",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = OpenFieldSecondaryText,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+        }
+
+        if (showModelDialog) {
+            ModelManagementDialog(
+                modelRepository = repository.modelRepository,
+                onDismissRequest = { showModelDialog = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.bodySmall.copy(
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            color = OpenFieldSecondaryText
+        ),
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun SettingsIconBadge(icon: ImageVector) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = OpenFieldPrimaryBlueLight,
+        modifier = Modifier.size(36.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = OpenFieldPrimaryBlue,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
