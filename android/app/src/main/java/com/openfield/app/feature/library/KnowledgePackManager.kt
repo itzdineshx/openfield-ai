@@ -37,59 +37,59 @@ class KnowledgePackManager(
         val CURATED_CATALOG: List<KnowledgePackManifest> = listOf(
             KnowledgePackManifest(
                 packId = "comp_tech",
-                title = "Computer Science & IT Fundamentals",
-                description = "Offline reference for system administration, networking protocols, Linux command line, and computer hardware diagnostics.",
+                title = "Computer & Tech",
+                description = "Troubleshooting, errors, setup",
                 category = "Technology",
                 version = "1.2.0",
-                size = "4.2 MB",
-                iconColorHex = 0xFF1E88E5,
+                size = "2.4 GB",
+                iconColorHex = 0xFF43A047,
                 checksumSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 provenance = OFFICIAL_PROVENANCE,
-                topics = listOf("Networking", "Linux Commands", "Hardware Architecture", "Troubleshooting", "Operating Systems")
+                topics = listOf("Networking", "Linux Commands", "Hardware Architecture", "Troubleshooting", "Operating Systems", "Linux")
             ),
             KnowledgePackManifest(
                 packId = "devices_repairs",
-                title = "Electronics & Device Repair Guide",
-                description = "Step-by-step diagnostic schematics, multimeter testing procedures, soldering safety, and consumer appliance repair manuals.",
+                title = "Devices & Repairs",
+                description = "General fixes and maintenance",
                 category = "Engineering",
                 version = "1.3.0",
-                size = "3.8 MB",
-                iconColorHex = 0xFFFB8C00,
+                size = "1.8 GB",
+                iconColorHex = 0xFF43A047,
                 checksumSha256 = "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
                 provenance = OFFICIAL_PROVENANCE,
-                topics = listOf("Soldering", "Circuit Boards", "Multimeter Tests", "Component Replacement", "Power Supplies")
+                topics = listOf("Soldering", "Circuit Boards", "Multimeter Tests", "Component Replacement", "Power Supplies", "Multimeter")
             ),
             KnowledgePackManifest(
                 packId = "learning",
-                title = "General Science & Mathematics",
-                description = "Comprehensive definitions, formulas, physics principles, chemistry basics, and biological systems for interactive offline study.",
+                title = "Learning",
+                description = "Science, concepts, how-to guides",
                 category = "Education",
                 version = "1.0.0",
-                size = "5.1 MB",
-                iconColorHex = 0xFF43A047,
+                size = "1.2 GB",
+                iconColorHex = 0xFF7E57C2,
                 checksumSha256 = "88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Physics Formulas", "Periodic Table", "Calculus Essentials", "Cellular Biology", "Mechanics")
             ),
             KnowledgePackManifest(
                 packId = "programming",
-                title = "Modern Programming Patterns",
-                description = "Architecture patterns, Kotlin, Python, SQL best practices, data structures, and edge AI deployment patterns.",
+                title = "Programming",
+                description = "Basics, examples and concepts",
                 category = "Software",
                 version = "1.1.0",
-                size = "3.2 MB",
-                iconColorHex = 0xFF8E24AA,
+                size = "1.9 GB",
+                iconColorHex = 0xFF1E88E5,
                 checksumSha256 = "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Kotlin Coroutines", "Room Database", "Clean Architecture", "Data Structures", "Algorithms")
             ),
             KnowledgePackManifest(
                 packId = "languages",
-                title = "Offline Multilingual Dictionaries",
-                description = "Essential bilingual terminology, technical glossaries, conversational phrasebooks, and grammatical rules.",
+                title = "Languages",
+                description = "Translation and learning support",
                 category = "Language",
                 version = "1.0.0",
-                size = "6.5 MB",
+                size = "860 MB",
                 iconColorHex = 0xFF00ACC1,
                 checksumSha256 = "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
                 provenance = OFFICIAL_PROVENANCE,
@@ -121,22 +121,21 @@ class KnowledgePackManager(
      */
     suspend fun seedDefaultPacksIfEmpty() {
         val existing = dao.getKnowledgePacks()
-        if (existing.isEmpty()) {
-            val entities = CURATED_CATALOG.map { manifest ->
-                validateManifest(manifest).getOrThrow()
-                KnowledgePackEntity(
-                    id = manifest.packId,
-                    title = manifest.title,
-                    description = manifest.description,
-                    size = manifest.size,
-                    isInstalled = false,
-                    category = manifest.category,
-                    iconColorHex = manifest.iconColorHex,
-                    topicsJson = formatTopics(manifest.topics)
-                )
-            }
-            dao.insertAll(entities)
+        val entities = CURATED_CATALOG.map { manifest ->
+            validateManifest(manifest).getOrThrow()
+            val existingPack = existing.find { it.id == manifest.packId }
+            KnowledgePackEntity(
+                id = manifest.packId,
+                title = manifest.title,
+                description = manifest.description,
+                size = manifest.size,
+                isInstalled = existingPack?.isInstalled ?: false,
+                category = manifest.category,
+                iconColorHex = manifest.iconColorHex,
+                topicsJson = formatTopics(manifest.topics)
+            )
         }
+        dao.insertAll(entities)
     }
 
     /**

@@ -28,6 +28,10 @@ data class ModeConfiguration(
 
 object ModeConfigRegistry {
 
+    private const val FORMAT_GUIDE = "Format answers for a phone screen: short paragraphs, numbered steps for procedures, " +
+        "bullet points for lists, **bold** only for key terms, and a line starting with 'Note:' for important caveats. " +
+        "Avoid tables unless asked."
+
     private val configurations: Map<OpenFieldMode, ModeConfiguration> = mapOf(
         OpenFieldMode.ASK_AI to ModeConfiguration(
             mode = OpenFieldMode.ASK_AI,
@@ -40,7 +44,8 @@ object ModeConfigRegistry {
                 temperature = 0.7,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's offline AI assistant powered by local Gemma. Answer clearly and helpfully."
+                systemPrompt = "You are OpenField, a helpful offline assistant. Answer accurately and directly. " +
+                    FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_ONLY,
             outputFormat = ModeOutputFormat.NATURAL_STREAMING,
@@ -57,7 +62,8 @@ object ModeConfigRegistry {
                 temperature = 0.3,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's offline image analysis assistant. Provide accurate visual descriptions and identifications."
+                systemPrompt = "You are OpenField's offline image analysis assistant. Describe only what is actually visible, " +
+                    "say clearly when you are unsure, and follow the requested section headings exactly. " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_AND_IMAGE,
             outputFormat = ModeOutputFormat.NATURAL_STREAMING,
@@ -75,7 +81,8 @@ object ModeConfigRegistry {
                 temperature = 0.2,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's offline document Q&A assistant. Ground answers strictly in provided text."
+                systemPrompt = "You are OpenField's offline document Q&A assistant. Ground answers strictly in the provided text " +
+                    "and cite pages like (Page 4). " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_AND_DOCUMENT,
             outputFormat = ModeOutputFormat.NATURAL_STREAMING,
@@ -92,7 +99,8 @@ object ModeConfigRegistry {
                 temperature = 0.3,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's diagnostic troubleshooting expert. Generate systematic diagnostic steps."
+                systemPrompt = "You are OpenField's diagnostic troubleshooting expert. Generate systematic diagnostic steps. " +
+                    "Reply with a single valid JSON object only, with no text before or after it."
             ),
             inputType = ModeInputType.STRUCTURED_INPUT,
             outputFormat = ModeOutputFormat.STRUCTURED_JSON,
@@ -109,7 +117,8 @@ object ModeConfigRegistry {
                 temperature = 0.5,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's interactive tutor. Provide clear educational lessons with analogies and quizzes."
+                systemPrompt = "You are OpenField's interactive tutor. Teach clearly with everyday analogies and short paragraphs. " +
+                    "When asked for a lesson in JSON, reply with a single valid JSON object only. Otherwise " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.STRUCTURED_INPUT,
             outputFormat = ModeOutputFormat.STRUCTURED_JSON,
@@ -126,7 +135,9 @@ object ModeConfigRegistry {
                 temperature = 0.7,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's offline writing assistant. Draft clear, polished content."
+                systemPrompt = "You are OpenField's offline writing assistant. Output only the finished text itself, " +
+                    "never an introduction such as 'Here is your draft' and never a closing remark. Use markdown headings and " +
+                    "lists only where the format normally uses them."
             ),
             inputType = ModeInputType.TEXT_ONLY,
             outputFormat = ModeOutputFormat.MARKDOWN_DOCUMENT,
@@ -141,7 +152,8 @@ object ModeConfigRegistry {
                 temperature = 0.4,
                 topK = 30,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's offline utility assistant."
+                systemPrompt = "You are OpenField's offline utility assistant. Perform the requested task directly " +
+                    "with no preamble. " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_ONLY,
             outputFormat = ModeOutputFormat.NATURAL_STREAMING,

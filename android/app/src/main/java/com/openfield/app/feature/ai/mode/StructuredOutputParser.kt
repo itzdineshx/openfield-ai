@@ -1,5 +1,7 @@
 package com.openfield.app.feature.ai.mode
 
+import com.openfield.app.core.text.Markdown
+
 object StructuredOutputParser {
 
     /**
@@ -8,7 +10,6 @@ object StructuredOutputParser {
     fun extractJsonString(raw: String): String? {
         val trimmed = raw.trim()
 
-        // 1. Check for ```json ... ``` or ``` ... ```
         val fenceRegex = Regex("```(?:json)?\\s*([\\s\\S]*?)\\s*```", RegexOption.IGNORE_CASE)
         val fenceMatch = fenceRegex.find(trimmed)
         if (fenceMatch != null) {
@@ -18,7 +19,6 @@ object StructuredOutputParser {
             }
         }
 
-        // 2. Look for outermost matching curly braces
         val firstBrace = trimmed.indexOf('{')
         val lastBrace = trimmed.lastIndexOf('}')
         if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
@@ -28,71 +28,81 @@ object StructuredOutputParser {
         return null
     }
 
-    /**
-     * Parses a DiagnosticAssessment from raw model output.
-     */
-    fun parseDiagnosticAssessment(raw: String): DiagnosticAssessment? {
-        val jsonStr = extractJsonString(raw)
-        if (jsonStr != null) {
-            val parsed = parseDiagnosticJson(jsonStr)
-            if (parsed != null) return parsed
-        }
+    private fun parseRootObject(raw: String): Map<String, Any?>? {
+        val candidate = extractJsonString(raw) ?: raw.substring(raw.indexOf('{').takeIf { it >= 0 } ?: return null)
+        return LenientJson.parseObject(candidate)
+    }
 
-        // Fallback: Parse markdown lines if JSON is unavailable or malformed
+    // =================================================================
+    // Troubleshooting
+    // =================================================================
+
+    fun parseDiagnosticAssessment(raw: String): DiagnosticAssessment? {
+        parseRootObject(raw)?.let { map -> diagnosticFromMap(map)?.let { return it } }
         return parseDiagnosticFromMarkdown(raw)
     }
 
-    private fun parseDiagnosticJson(json: String): DiagnosticAssessment? {
-        try {
-            val category = extractStringField(json, "category") ?: "General Troubleshooting"
-            val safety = extractStringField(json, "safetyNotice")
-            val stepNumber = extractIntField(json, "currentStepNumber") ?: 1
-            val totalSteps = extractIntField(json, "totalEstimatedSteps") ?: 3
-            val question = extractStringField(json, "question") ?: return null
-            val explanation = extractStringField(json, "explanation")
-            val isResolved = extractBooleanField(json, "isResolutionReached") ?: false
-            val likelyCause = extractStringField(json, "likelyCause")
-            val solution = extractStringField(json, "recommendedSolution")
-            val isEscalation = extractBooleanField(json, "isEscalationNeeded") ?: false
-            val escalationReason = extractStringField(json, "escalationReason")
+    private fun diagnosticFromMap(map: Map<String, Any?>): DiagnosticAssessment? {
+        val isResolved = map.bool("isResolutionReached", "resolved", "isResolved") ?: false
+        val solution = map.str("recommendedSolution", "solution", "fix", "resolution")
+        val cause = map.str("likelyCause", "cause", "probableCause", "diagnosis")
+        val question = map.str("question", "nextQuestion", "check", "step")
+            ?: if (isResolved) (cause ?: "Diagnosis complete") else return null
+        val stepNumber = map.int("currentStepNumber", "stepNumber", "step") ?: 1
 
-            val options = extractOptionsArray(json)
+        return DiagnosticAssessment(
+            category = map.str("category", "type")?.let(Markdown::stripInline) ?: "General Troubleshooting",
+            safetyNotice = map.str("safetyNotice", "safety", "warning"),
+            currentStepNumber = stepNumber,
+            totalEstimatedSteps = maxOf(map.int("totalEstimatedSteps", "totalSteps") ?: 3, stepNumber),
+            question = question,
+            explanation = map.str("explanation", "why", "purpose", "reason"),
+            options = parseOptions(map.list("options", "choices", "answers")),
+            isResolutionReached = isResolved,
+            likelyCause = cause,
+            recommendedSolution = solution,
+            isEscalationNeeded = map.bool("isEscalationNeeded", "escalate", "needsProfessional") ?: false,
+            escalationReason = map.str("escalationReason", "escalation")
+        )
+    }
 
-            return DiagnosticAssessment(
-                category = category,
-                safetyNotice = safety.takeIf { !it.equals("null", ignoreCase = true) && !it.isNullOrBlank() },
-                currentStepNumber = stepNumber,
-                totalEstimatedSteps = maxOf(totalSteps, stepNumber),
-                question = question,
-                explanation = explanation,
-                options = options,
-                isResolutionReached = isResolved,
-                likelyCause = likelyCause.takeIf { !it.equals("null", ignoreCase = true) && !it.isNullOrBlank() },
-                recommendedSolution = solution.takeIf { !it.equals("null", ignoreCase = true) && !it.isNullOrBlank() },
-                isEscalationNeeded = isEscalation,
-                escalationReason = escalationReason.takeIf { !it.equals("null", ignoreCase = true) && !it.isNullOrBlank() }
-            )
-        } catch (e: Exception) {
-            return null
+    private val optionPrefix = Regex("^\\(?([A-Da-d]|\\d)[).:\\-]\\s+")
+
+    private fun parseOptions(raw: List<Any?>?): List<DiagnosticOption> {
+        if (raw == null) return emptyList()
+        val parsed = raw.mapNotNull { item ->
+            when (item) {
+                is String -> DiagnosticOption(id = "", text = item)
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val m = item as Map<String, Any?>
+                    val text = m.str("text", "label", "option", "answer", "value") ?: return@mapNotNull null
+                    DiagnosticOption(id = m.str("id", "key") ?: "", text = text, detail = m.str("detail", "description"))
+                }
+                else -> null
+            }
+        }.map { it.copy(text = it.text.replace(optionPrefix, "").trim()) }
+            .filter { it.text.isNotBlank() }
+            .distinctBy { it.text.lowercase() }
+
+        val idsUsable = parsed.all { it.id.isNotBlank() } && parsed.map { it.id }.toSet().size == parsed.size
+        return parsed.mapIndexed { idx, option ->
+            if (idsUsable) option else option.copy(id = ('A'.code + idx).toChar().toString())
         }
     }
 
     private fun parseDiagnosticFromMarkdown(raw: String): DiagnosticAssessment? {
-        val lines = raw.lines().map { it.trim() }.filter { it.isNotBlank() }
+        val lines = raw.lines().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("```") }
         if (lines.isEmpty()) return null
 
         val firstQuestion = lines.find { it.endsWith("?") } ?: lines.firstOrNull() ?: return null
         val options = mutableListOf<DiagnosticOption>()
 
-        val optionLines = lines.filter { line ->
-            line.matches(Regex("^(?:[A-Da-d][\\).:]|[•\\-*]|\\d+[\\).])\\s+.*"))
-        }
-
-        optionLines.forEachIndexed { idx, line ->
+        val optionLineRegex = Regex("^(?:[A-Da-d][\\).:]|[•\\-*]|\\d+[\\).])\\s+.*")
+        lines.filter { optionLineRegex.matches(it) }.forEachIndexed { idx, line ->
             val clean = line.replaceFirst(Regex("^(?:[A-Da-d][\\).:]|[•\\-*]|\\d+[\\).])\\s*"), "").trim()
             if (clean.isNotBlank()) {
-                val letter = ('A'.code + idx).toChar().toString()
-                options.add(DiagnosticOption(id = letter, text = clean))
+                options.add(DiagnosticOption(id = ('A'.code + idx).toChar().toString(), text = clean))
             }
         }
 
@@ -103,7 +113,7 @@ object StructuredOutputParser {
             safetyNotice = safetyLine,
             currentStepNumber = 1,
             totalEstimatedSteps = 3,
-            question = firstQuestion,
+            question = Markdown.stripInline(firstQuestion),
             explanation = null,
             options = if (options.isNotEmpty()) options else listOf(
                 DiagnosticOption("A", "Yes, observed"),
@@ -113,75 +123,159 @@ object StructuredOutputParser {
         )
     }
 
-    /**
-     * Parses a StructuredLesson from raw model output.
-     */
-    fun parseStructuredLesson(raw: String, fallbackTopic: String, level: LearningLevel): StructuredLesson? {
-        val jsonStr = extractJsonString(raw)
-        if (jsonStr != null) {
-            val parsed = parseLessonJson(jsonStr, fallbackTopic, level)
-            if (parsed != null) return parsed
-        }
+    fun serializeDiagnostic(a: DiagnosticAssessment): String = LenientJson.write(
+        mapOf(
+            "category" to a.category,
+            "safetyNotice" to a.safetyNotice,
+            "currentStepNumber" to a.currentStepNumber,
+            "totalEstimatedSteps" to a.totalEstimatedSteps,
+            "question" to a.question,
+            "explanation" to a.explanation,
+            "options" to a.options.map { mapOf("id" to it.id, "text" to it.text, "detail" to it.detail) },
+            "isResolutionReached" to a.isResolutionReached,
+            "likelyCause" to a.likelyCause,
+            "recommendedSolution" to a.recommendedSolution,
+            "isEscalationNeeded" to a.isEscalationNeeded,
+            "escalationReason" to a.escalationReason
+        )
+    )
 
+    fun deserializeDiagnostic(json: String): DiagnosticAssessment? =
+        if (json.trimStart().startsWith("{")) LenientJson.parseObject(json)?.let(::diagnosticFromMap) else null
+
+    fun serializeHistory(history: List<DiagnosticStepHistory>): String = LenientJson.write(
+        history.map { mapOf("step" to it.stepIndex, "question" to it.question, "answer" to it.selectedOptionText) }
+    )
+
+    fun deserializeHistory(json: String): List<DiagnosticStepHistory>? {
+        if (!json.trimStart().startsWith("[")) return null
+        val list = LenientJson.parse(json) as? List<*> ?: return null
+        return list.mapNotNull { item ->
+            @Suppress("UNCHECKED_CAST")
+            val m = item as? Map<String, Any?> ?: return@mapNotNull null
+            DiagnosticStepHistory(
+                stepIndex = m.int("step") ?: 1,
+                question = m.str("question") ?: "",
+                selectedOptionText = m.str("answer") ?: ""
+            )
+        }
+    }
+
+    // =================================================================
+    // Learn & Explain
+    // =================================================================
+
+    fun parseStructuredLesson(raw: String, fallbackTopic: String, level: LearningLevel): StructuredLesson? {
+        parseRootObject(raw)?.let { map -> lessonFromMap(map, fallbackTopic, level)?.let { return it } }
         return parseLessonFromMarkdown(raw, fallbackTopic, level)
     }
 
-    private fun parseLessonJson(json: String, fallbackTopic: String, level: LearningLevel): StructuredLesson? {
-        try {
-            val topic = extractStringField(json, "topic") ?: fallbackTopic
-            val title = extractStringField(json, "title") ?: "$topic Explained"
-            val overview = extractStringField(json, "overview") ?: return null
-            val example = extractStringField(json, "practicalExample") ?: ""
+    private fun lessonFromMap(map: Map<String, Any?>, fallbackTopic: String, level: LearningLevel): StructuredLesson? {
+        val topic = map.str("topic") ?: fallbackTopic
+        val sections = map.list("sections", "concepts", "keyConcepts", "parts")?.mapNotNull { item ->
+            when (item) {
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val m = item as Map<String, Any?>
+                    val content = m.str("content", "body", "text", "explanation", "description") ?: return@mapNotNull null
+                    LessonSection(Markdown.stripInline(m.str("heading", "title", "name", "concept") ?: "Key idea"), content)
+                }
+                is String -> item.takeIf { it.isNotBlank() }?.let { LessonSection("Key idea", it) }
+                else -> null
+            }
+        }.orEmpty()
 
-            val sections = extractSectionsArray(json)
-            val quiz = extractQuizObject(json)
+        val overview = map.str("overview", "summary", "introduction", "intro")
+            ?: sections.firstOrNull()?.content
+            ?: return null
 
-            return StructuredLesson(
-                topic = topic,
-                level = level,
-                title = title,
-                overview = overview,
-                sections = sections,
-                practicalExample = example,
-                quiz = quiz
-            )
-        } catch (e: Exception) {
-            return null
+        return StructuredLesson(
+            topic = topic,
+            level = level,
+            title = Markdown.stripInline(map.str("title", "lessonTitle") ?: "$topic Explained"),
+            overview = overview,
+            sections = sections.ifEmpty { listOf(LessonSection("Key idea", overview)) },
+            practicalExample = map.str("practicalExample", "example", "analogy", "realWorldExample") ?: "",
+            quiz = map.obj("quiz", "question", "knowledgeCheck")?.let(::quizFromMap)
+        )
+    }
+
+    private fun quizFromMap(m: Map<String, Any?>): LessonQuiz? {
+        val question = m.str("question", "prompt") ?: return null
+        val options = m.list("options", "choices", "answers")?.mapNotNull { item ->
+            when (item) {
+                is String -> item
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    (item as Map<String, Any?>).str("text", "option", "label")
+                }
+                null -> null
+                else -> item.toString()
+            }
+        }?.map { it.replace(optionPrefix, "").trim() }?.filter { it.isNotBlank() }.orEmpty()
+        if (options.size < 2) return null
+
+        val rawAnswer = m.entries.firstOrNull { (k, _) ->
+            k.lowercase() in setOf("correctoptionindex", "correctindex", "answerindex", "correct", "answer", "correctanswer", "correctoption")
+        }?.value
+        val index = when (rawAnswer) {
+            is Number -> rawAnswer.toInt()
+            is String -> {
+                val t = rawAnswer.trim()
+                t.toIntOrNull()
+                    ?: if (t.length == 1 && t[0].uppercaseChar() in 'A'..'H') t[0].uppercaseChar() - 'A' else null
+                    ?: options.indexOfFirst { it.equals(t.replace(optionPrefix, ""), ignoreCase = true) }.takeIf { it >= 0 }
+                    ?: 0
+            }
+            else -> 0
         }
+
+        return LessonQuiz(
+            question = question,
+            options = options,
+            correctOptionIndex = index.coerceIn(0, options.size - 1),
+            explanation = m.str("explanation", "reason", "why") ?: "",
+            hint = m.str("hint", "clue")
+        )
     }
 
     private fun parseLessonFromMarkdown(raw: String, topic: String, level: LearningLevel): StructuredLesson? {
-        val lines = raw.lines().map { it.trim() }
-        val nonBlank = lines.filter { it.isNotBlank() }
-        if (nonBlank.isEmpty()) return null
+        val cleaned = raw.replace(Regex("```\\w*"), "").trim()
+        if (cleaned.isBlank()) return null
+        val lines = cleaned.lines()
 
-        val title = nonBlank.firstOrNull { it.startsWith("#") }?.removePrefix("#")?.trim()
+        val title = lines.firstOrNull { it.trim().startsWith("# ") }?.trim()?.removePrefix("# ")?.let(Markdown::stripInline)
             ?: "$topic Explained"
 
-        val overview = nonBlank.firstOrNull { !it.startsWith("#") && it.length > 20 }
-            ?: "Overview of $topic."
-
         val sections = mutableListOf<LessonSection>()
-        var currentHeading: String? = null
-        val currentContent = StringBuilder()
+        val intro = StringBuilder()
+        var heading: String? = null
+        val body = StringBuilder()
+
+        fun flush() {
+            val h = heading
+            if (h != null && body.isNotBlank()) sections.add(LessonSection(h, body.toString().trim()))
+            body.clear()
+        }
 
         for (line in lines) {
-            if (line.startsWith("## ") || line.startsWith("### ")) {
-                if (currentHeading != null && currentContent.isNotBlank()) {
-                    sections.add(LessonSection(currentHeading, currentContent.toString().trim()))
-                    currentContent.clear()
+            val t = line.trim()
+            when {
+                t.startsWith("# ") -> Unit
+                t.startsWith("## ") || t.startsWith("### ") -> {
+                    flush()
+                    heading = Markdown.stripInline(t.trimStart('#'))
                 }
-                currentHeading = line.removePrefix("### ").removePrefix("## ").trim()
-            } else if (currentHeading != null) {
-                currentContent.append(line).append("\n")
+                heading == null -> intro.append(line).append('\n')
+                else -> body.append(line).append('\n')
             }
         }
-        if (currentHeading != null && currentContent.isNotBlank()) {
-            sections.add(LessonSection(currentHeading, currentContent.toString().trim()))
-        }
+        flush()
 
-        if (sections.isEmpty()) {
-            sections.add(LessonSection("Key Concepts", raw.take(600)))
+        val overview = intro.toString().trim().ifBlank { sections.firstOrNull()?.content ?: cleaned.take(600) }
+        val exampleSection = sections.firstOrNull { it.heading.contains("example", true) || it.heading.contains("analogy", true) }
+        val conceptSections = (sections - setOfNotNull(exampleSection)).ifEmpty {
+            listOf(LessonSection("Key ideas", cleaned.take(1200)))
         }
 
         return StructuredLesson(
@@ -189,160 +283,116 @@ object StructuredOutputParser {
             level = level,
             title = title,
             overview = overview,
-            sections = sections,
-            practicalExample = "Consider how $topic functions in everyday systems.",
+            sections = conceptSections,
+            practicalExample = exampleSection?.content ?: "",
             quiz = null
         )
     }
 
-    /**
-     * Parses ImageAnalysisSections from structured markdown text.
-     */
-    fun parseImageSections(raw: String): ImageAnalysisSections {
-        fun extractSection(title: String): String {
-            val lines = raw.lines()
-            val startIdx = lines.indexOfFirst { it.contains(title, ignoreCase = true) }
-            if (startIdx == -1) return ""
-
-            val content = StringBuilder()
-            for (i in (startIdx + 1) until lines.size) {
-                val line = lines[i].trim()
-                if (line.startsWith("#") || line.matches(Regex("^\\d+\\.\\s+[A-Z].*"))) {
-                    break
-                }
-                content.append(lines[i]).append("\n")
+    fun serializeLesson(lesson: StructuredLesson): String = LenientJson.write(
+        mapOf(
+            "topic" to lesson.topic,
+            "title" to lesson.title,
+            "overview" to lesson.overview,
+            "sections" to lesson.sections.map { mapOf("heading" to it.heading, "content" to it.content) },
+            "practicalExample" to lesson.practicalExample,
+            "quiz" to lesson.quiz?.let {
+                mapOf(
+                    "question" to it.question,
+                    "options" to it.options,
+                    "correctOptionIndex" to it.correctOptionIndex,
+                    "explanation" to it.explanation,
+                    "hint" to it.hint
+                )
             }
-            return content.toString().trim()
+        )
+    )
+
+    fun deserializeLesson(json: String, fallbackTopic: String, level: LearningLevel): StructuredLesson? =
+        if (json.trimStart().startsWith("{")) LenientJson.parseObject(json)?.let { lessonFromMap(it, fallbackTopic, level) } else null
+
+    // =================================================================
+    // Image analysis
+    // =================================================================
+
+    private enum class ImageSection(vararg val aliases: String) {
+        SEE("what i see", "what is visible", "visible content", "description", "overview", "observation"),
+        DETAILS("important details", "key details", "notable details", "key features", "details", "features"),
+        EXPLANATION("explanation", "context", "background", "interpretation"),
+        IDENTIFICATION("possible identification", "identification", "identity", "likely identity"),
+        NEXT_STEPS("suggested next steps", "next steps", "recommendations", "recommended actions", "what to do"),
+        UNCERTAINTY("uncertainty & limitations", "uncertainty and limitations", "uncertainty", "limitations", "caveats")
+    }
+
+    private val headingDecoration = Regex("^(?:#{1,6}\\s*)?(?:\\*\\*|__)?\\s*(?:\\d+[.)]\\s*)?")
+
+    /** Returns the section a line opens plus any text that follows the heading on the same line. */
+    private fun matchImageHeading(line: String): Pair<ImageSection, String>? {
+        val t = line.trim()
+        if (t.isEmpty()) return null
+        val looksLikeHeading = t.startsWith("#") || t.startsWith("**") || t.startsWith("__") ||
+            Regex("^\\d+[.)]\\s+[A-Z]").containsMatchIn(t)
+        if (!looksLikeHeading) return null
+
+        val body = t.replace(headingDecoration, "")
+        val lower = body.lowercase()
+        for (section in ImageSection.entries) {
+            for (alias in section.aliases) {
+                if (!lower.startsWith(alias)) continue
+                val after = body.substring(alias.length)
+                val rest = after.trimStart('*', '_', ' ', ':', '-', '—').trim().trimEnd('*', '_').trim()
+                val cleanAfter = after.trim().trim('*', '_', ':', ' ')
+                if (cleanAfter.isEmpty() || after.trimStart().startsWith(":") || after.trimStart().startsWith("**")) {
+                    return section to rest
+                }
+            }
+        }
+        return null
+    }
+
+    fun parseImageSections(raw: String): ImageAnalysisSections {
+        val content = mutableMapOf<ImageSection, StringBuilder>()
+        var current: ImageSection? = null
+
+        for (line in raw.lines()) {
+            val heading = matchImageHeading(line)
+            if (heading != null) {
+                current = heading.first
+                val sb = content.getOrPut(heading.first) { StringBuilder() }
+                if (heading.second.isNotBlank()) sb.append(heading.second).append('\n')
+                continue
+            }
+            current?.let { content.getOrPut(it) { StringBuilder() }.append(line).append('\n') }
         }
 
-        val whatISee = extractSection("What I See").ifBlank { raw.lines().take(4).joinToString("\n").trim() }
-        val details = extractSection("Important Details")
-        val explanation = extractSection("Explanation")
-        val identification = extractSection("Possible Identification").takeIf { it.isNotBlank() }
-        val nextSteps = extractSection("Suggested Next Steps")
-        val uncertainty = extractSection("Uncertainty").takeIf { it.isNotBlank() }
+        fun text(section: ImageSection) = content[section]?.toString()?.trim().orEmpty()
+        fun items(section: ImageSection): List<String> {
+            val lines = text(section).lines().map { it.trim() }.filter { it.isNotBlank() }
+            val listMarker = Regex("^(?:[-*+•]|\\d+[.)])\\s+")
+            val marked = lines.filter { listMarker.containsMatchIn(it) }
+            return (marked.ifEmpty { lines }).map { it.replace(listMarker, "").trim() }.filter { it.isNotBlank() }
+        }
 
-        val detailList = details.lines()
-            .map { it.trim().trimStart('-', '•', '*', ' ') }
-            .filter { it.isNotBlank() }
+        val hasStructure = content.isNotEmpty()
+        val whatISee = if (hasStructure) text(ImageSection.SEE) else raw.trim()
+        val identification = text(ImageSection.IDENTIFICATION).takeIf { it.isNotBlank() }
 
-        val nextStepsList = nextSteps.lines()
-            .map { it.trim().trimStart('-', '•', '*', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.') }
-            .filter { it.isNotBlank() }
-
-        val subject = identification?.lines()?.firstOrNull()?.trim()
-            ?: whatISee.lines().firstOrNull()?.take(40)
-            ?: "Visual Analysis"
+        val subjectSource = identification?.lines()?.firstOrNull { it.isNotBlank() }
+            ?: whatISee.lines().firstOrNull { it.isNotBlank() }
+            ?: ""
+        val subject = Markdown.stripInline(subjectSource.replace(Regex("^(?:[-*+•]|\\d+[.)])\\s+"), ""))
+            .let { s -> s.split(Regex("(?<=[.!?])\\s")).first().trimEnd('.') }
+            .let { if (it.length > 60) it.take(57).trimEnd() + "…" else it }
+            .ifBlank { "Image analysis" }
 
         return ImageAnalysisSections(
             subject = subject,
             whatISee = whatISee,
-            importantDetails = detailList,
-            explanation = explanation,
+            importantDetails = items(ImageSection.DETAILS),
+            explanation = text(ImageSection.EXPLANATION),
             possibleIdentification = identification,
-            suggestedNextSteps = nextStepsList,
-            uncertaintyAndLimitations = uncertainty
-        )
-    }
-
-    // =================================================================
-    // Helper Extractors for Lightweight JSON parsing
-    // =================================================================
-
-    private fun extractStringField(json: String, key: String): String? {
-        val regex = Regex("\"$key\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"", RegexOption.DOT_MATCHES_ALL)
-        val match = regex.find(json) ?: return null
-        return unescapeJsonString(match.groupValues[1])
-    }
-
-    private fun unescapeJsonString(str: String): String {
-        return str
-            .replace("\\\"", "\"")
-            .replace("\\n", "\n")
-            .replace("\\r", "\r")
-            .replace("\\t", "\t")
-            .replace("\\\\", "\\")
-    }
-
-    private fun extractIntField(json: String, key: String): Int? {
-        val regex = Regex("\"$key\"\\s*:\\s*(\\d+)")
-        val match = regex.find(json)
-        return match?.groupValues?.get(1)?.toIntOrNull()
-    }
-
-    private fun extractBooleanField(json: String, key: String): Boolean? {
-        val regex = Regex("\"$key\"\\s*:\\s*(true|false)", RegexOption.IGNORE_CASE)
-        val match = regex.find(json)
-        return match?.groupValues?.get(1)?.toBooleanStrictOrNull()
-    }
-
-    private fun extractOptionsArray(json: String): List<DiagnosticOption> {
-        val options = mutableListOf<DiagnosticOption>()
-        val blockRegex = Regex("\"options\"\\s*:\\s*\\[([\\s\\S]*?)\\]")
-        val blockMatch = blockRegex.find(json) ?: return emptyList()
-        val arrayContent = blockMatch.groupValues[1]
-
-        val objRegex = Regex("\\{([^}]*)\\}")
-        objRegex.findAll(arrayContent).forEach { match ->
-            val obj = match.groupValues[1]
-            val id = extractStringField(obj, "id") ?: (('A'.code + options.size).toChar().toString())
-            val text = extractStringField(obj, "text") ?: ""
-            val detail = extractStringField(obj, "detail")
-            if (text.isNotBlank()) {
-                options.add(DiagnosticOption(id, text, detail))
-            }
-        }
-        return options
-    }
-
-    private fun extractSectionsArray(json: String): List<LessonSection> {
-        val sections = mutableListOf<LessonSection>()
-        val blockRegex = Regex("\"sections\"\\s*:\\s*\\[([\\s\\S]*?)\\]")
-        val blockMatch = blockRegex.find(json) ?: return emptyList()
-        val arrayContent = blockMatch.groupValues[1]
-
-        val objRegex = Regex("\\{([^}]*)\\}")
-        objRegex.findAll(arrayContent).forEach { match ->
-            val obj = match.groupValues[1]
-            val heading = extractStringField(obj, "heading") ?: "Concept"
-            val content = extractStringField(obj, "content") ?: ""
-            if (content.isNotBlank()) {
-                sections.add(LessonSection(heading, content))
-            }
-        }
-        return sections
-    }
-
-    private fun extractQuizObject(json: String): LessonQuiz? {
-        val blockRegex = Regex("\"quiz\"\\s*:\\s*\\{([\\s\\S]*?)\\}")
-        val match = blockRegex.find(json) ?: return null
-        val quizContent = match.groupValues[1]
-
-        val question = extractStringField(quizContent, "question") ?: return null
-        val correctIndex = extractIntField(quizContent, "correctOptionIndex") ?: 0
-        val explanation = extractStringField(quizContent, "explanation") ?: ""
-        val hint = extractStringField(quizContent, "hint")
-
-        val options = mutableListOf<String>()
-        val optionsRegex = Regex("\"options\"\\s*:\\s*\\[([\\s\\S]*?)\\]")
-        val optionsMatch = optionsRegex.find(quizContent)
-        if (optionsMatch != null) {
-            val arrayStr = optionsMatch.groupValues[1]
-            val itemRegex = Regex("\"((?:\\\\\"|[^\"])*)\"", RegexOption.DOT_MATCHES_ALL)
-            itemRegex.findAll(arrayStr).forEach { itemMatch ->
-                val str = unescapeJsonString(itemMatch.groupValues[1].trim())
-                if (str.isNotBlank()) options.add(str)
-            }
-        }
-
-        if (options.isEmpty()) return null
-
-        return LessonQuiz(
-            question = question,
-            options = options,
-            correctOptionIndex = correctIndex.coerceIn(0, options.size - 1),
-            explanation = explanation,
-            hint = hint
+            suggestedNextSteps = items(ImageSection.NEXT_STEPS),
+            uncertaintyAndLimitations = text(ImageSection.UNCERTAINTY).takeIf { it.isNotBlank() }
         )
     }
 }

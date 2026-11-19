@@ -231,7 +231,7 @@ fun ChatSessionCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = session.title,
+                        text = com.openfield.app.core.text.Markdown.stripInline(session.title),
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
@@ -256,7 +256,7 @@ fun ChatSessionCard(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = session.preview,
+                    text = com.openfield.app.core.text.Markdown.preview(session.preview, 90),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = OpenFieldSecondaryText,
                         fontSize = 12.sp

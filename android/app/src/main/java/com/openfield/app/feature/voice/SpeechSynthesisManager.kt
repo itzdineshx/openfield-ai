@@ -61,10 +61,9 @@ class SpeechSynthesisManager(private val context: Context) : TextToSpeech.OnInit
         stop()
         _currentUtteranceId.value = utteranceId
 
-        // Strip markdown asterisks and backticks for smoother acoustic synthesis
-        val cleanText = text
-            .replace(Regex("[*#`_~>]"), " ")
-            .replace(Regex("\\s+"), " ")
+        val cleanText = com.openfield.app.core.text.Markdown.toPlainText(text)
+            .replace("•", "")
+            .replace(Regex("[ \\t]+"), " ")
             .trim()
 
         tts?.speak(cleanText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)

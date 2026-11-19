@@ -168,7 +168,7 @@ fun HomeScreen(
                 modelState is ModelInstallationState.Installed && engineState is AiEngineState.Loading ->
                     "Loading AI Model..."
                 modelState is ModelInstallationState.Installed ->
-                    "Offline Mode (${(modelState as ModelInstallationState.Installed).activeModel.displayName})"
+                    "Offline Mode"
                 else -> "Setup Offline AI Model"
             }
             val bannerSubtitle = when {

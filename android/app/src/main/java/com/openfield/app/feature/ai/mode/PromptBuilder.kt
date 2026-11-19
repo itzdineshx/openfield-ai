@@ -211,7 +211,8 @@ OUTPUT JSON FORMAT ONLY:
 
 RULES:
 - Provide 2 to 4 distinct selectable options.
-- Keep options concise and mutually exclusive.
+- Keep options concise (under 12 words) and mutually exclusive.
+- Keep the question under 25 words and ask about something the user can check right now.
 - Highlight safety warnings if dangerous components are involved.
 - Set "isEscalationNeeded": true and provide "escalationReason" if the situation involves dangerous mains voltage, explosive gases, toxic chemical exposure, structural collapse risk, or requires certified technician tooling.
 - Respond with valid JSON.
@@ -263,6 +264,12 @@ OUTPUT JSON FORMAT ONLY:
   "escalationReason": null
 }
 ```
+
+RULES:
+- Do not repeat a question that was already asked.
+- If not resolved, give 2 to 4 short, mutually exclusive options.
+- If resolved, "recommendedSolution" must be a numbered list of concrete fix steps (e.g. "1. ...\n2. ...").
+- Respond with valid JSON.
 """.trimIndent()
     }
 
@@ -311,43 +318,46 @@ RULES:
 """.trimIndent()
     }
 
-    fun buildLearningFollowUpPrompt(topic: String, lessonTitle: String, userQuestion: String): String {
+    private fun lessonContextBlock(lessonContext: String?): String =
+        if (lessonContext.isNullOrBlank()) "" else "\nLesson content so far:\n${lessonContext.take(1500)}\n"
+
+    fun buildLearningFollowUpPrompt(topic: String, lessonTitle: String, userQuestion: String, lessonContext: String? = null): String {
         return """
 Topic: "$topic"
 Lesson: "$lessonTitle"
-
+${lessonContextBlock(lessonContext)}
 User's follow-up question:
 "$userQuestion"
 
-Explain clearly and concisely in the context of this lesson.
+Explain clearly and concisely in the context of this lesson. Use short paragraphs and bullet points where helpful.
 """.trimIndent()
     }
 
-    fun buildExplainMoreSimplyPrompt(topic: String, lessonTitle: String): String {
+    fun buildExplainMoreSimplyPrompt(topic: String, lessonTitle: String, lessonContext: String? = null): String {
         return """
 Topic: "$topic"
 Lesson: "$lessonTitle"
-
+${lessonContextBlock(lessonContext)}
 INSTRUCTION:
-Explain this concept even more simply, using plain everyday words and an intuitive breakdown as if explaining to someone completely new to the subject. Avoid any unnecessary technical jargon.
+Explain this concept even more simply, using plain everyday words and an intuitive breakdown as if explaining to someone completely new to the subject. Avoid any unnecessary technical jargon. End with a short "In short:" bullet list.
 """.trimIndent()
     }
 
-    fun buildShowAnotherExamplePrompt(topic: String, lessonTitle: String): String {
+    fun buildShowAnotherExamplePrompt(topic: String, lessonTitle: String, lessonContext: String? = null): String {
         return """
 Topic: "$topic"
 Lesson: "$lessonTitle"
-
+${lessonContextBlock(lessonContext)}
 INSTRUCTION:
-Provide a fresh, completely different real-world analogy or practical scenario illustrating "$topic". Show step-by-step how the concept applies to this new example.
+Provide a fresh, completely different real-world analogy or practical scenario illustrating "$topic". Show step-by-step how the concept applies to this new example, using a numbered list.
 """.trimIndent()
     }
 
-    fun buildSummarizeTopicPrompt(topic: String, lessonTitle: String): String {
+    fun buildSummarizeTopicPrompt(topic: String, lessonTitle: String, lessonContext: String? = null): String {
         return """
 Topic: "$topic"
 Lesson: "$lessonTitle"
-
+${lessonContextBlock(lessonContext)}
 INSTRUCTION:
 Provide a concise, 3-to-4 bullet-point revision summary capturing the absolute core principles and practical takeaways of this lesson.
 """.trimIndent()
@@ -408,6 +418,8 @@ RULES:
 
         return """
 $instruction
+
+Keep the same format and structure (greeting, headings, lists, sign-off) unless the instruction requires otherwise.
 
 ORIGINAL CONTENT:
 $currentText

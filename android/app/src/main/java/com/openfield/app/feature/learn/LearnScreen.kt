@@ -2,7 +2,9 @@ package com.openfield.app.feature.learn
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,30 +19,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,27 +47,52 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openfield.app.core.components.AnswerOptionRow
 import com.openfield.app.core.components.ChatBottomComposer
 import com.openfield.app.core.components.ChatMessageBubble
-import com.openfield.app.core.components.MarkdownText
+import com.openfield.app.core.components.ChoicePill
+import com.openfield.app.core.components.FeatureHeaderCard
+import com.openfield.app.core.components.GeneratingCard
+import com.openfield.app.core.components.InlineErrorCard
+import com.openfield.app.core.components.InlineMarkdown
+import com.openfield.app.core.components.MarkdownContent
+import com.openfield.app.core.components.OptionState
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.components.ScreenTopBar
+import com.openfield.app.core.components.SectionTitle
+import com.openfield.app.core.components.SuggestionChips
 import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldError
+import com.openfield.app.core.theme.OpenFieldErrorBg
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueBorder
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
-import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.core.theme.OpenFieldSuccess
+import com.openfield.app.core.theme.OpenFieldSuccessBg
+import com.openfield.app.data.local.entity.LearningSessionEntity
 import com.openfield.app.data.repository.OpenFieldRepository
+import com.openfield.app.feature.ai.controller.LearningController
 import com.openfield.app.feature.ai.controller.LearningUiState
 import com.openfield.app.feature.ai.mode.LearningLevel
+import com.openfield.app.feature.voice.rememberVoiceInput
+
+private val topicSuggestions = listOf(
+    "How a battery works",
+    "Photosynthesis",
+    "How Wi-Fi works",
+    "Compound interest",
+    "Why the sky is blue"
+)
 
 @Composable
 fun LearnScreen(
@@ -83,7 +107,25 @@ fun LearnScreen(
 
     var topicInput by remember { mutableStateOf("") }
     var followUpPrompt by remember { mutableStateOf("") }
-    var freeResponseInput by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+
+    val voice = rememberVoiceInput { recognized ->
+        followUpPrompt = if (followUpPrompt.isBlank()) recognized else "$followUpPrompt $recognized"
+    }
+
+    val active = uiState as? LearningUiState.ActiveLesson
+    val followUpCount = active?.followUps?.size ?: 0
+    val lastFollowUpLength = active?.followUps?.lastOrNull()?.text?.length ?: 0
+
+    LaunchedEffect(uiState::class) { scrollState.scrollTo(0) }
+    LaunchedEffect(followUpCount) {
+        if (followUpCount > 0) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+    LaunchedEffect(lastFollowUpLength) {
+        if (followUpCount > 0 && scrollState.maxValue - scrollState.value < 600) {
+            scrollState.scrollTo(scrollState.maxValue)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -97,29 +139,28 @@ fun LearnScreen(
                             controller.reset()
                             topicInput = ""
                         }) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "New topic"
-                            )
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "New topic")
                         }
                     }
                 }
             )
         },
         bottomBar = {
-            if (uiState is LearningUiState.ActiveLesson) {
+            if (active != null) {
                 ChatBottomComposer(
                     value = followUpPrompt,
                     onValueChange = { followUpPrompt = it },
                     onSend = { prompt ->
-                        if (prompt.isNotBlank()) {
-                            controller.askLessonFollowUp(prompt)
-                            followUpPrompt = ""
-                        }
+                        controller.askLessonFollowUp(prompt)
+                        followUpPrompt = ""
                     },
-                    onAttach = { },
-                    onVoiceClick = { },
-                    placeholder = "Ask a question about this lesson...",
+                    onVoiceClick = voice.toggle,
+                    isListening = voice.isListening,
+                    onStopListening = voice.stop,
+                    onCancelListening = voice.cancel,
+                    isGenerating = active.isAnswering,
+                    onStopGenerating = { controller.stopFollowUp() },
+                    placeholder = "Ask a follow-up…",
                     modifier = Modifier.imePadding()
                 )
             }
@@ -133,746 +174,544 @@ fun LearnScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(OpenFieldBackground)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-
             when (val state = uiState) {
-                is LearningUiState.Idle -> {
-                    // Header Card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = CardShape,
-                        colors = CardDefaults.cardColors(containerColor = OpenFieldPrimaryBlueLight),
-                        border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.2f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = null,
-                                tint = OpenFieldPrimaryBlue,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Interactive AI Tutor",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Master concepts through structured lessons, analogies, and quizzes offline.",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = 12.sp,
-                                        color = OpenFieldSecondaryText
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = "What concept would you like to learn?",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = topicInput,
-                        onValueChange = { topicInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
-                        placeholder = {
-                            Text(
-                                text = "e.g. Quantum Computing, Photosynthesis, Neural Networks...",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 13.sp,
-                                    color = OpenFieldSecondaryText.copy(alpha = 0.6f)
-                                )
-                            )
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = OpenFieldPrimaryBlue,
-                            unfocusedBorderColor = OpenFieldCardBorder,
-                            focusedContainerColor = OpenFieldBackground,
-                            unfocusedContainerColor = OpenFieldBackground
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Text(
-                        text = "Select explanation level:",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Level Selector Pills
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        LearningLevel.entries.forEach { level ->
-                            val isSelected = currentLevel == level
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder
-                                ),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { controller.setLearningLevel(level) }
-                            ) {
-                                Text(
-                                    text = level.displayName,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color.White else OpenFieldNavyText,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 12.sp
-                                    ),
-                                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    PrimaryButton(
-                        text = "Start interactive lesson",
-                        onClick = { controller.generateLesson(topicInput, currentLevel) },
-                        enabled = topicInput.isNotBlank(),
-                        leadingIcon = Icons.Default.AutoAwesome
-                    )
-
-                    // Saved Lessons Section
-                    if (savedSessions.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(30.dp))
-                        Text(
-                            text = "Recent Lessons",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = OpenFieldNavyText
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        savedSessions.forEach { session ->
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .clickable { controller.resumeLesson(session) },
-                                shape = CardShape,
-                                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                                border = BorderStroke(1.dp, OpenFieldCardBorder)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Book,
-                                        contentDescription = null,
-                                        tint = OpenFieldPrimaryBlue,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = session.lessonTitle,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = OpenFieldNavyText
-                                            ),
-                                            maxLines = 1,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = "${session.topic} • ${session.level} Level • ${if (session.isQuizCompleted) "Quiz Done" else "In Progress"}",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                fontSize = 11.sp,
-                                                color = OpenFieldSecondaryText
-                                            )
-                                        )
-                                    }
-                                    IconButton(
-                                        onClick = { controller.deleteLesson(session.id) },
-                                        modifier = Modifier.size(28.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.DeleteOutline,
-                                            contentDescription = "Delete lesson",
-                                            tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                is LearningUiState.Idle -> IdleContent(
+                    topicInput = topicInput,
+                    onTopicChange = { topicInput = it },
+                    level = currentLevel,
+                    onLevelChange = controller::setLearningLevel,
+                    onStart = { controller.generateLesson(topicInput, currentLevel) },
+                    savedSessions = savedSessions,
+                    onResume = controller::resumeLesson,
+                    onDelete = controller::deleteLesson
+                )
 
                 is LearningUiState.Generating -> {
-                    Box(
+                    FeatureHeaderCard(
+                        icon = Icons.AutoMirrored.Filled.MenuBook,
+                        title = "Preparing your lesson",
+                        subtitle = "Explanation, examples and a quick quiz."
+                    )
+                    GeneratingCard(
+                        message = state.message,
+                        detail = "Lessons are written on your device and can take a minute or two.",
+                        onStop = { controller.cancelGeneration() }
+                    )
+                }
+
+                is LearningUiState.ActiveLesson -> LessonContent(state, controller)
+
+                is LearningUiState.Error -> InlineErrorCard(
+                    title = "Couldn't create the lesson",
+                    message = state.message,
+                    retryLabel = "Retry lesson",
+                    onRetry = if (state.canRetry) controller::retry else null
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun IdleContent(
+    topicInput: String,
+    onTopicChange: (String) -> Unit,
+    level: LearningLevel,
+    onLevelChange: (LearningLevel) -> Unit,
+    onStart: () -> Unit,
+    savedSessions: List<LearningSessionEntity>,
+    onResume: (LearningSessionEntity) -> Unit,
+    onDelete: (String) -> Unit
+) {
+    FeatureHeaderCard(
+        icon = Icons.AutoMirrored.Filled.MenuBook,
+        title = "Learn anything",
+        subtitle = "Get a clear explanation, real examples and a quick quiz — all offline."
+    )
+
+    SectionTitle("What would you like to understand?")
+    OutlinedTextField(
+        value = topicInput,
+        onValueChange = onTopicChange,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        placeholder = {
+            Text(
+                "e.g. How does a battery work?",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, color = OpenFieldSecondaryText.copy(alpha = 0.7f))
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = OpenFieldPrimaryBlue,
+            unfocusedBorderColor = OpenFieldCardBorder,
+            focusedContainerColor = OpenFieldBackground,
+            unfocusedContainerColor = OpenFieldBackground
+        )
+    )
+    SuggestionChips(suggestions = topicSuggestions, onClick = onTopicChange)
+
+    SectionTitle("Explanation level")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        LearningLevel.entries.forEach { item ->
+            ChoicePill(
+                label = item.displayName,
+                selected = level == item,
+                onClick = { onLevelChange(item) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    PrimaryButton(
+        text = "Start lesson",
+        onClick = onStart,
+        enabled = topicInput.isNotBlank(),
+        leadingIcon = Icons.Default.AutoAwesome
+    )
+
+    if (savedSessions.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        SectionTitle("Recent lessons")
+        savedSessions.take(8).forEach { session ->
+            Surface(
+                shape = CardShape,
+                color = OpenFieldBackground,
+                border = BorderStroke(1.dp, OpenFieldCardBorder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(CardShape)
+                    .clickable { onResume(session) }
+            ) {
+                Row(modifier = Modifier.padding(start = 14.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = session.lessonTitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText)
+                        )
+                        val levelName = runCatching { LearningLevel.valueOf(session.level).displayName }.getOrDefault(session.level)
+                        Text(
+                            text = "$levelName • ${if (session.isQuizCompleted) "Quiz done" else "In progress"}",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = OpenFieldSecondaryText)
+                        )
+                    }
+                    IconButton(onClick = { onDelete(session.id) }) {
+                        Icon(
+                            Icons.Default.DeleteOutline,
+                            contentDescription = "Delete lesson",
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LessonContent(state: LearningUiState.ActiveLesson, controller: LearningController) {
+    val lesson = state.lesson
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Surface(shape = RoundedCornerShape(12.dp), color = OpenFieldPrimaryBlueLight) {
+            Text(
+                text = lesson.level.displayName,
+                style = MaterialTheme.typography.labelMedium.copy(color = OpenFieldPrimaryBlue, fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = lesson.topic,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText)
+        )
+    }
+
+    Text(
+        text = lesson.title,
+        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 27.sp, color = OpenFieldNavyText)
+    )
+    MarkdownContent(text = lesson.overview)
+
+    if (lesson.topic.contains("battery", ignoreCase = true) || lesson.title.contains("battery", ignoreCase = true)) {
+        Spacer(modifier = Modifier.height(10.dp))
+        BatteryConceptDiagram()
+        Spacer(modifier = Modifier.height(10.dp))
+        Surface(
+            shape = CardShape,
+            color = OpenFieldBackground,
+            border = BorderStroke(1.dp, OpenFieldCardBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "In short:",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText)
+                )
+                listOf(
+                    "It has two ends: positive and negative.",
+                    "A chemical reaction inside makes electrons move.",
+                    "That motion creates electric current.",
+                    "The current powers your device."
+                ).forEach { pt ->
+                    Row(verticalAlignment = Alignment.Top) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(OpenFieldNavyText)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = pt,
+                            style = MaterialTheme.typography.bodyMedium.copy(color = OpenFieldNavyText, fontSize = 14.sp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    lesson.sections.forEachIndexed { index, section ->
+        Surface(
+            shape = CardShape,
+            color = OpenFieldBackground,
+            border = BorderStroke(1.dp, OpenFieldCardBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "${index + 1}. ${section.heading}",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = OpenFieldPrimaryBlue)
+                )
+                MarkdownContent(text = section.content)
+            }
+        }
+    }
+
+    if (lesson.practicalExample.isNotBlank()) {
+        Surface(
+            shape = CardShape,
+            color = OpenFieldPrimaryBlueLight,
+            border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
+                Icon(Icons.Default.Lightbulb, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Everyday example", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldPrimaryBlue))
+                    MarkdownContent(text = lesson.practicalExample)
+                }
+            }
+        }
+    }
+
+    SectionTitle("Go deeper")
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ChoicePill("Explain simpler", selected = false, onClick = controller::explainMoreSimply, enabled = !state.isAnswering)
+        ChoicePill("Another example", selected = false, onClick = controller::showAnotherExample, enabled = !state.isAnswering)
+        ChoicePill("Summarize", selected = false, onClick = controller::summarizeTopic, enabled = !state.isAnswering)
+    }
+
+    lesson.quiz?.let { quiz ->
+        SectionTitle("Quick check")
+        Surface(
+            shape = CardShape,
+            color = OpenFieldBackground,
+            border = BorderStroke(1.dp, OpenFieldCardBorder),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                InlineMarkdown(
+                    text = quiz.question,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 22.sp, color = OpenFieldNavyText)
+                )
+                quiz.options.forEachIndexed { idx, option ->
+                    val optionState = when {
+                        state.isAnswerSubmitted && idx == quiz.correctOptionIndex -> OptionState.CORRECT
+                        state.isAnswerSubmitted && idx == state.selectedQuizOptionIndex -> OptionState.WRONG
+                        !state.isAnswerSubmitted && idx == state.selectedQuizOptionIndex -> OptionState.SELECTED
+                        else -> OptionState.DEFAULT
+                    }
+                    AnswerOptionRow(
+                        text = option,
+                        state = optionState,
+                        enabled = !state.isAnswerSubmitted,
+                        onClick = { controller.selectQuizOption(idx) }
+                    )
+                }
+
+                if (!state.isAnswerSubmitted && quiz.hint != null) {
+                    Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(280.dp),
-                        contentAlignment = Alignment.Center
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = controller::toggleHint)
+                            .padding(vertical = 4.dp, horizontal = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(
-                                color = OpenFieldPrimaryBlue,
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(42.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = state.message,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Synthesizing principles, analogies, and quizzes on-device…",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText
-                                )
-                            )
-                        }
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (state.showHint) "Hide hint" else "Need a hint?",
+                            style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldPrimaryBlue, fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                        )
+                    }
+                    if (state.showHint) {
+                        MarkdownContent(
+                            text = quiz.hint,
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 19.sp, color = OpenFieldSecondaryText)
+                        )
                     }
                 }
 
-                is LearningUiState.ActiveLesson -> {
-                    val lesson = state.lesson
-
-                    // Lesson Header Pill
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = OpenFieldPrimaryBlueLight
-                        ) {
-                            Text(
-                                text = "${lesson.level.displayName} Level",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldPrimaryBlue,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                ),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-
-                        Text(
-                            text = lesson.topic,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = OpenFieldSecondaryText,
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Title & Core Overview Card
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = CardShape,
-                        colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                        border = BorderStroke(1.dp, OpenFieldCardBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = lesson.title,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            MarkdownText(
-                                text = lesson.overview,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 13.sp,
-                                    lineHeight = 20.sp,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                        }
-                    }
-
-                    // Concept Sections
-                    lesson.sections.forEach { section ->
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = CardShape,
-                            colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                            border = BorderStroke(1.dp, OpenFieldCardBorder)
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text(
-                                    text = section.heading,
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp,
-                                        color = OpenFieldPrimaryBlue
-                                    )
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                MarkdownText(
-                                    text = section.content,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = 13.sp,
-                                        lineHeight = 19.sp,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    // Intuitive Analogy / Practical Example
-                    if (lesson.practicalExample.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = CardShape,
-                            colors = CardDefaults.cardColors(containerColor = OpenFieldPrimaryBlueLight.copy(alpha = 0.4f)),
-                            border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.3f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(14.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Lightbulb,
-                                    contentDescription = null,
-                                    tint = OpenFieldPrimaryBlue,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "Intuitive Analogy",
-                                        style = MaterialTheme.typography.titleSmall.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = OpenFieldPrimaryBlue
-                                        )
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = lesson.practicalExample,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontSize = 13.sp,
-                                            lineHeight = 19.sp,
-                                            color = OpenFieldNavyText
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Deepen Understanding Actions
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Deepen Understanding",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = OpenFieldNavyText
-                        )
+                if (!state.isAnswerSubmitted) {
+                    PrimaryButton(
+                        text = "Check answer",
+                        onClick = controller::submitQuizAnswer,
+                        enabled = state.selectedQuizOptionIndex != null,
+                        height = 48.dp
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = OpenFieldSecondaryBackground,
-                            border = BorderStroke(1.dp, OpenFieldCardBorder),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { controller.explainMoreSimply() }
-                        ) {
-                            Text(
-                                text = "Explain Simpler",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 11.sp,
-                                    color = OpenFieldNavyText
-                                ),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = OpenFieldSecondaryBackground,
-                            border = BorderStroke(1.dp, OpenFieldCardBorder),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { controller.showAnotherExample() }
-                        ) {
-                            Text(
-                                text = "New Example",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 11.sp,
-                                    color = OpenFieldNavyText
-                                ),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = OpenFieldSecondaryBackground,
-                            border = BorderStroke(1.dp, OpenFieldCardBorder),
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { controller.summarizeTopic() }
-                        ) {
-                            Text(
-                                text = "Summarize",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 11.sp,
-                                    color = OpenFieldNavyText
-                                ),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                        }
-                    }
-
-                    // Interactive Knowledge Check Quiz
-                    val quiz = lesson.quiz
-                    if (quiz != null) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = "Knowledge Check",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = OpenFieldNavyText
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = CardShape,
-                            colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                            border = BorderStroke(1.5.dp, OpenFieldCardBorder)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    text = quiz.question,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 14.sp,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                quiz.options.forEachIndexed { idx, optionText ->
-                                    val isSelected = state.selectedQuizOptionIndex == idx
-                                    val isCorrect = idx == quiz.correctOptionIndex
-
-                                    val optionBorderColor = when {
-                                        state.isAnswerSubmitted && isCorrect -> Color(0xFF2E7D32)
-                                        state.isAnswerSubmitted && isSelected && !isCorrect -> OpenFieldError
-                                        isSelected -> OpenFieldPrimaryBlue
-                                        else -> OpenFieldCardBorder
-                                    }
-
-                                    val optionBgColor = when {
-                                        state.isAnswerSubmitted && isCorrect -> Color(0xFFE8F5E9)
-                                        state.isAnswerSubmitted && isSelected && !isCorrect -> OpenFieldError.copy(alpha = 0.08f)
-                                        isSelected -> OpenFieldPrimaryBlueLight
-                                        else -> OpenFieldBackground
-                                    }
-
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = optionBgColor,
-                                        border = BorderStroke(1.5.dp, optionBorderColor),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp)
-                                            .clickable(enabled = !state.isAnswerSubmitted) {
-                                                controller.selectQuizOption(idx)
-                                            }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            val letter = ('A'.code + idx).toChar().toString()
-                                            Text(
-                                                text = "$letter.",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 13.sp,
-                                                color = OpenFieldNavyText
-                                            )
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Text(
-                                                text = optionText,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontSize = 13.sp,
-                                                    color = OpenFieldNavyText
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (quiz.hint != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Row(
-                                        modifier = Modifier
-                                            .clickable { controller.toggleHint() }
-                                            .padding(vertical = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                            contentDescription = null,
-                                            tint = OpenFieldPrimaryBlue,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = if (state.showHint) "Hide hint" else "Need a hint?",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                color = OpenFieldPrimaryBlue,
-                                                fontWeight = FontWeight.Medium,
-                                                fontSize = 12.sp
-                                            )
-                                        )
-                                    }
-
-                                    if (state.showHint) {
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = OpenFieldPrimaryBlueLight.copy(alpha = 0.3f),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 4.dp)
-                                        ) {
-                                            Text(
-                                                text = quiz.hint,
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    color = OpenFieldNavyText,
-                                                    fontSize = 12.sp
-                                                ),
-                                                modifier = Modifier.padding(10.dp)
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                if (!state.isAnswerSubmitted) {
-                                    PrimaryButton(
-                                        text = "Check answer",
-                                        onClick = { controller.submitQuizAnswer() },
-                                        enabled = state.selectedQuizOptionIndex != null
-                                    )
-                                } else {
-                                    // Feedback explanation
-                                    val selectedIdx = state.selectedQuizOptionIndex ?: -1
-                                    val gotItRight = selectedIdx == quiz.correctOptionIndex
-
-                                    Surface(
-                                        shape = RoundedCornerShape(10.dp),
-                                        color = if (gotItRight) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column(modifier = Modifier.padding(12.dp)) {
-                                            Text(
-                                                text = if (gotItRight) "Correct! Well done." else "Incorrect.",
-                                                style = MaterialTheme.typography.titleSmall.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (gotItRight) Color(0xFF2E7D32) else OpenFieldError
-                                                )
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = quiz.explanation,
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontSize = 12.sp,
-                                                    lineHeight = 17.sp,
-                                                    color = OpenFieldNavyText
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Free-Response Concept Check
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Explain In Your Own Words",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = CardShape,
-                        colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                        border = BorderStroke(1.dp, OpenFieldCardBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "How would you explain the core mechanism of ${lesson.topic} to someone else?",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontSize = 12.sp
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedTextField(
-                                value = freeResponseInput,
-                                onValueChange = { freeResponseInput = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp),
-                                placeholder = {
-                                    Text(
-                                        text = "Write your explanation here…",
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            color = OpenFieldSecondaryText.copy(alpha = 0.6f)
-                                        )
-                                    )
-                                },
-                                maxLines = 4,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = OpenFieldPrimaryBlue,
-                                    unfocusedBorderColor = OpenFieldCardBorder
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            PrimaryButton(
-                                text = "Evaluate my explanation",
-                                onClick = {
-                                    if (freeResponseInput.isNotBlank()) {
-                                        controller.submitFreeResponseCheck(freeResponseInput)
-                                        freeResponseInput = ""
-                                    }
-                                },
-                                enabled = freeResponseInput.isNotBlank()
-                            )
-                        }
-                    }
-
-                    // Follow-up Q&A messages
-                    if (state.followUps.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Text(
-                            text = "Lesson Q&A",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = OpenFieldNavyText
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        state.followUps.forEach { msg ->
-                            ChatMessageBubble(
-                                isUser = msg.isUser,
-                                message = msg.text,
-                                timestamp = msg.timestamp,
-                                isComplete = msg.isComplete
-                            )
-                        }
-                    }
-                }
-
-                is LearningUiState.Error -> {
+                } else {
+                    val correct = state.selectedQuizOptionIndex == quiz.correctOptionIndex
                     Surface(
-                        shape = CardShape,
-                        color = OpenFieldError.copy(alpha = 0.08f),
-                        border = BorderStroke(1.dp, OpenFieldError.copy(alpha = 0.3f)),
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (correct) OpenFieldSuccessBg else OpenFieldErrorBg,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.ErrorOutline,
-                                    contentDescription = null,
-                                    tint = OpenFieldError
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Lesson Error",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        color = OpenFieldError,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = state.message,
-                                style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldError)
+                                text = if (correct) "Correct — nice work!" else "Not quite.",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (correct) OpenFieldSuccess else OpenFieldError
+                                )
                             )
-                            if (state.canRetry) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                PrimaryButton(
-                                    text = "Retry lesson",
-                                    onClick = { controller.generateLesson(topicInput, currentLevel) },
-                                    leadingIcon = Icons.Default.Refresh
+                            if (quiz.explanation.isNotBlank()) {
+                                MarkdownContent(
+                                    text = quiz.explanation,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 20.sp, color = OpenFieldNavyText)
                                 )
                             }
+                        }
+                    }
+                    if (!correct) {
+                        OutlinedButton(
+                            onClick = controller::retryQuiz,
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, OpenFieldCardBorder)
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, tint = OpenFieldNavyText, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Try again", color = OpenFieldNavyText, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
             }
+        }
+    }
 
-            Spacer(modifier = Modifier.height(30.dp))
+    ExplainBackCard(enabled = !state.isAnswering, onSubmit = controller::submitFreeResponseCheck)
+
+    if (state.followUps.isNotEmpty()) {
+        SectionTitle("Your questions")
+        Column {
+            state.followUps.forEach { msg ->
+                ChatMessageBubble(
+                    isUser = msg.isUser,
+                    message = msg.text,
+                    isComplete = msg.isComplete
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExplainBackCard(enabled: Boolean, onSubmit: (String) -> Unit) {
+    var answer by remember { mutableStateOf("") }
+    Surface(
+        shape = CardShape,
+        color = OpenFieldBackground,
+        border = BorderStroke(1.dp, OpenFieldCardBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                "Explain it in your own words",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText)
+            )
+            Text(
+                "Write a short explanation and get feedback on what you got right.",
+                style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.5.sp)
+            )
+            OutlinedTextField(
+                value = answer,
+                onValueChange = { answer = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                maxLines = 5,
+                placeholder = { Text("Your explanation…", color = OpenFieldSecondaryText.copy(alpha = 0.7f)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = OpenFieldPrimaryBlue,
+                    unfocusedBorderColor = OpenFieldCardBorder
+                )
+            )
+            PrimaryButton(
+                text = "Get feedback",
+                onClick = {
+                    onSubmit(answer)
+                    answer = ""
+                },
+                enabled = enabled && answer.isNotBlank(),
+                height = 48.dp
+            )
+        }
+    }
+}
+
+@Composable
+fun BatteryConceptDiagram(modifier: Modifier = Modifier) {
+    Surface(
+        shape = CardShape,
+        color = OpenFieldBackground,
+        border = BorderStroke(1.dp, OpenFieldCardBorder),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left Labels
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Positive (+)",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(60.dp))
+                    Text(
+                        text = "Negative (-)",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // Center Battery Graphic
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Positive Terminal Nub
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .height(7.dp)
+                            .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
+                            .background(Color(0xFF90A4AE))
+                    )
+                    // Battery Body Cylinder
+                    Box(
+                        modifier = Modifier
+                            .width(62.dp)
+                            .height(105.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(2.dp, OpenFieldNavyText, RoundedCornerShape(8.dp))
+                    ) {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Top Layer: Reaction (Yellow/Orange)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .background(Color(0xFFFFB74D))
+                            )
+                            // Divider line
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(OpenFieldNavyText.copy(alpha = 0.3f))
+                            )
+                            // Bottom Layer: Electron Flow (Blue)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .background(Color(0xFF64B5F6))
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // Right Description Labels
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.weight(1.3f)
+                ) {
+                    Text(
+                        text = "Chemical\nreaction",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                    Text(
+                        text = "(creates electrons)",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 10.sp,
+                            color = OpenFieldSecondaryText
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Electrical\nenergy output",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                    Text(
+                        text = "(powers your device)",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 10.sp,
+                            color = OpenFieldSecondaryText
+                        )
+                    )
+                }
+            }
         }
     }
 }

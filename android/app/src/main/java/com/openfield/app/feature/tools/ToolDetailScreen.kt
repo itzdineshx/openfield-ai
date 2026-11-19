@@ -49,8 +49,12 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.openfield.app.core.components.MarkdownText
+import androidx.compose.material.icons.filled.Stop
+import com.openfield.app.core.components.MarkdownContent
 import com.openfield.app.core.components.PrimaryButton
+import com.openfield.app.core.components.TypingIndicator
+import com.openfield.app.core.text.Markdown
+import kotlinx.coroutines.Job
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
@@ -78,6 +82,7 @@ fun ToolDetailScreen(
     var inputText by remember(toolId) { mutableStateOf("") }
     var outputText by remember(toolId) { mutableStateOf("") }
     var isExecuting by remember { mutableStateOf(false) }
+    var runJob by remember { mutableStateOf<Job?>(null) }
 
     Scaffold(
         topBar = {
@@ -191,10 +196,14 @@ fun ToolDetailScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             PrimaryButton(
-                text = if (isExecuting) "Generating Offline..." else "Execute Offline",
+                text = if (isExecuting) "Stop" else "Run",
                 onClick = {
-                    if (inputText.isNotBlank() && !isExecuting) {
-                        scope.launch {
+                    if (isExecuting) {
+                        repository.aiEngine.cancelGeneration()
+                        runJob?.cancel()
+                        isExecuting = false
+                    } else if (inputText.isNotBlank()) {
+                        runJob = scope.launch {
                             isExecuting = true
                             outputText = ""
                             try {
@@ -218,19 +227,25 @@ fun ToolDetailScreen(
                                 repository.executeToolActionStream(tool.id, inputText).collect { token ->
                                     outputText += token
                                 }
+                            } catch (e: kotlinx.coroutines.CancellationException) {
+                                // stopped by the user; keep partial output
                             } catch (e: Exception) {
-                                outputText = if (outputText.isNotBlank()) outputText else "Error executing offline tool: ${e.message}"
+                                outputText = if (outputText.isNotBlank()) outputText else "Sorry, this tool failed: ${e.message}"
                             } finally {
                                 isExecuting = false
                             }
                         }
                     }
                 },
-                leadingIcon = Icons.Default.PlayArrow,
-                enabled = !isExecuting
+                leadingIcon = if (isExecuting) Icons.Default.Stop else Icons.Default.PlayArrow,
+                enabled = isExecuting || inputText.isNotBlank()
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            if (isExecuting && outputText.isEmpty()) {
+                TypingIndicator(label = "Working on your device…")
+            }
 
             // Output Section
             if (outputText.isNotEmpty()) {
@@ -249,7 +264,7 @@ fun ToolDetailScreen(
 
                     IconButton(
                         onClick = {
-                            clipboardManager.setText(AnnotatedString(outputText))
+                            clipboardManager.setText(AnnotatedString(Markdown.toPlainText(outputText)))
                             Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.size(32.dp)
@@ -271,13 +286,8 @@ fun ToolDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
                     border = BorderStroke(1.dp, OpenFieldCardBorder)
                 ) {
-                    MarkdownText(
+                    MarkdownContent(
                         text = outputText,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            lineHeight = 21.sp,
-                            color = OpenFieldNavyText
-                        ),
                         modifier = Modifier.padding(16.dp)
                     )
                 }

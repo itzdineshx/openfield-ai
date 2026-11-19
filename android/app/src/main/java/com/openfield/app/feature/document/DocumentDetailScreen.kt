@@ -180,13 +180,8 @@ fun DocumentDetailScreen(
                 colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
                 border = BorderStroke(1.dp, OpenFieldCardBorder)
             ) {
-                Text(
+                com.openfield.app.core.components.MarkdownContent(
                     text = doc?.summary ?: "No summary available.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp,
-                        color = OpenFieldNavyText
-                    ),
                     modifier = Modifier.padding(16.dp)
                 )
             }

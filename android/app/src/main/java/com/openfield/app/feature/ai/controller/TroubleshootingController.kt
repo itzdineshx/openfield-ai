@@ -8,6 +8,7 @@ import com.openfield.app.feature.ai.mode.AiOrchestrator
 import com.openfield.app.feature.ai.mode.DiagnosticAssessment
 import com.openfield.app.feature.ai.mode.DiagnosticOption
 import com.openfield.app.feature.ai.mode.DiagnosticStepHistory
+import com.openfield.app.feature.ai.mode.StructuredOutputParser
 import com.openfield.app.feature.ai.mode.ValidationResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -83,38 +84,31 @@ class TroubleshootingController(
     }
 
     fun resumeSession(session: TroubleshootSessionEntity) {
+        activeJob?.cancel()
         currentSessionId = session.id
         _problemDescription.value = session.problem
         removeImage()
 
-        val parsedHistory = mutableListOf<DiagnosticStepHistory>()
-        if (session.historyJson.isNotBlank()) {
-            session.historyJson.split(";").forEach { item ->
-                val parts = item.split(":")
-                if (parts.size >= 2) {
-                    val stepIdx = parts[0].toIntOrNull() ?: 1
-                    val ans = parts.subList(1, parts.size).joinToString(":")
-                    parsedHistory.add(DiagnosticStepHistory(stepIdx, "Step $stepIdx check", ans))
-                }
-            }
-        }
-        _history.value = parsedHistory
+        _history.value = StructuredOutputParser.deserializeHistory(session.historyJson)
+            ?: parseLegacyHistory(session.historyJson)
 
-        val assessment = DiagnosticAssessment(
-            category = session.category,
-            currentStepNumber = session.currentStepNumber,
-            question = session.assessmentJson,
-            isResolutionReached = session.isResolved,
-            likelyCause = if (session.isResolved) session.assessmentJson else null,
-            recommendedSolution = if (session.isResolved) "Refer to saved diagnostic resolution." else null
-        )
-
-        _uiState.value = if (session.isResolved) {
-            TroubleshootingUiState.Resolution(assessment, didFixWork = true)
-        } else {
-            TroubleshootingUiState.DiagnosticStep(assessment)
+        val saved = StructuredOutputParser.deserializeDiagnostic(session.assessmentJson)
+        when {
+            saved != null && saved.isResolutionReached ->
+                _uiState.value = TroubleshootingUiState.Resolution(saved, didFixWork = if (session.isResolved) true else null)
+            saved != null && saved.options.size >= 2 ->
+                _uiState.value = TroubleshootingUiState.DiagnosticStep(saved)
+            else -> fetchDiagnosticAssessment()
         }
     }
+
+    private fun parseLegacyHistory(raw: String): List<DiagnosticStepHistory> =
+        raw.split(";").mapNotNull { item ->
+            val parts = item.split(":")
+            if (parts.size < 2) return@mapNotNull null
+            val stepIdx = parts[0].toIntOrNull() ?: return@mapNotNull null
+            DiagnosticStepHistory(stepIdx, "Step $stepIdx check", parts.drop(1).joinToString(":"))
+        }
 
     fun deleteSession(sessionId: String) {
         scope.launch(Dispatchers.IO) {
@@ -135,18 +129,19 @@ class TroubleshootingController(
     }
 
     private fun fetchDiagnosticAssessment() {
-        if (!orchestrator.isReady()) {
-            _uiState.value = TroubleshootingUiState.Error(
-                "Local AI model is not ready. Please load Gemma 4 E2B IT in Model Management.",
-                canRetry = true
-            )
-            return
-        }
-
         activeJob?.cancel()
+        val stepNum = _history.value.size + 1
+        _uiState.value = TroubleshootingUiState.Generating(
+            if (stepNum == 1) "Understanding your problem…" else "Preparing step $stepNum…"
+        )
         activeJob = scope.launch(Dispatchers.IO) {
-            val stepNum = _history.value.size + 1
-            _uiState.value = TroubleshootingUiState.Generating("Analyzing diagnostic step $stepNum…")
+            if (!orchestrator.awaitReady()) {
+                _uiState.value = TroubleshootingUiState.Error(
+                    "The on-device AI model isn't loaded. Open AI Model Management from the Home banner, then retry.",
+                    canRetry = true
+                )
+                return@launch
+            }
 
             val result = orchestrator.executeDiagnosticAssessment(
                 problemDescription = _problemDescription.value,
@@ -167,7 +162,7 @@ class TroubleshootingController(
                 }
                 is ValidationResult.Failure -> {
                     _uiState.value = TroubleshootingUiState.Error(
-                        message = result.reason,
+                        message = "The AI's answer for this step couldn't be read (${result.reason.trimEnd('.')}). Tap retry to generate it again.",
                         canRetry = true
                     )
                 }
@@ -197,6 +192,27 @@ class TroubleshootingController(
             _history.value = _history.value + historyEntry
 
             fetchDiagnosticAssessment()
+        }
+    }
+
+    fun submitCustomAnswer(observation: String) {
+        val current = _uiState.value as? TroubleshootingUiState.DiagnosticStep ?: return
+        if (observation.isBlank()) return
+        _history.value = _history.value + DiagnosticStepHistory(
+            stepIndex = current.assessment.currentStepNumber,
+            question = current.assessment.question,
+            selectedOptionText = observation.trim()
+        )
+        fetchDiagnosticAssessment()
+    }
+
+    fun cancelGeneration() {
+        orchestrator.cancelGeneration()
+        activeJob?.cancel()
+        _uiState.value = if (_history.value.isEmpty()) {
+            TroubleshootingUiState.Idle
+        } else {
+            TroubleshootingUiState.Error("Stopped. Tap retry to continue from this step.", canRetry = true)
         }
     }
 
@@ -241,8 +257,8 @@ class TroubleshootingController(
                     category = assessment.category,
                     currentStepNumber = assessment.currentStepNumber,
                     isResolved = isResolved,
-                    assessmentJson = assessment.question,
-                    historyJson = _history.value.joinToString(";") { "${it.stepIndex}:${it.selectedOptionText}" },
+                    assessmentJson = StructuredOutputParser.serializeDiagnostic(assessment),
+                    historyJson = StructuredOutputParser.serializeHistory(_history.value),
                     updatedAt = System.currentTimeMillis()
                 )
                 modeSessionDao.insertTroubleshootSession(entity)

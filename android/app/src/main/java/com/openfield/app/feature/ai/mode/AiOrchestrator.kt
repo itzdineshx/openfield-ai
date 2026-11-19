@@ -1,16 +1,30 @@
 package com.openfield.app.feature.ai.mode
 
 import com.openfield.app.feature.ai.engine.AiEngineException
+import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.engine.AiGenerationConfig
 import com.openfield.app.feature.ai.engine.LocalAiEngine
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withTimeoutOrNull
 
 class AiOrchestrator(
     val aiEngine: LocalAiEngine
 ) {
 
     fun isReady(): Boolean = aiEngine.isReady()
+
+    /** Waits for an in-progress model load (e.g. auto-load at app start) instead of failing immediately. */
+    suspend fun awaitReady(timeoutMs: Long = 120_000): Boolean {
+        if (aiEngine.isReady()) return true
+        if (aiEngine.engineState.value !is AiEngineState.Loading) return false
+        val settled = withTimeoutOrNull(timeoutMs) {
+            aiEngine.engineState.first { it !is AiEngineState.Loading }
+        }
+        return settled != null && aiEngine.isReady()
+    }
 
     fun cancelGeneration() {
         aiEngine.cancelGeneration()
@@ -123,11 +137,35 @@ class AiOrchestrator(
                 rawBuffer.append(token)
             }
             val raw = rawBuffer.toString()
-            val parsed = StructuredOutputParser.parseDiagnosticAssessment(raw)
+            val parsed = StructuredOutputParser.parseDiagnosticAssessment(raw)?.let(::repairDiagnostic)
             return OutputValidator.validateDiagnosticAssessment(parsed, raw, problemDescription)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return ValidationResult.Failure("Diagnostic generation failed: ${e.message}", rawBuffer.toString())
         }
+    }
+
+    /** Small models often get the shape almost right; fix recoverable gaps instead of failing the step. */
+    private fun repairDiagnostic(a: DiagnosticAssessment): DiagnosticAssessment {
+        var fixed = a
+        if (fixed.isResolutionReached && fixed.recommendedSolution.isNullOrBlank()) {
+            fixed = if (!fixed.likelyCause.isNullOrBlank() && fixed.options.size < 2) {
+                fixed.copy(recommendedSolution = "Address the likely cause described above. If you are unsure how, consult a qualified technician.")
+            } else {
+                fixed.copy(isResolutionReached = false)
+            }
+        }
+        if (!fixed.isResolutionReached && fixed.options.size < 2 && fixed.question.isNotBlank()) {
+            fixed = fixed.copy(
+                options = listOf(
+                    DiagnosticOption("A", "Yes"),
+                    DiagnosticOption("B", "No"),
+                    DiagnosticOption("C", "I'm not sure")
+                )
+            )
+        }
+        return fixed
     }
 
     // -------------------------------------------------------------
@@ -155,6 +193,8 @@ class AiOrchestrator(
             val raw = rawBuffer.toString()
             val parsed = StructuredOutputParser.parseStructuredLesson(raw, topic, level)
             return OutputValidator.validateStructuredLesson(parsed, raw)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return ValidationResult.Failure("Lesson generation failed: ${e.message}", rawBuffer.toString())
         }
@@ -164,40 +204,44 @@ class AiOrchestrator(
         topic: String,
         lessonTitle: String,
         userQuestion: String,
+        lessonContext: String? = null,
         customConfig: AiGenerationConfig? = null
     ): Flow<String> {
         val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.LEARN_EXPLAIN).defaultGenConfig
-        val prompt = PromptBuilder.buildLearningFollowUpPrompt(topic, lessonTitle, userQuestion)
+        val prompt = PromptBuilder.buildLearningFollowUpPrompt(topic, lessonTitle, userQuestion, lessonContext)
         return aiEngine.generateStream(prompt, config)
     }
 
     fun streamExplainMoreSimply(
         topic: String,
         lessonTitle: String,
+        lessonContext: String? = null,
         customConfig: AiGenerationConfig? = null
     ): Flow<String> {
         val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.LEARN_EXPLAIN).defaultGenConfig
-        val prompt = PromptBuilder.buildExplainMoreSimplyPrompt(topic, lessonTitle)
+        val prompt = PromptBuilder.buildExplainMoreSimplyPrompt(topic, lessonTitle, lessonContext)
         return aiEngine.generateStream(prompt, config)
     }
 
     fun streamShowAnotherExample(
         topic: String,
         lessonTitle: String,
+        lessonContext: String? = null,
         customConfig: AiGenerationConfig? = null
     ): Flow<String> {
         val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.LEARN_EXPLAIN).defaultGenConfig
-        val prompt = PromptBuilder.buildShowAnotherExamplePrompt(topic, lessonTitle)
+        val prompt = PromptBuilder.buildShowAnotherExamplePrompt(topic, lessonTitle, lessonContext)
         return aiEngine.generateStream(prompt, config)
     }
 
     fun streamSummarizeTopic(
         topic: String,
         lessonTitle: String,
+        lessonContext: String? = null,
         customConfig: AiGenerationConfig? = null
     ): Flow<String> {
         val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.LEARN_EXPLAIN).defaultGenConfig
-        val prompt = PromptBuilder.buildSummarizeTopicPrompt(topic, lessonTitle)
+        val prompt = PromptBuilder.buildSummarizeTopicPrompt(topic, lessonTitle, lessonContext)
         return aiEngine.generateStream(prompt, config)
     }
 

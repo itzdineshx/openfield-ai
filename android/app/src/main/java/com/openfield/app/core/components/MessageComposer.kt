@@ -3,6 +3,7 @@ package com.openfield.app.core.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -166,6 +167,26 @@ fun HomePromptComposer(
 }
 
 @Composable
+private fun CircleAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    background: Color,
+    onClick: () -> Unit,
+    enabled: Boolean = true
+) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(background)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(imageVector = icon, contentDescription = description, tint = Color.White, modifier = Modifier.size(17.dp))
+    }
+}
+
+@Composable
 private fun ComposerActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String,
@@ -196,19 +217,21 @@ fun ChatBottomComposer(
     value: String,
     onValueChange: (String) -> Unit,
     onSend: (String) -> Unit,
-    onAttach: () -> Unit,
-    onVoiceClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onAttach: (() -> Unit)? = null,
+    onVoiceClick: (() -> Unit)? = null,
     placeholder: String = "Ask a follow-up...",
     enabled: Boolean = true,
     isListening: Boolean = false,
     onStopListening: () -> Unit = {},
-    onCancelListening: () -> Unit = {}
+    onCancelListening: () -> Unit = {},
+    isGenerating: Boolean = false,
+    onStopGenerating: (() -> Unit)? = null
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = OpenFieldBackground,
-        shadowElevation = 4.dp
+        shadowElevation = 6.dp
     ) {
         Row(
             modifier = Modifier
@@ -217,7 +240,7 @@ fun ChatBottomComposer(
                 .clip(ComposerShape)
                 .background(OpenFieldSecondaryBackground)
                 .border(1.dp, OpenFieldCardBorder, ComposerShape)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(start = if (onAttach == null) 14.dp else 6.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isListening) {
@@ -268,79 +291,83 @@ fun ChatBottomComposer(
                     }
                 }
             } else {
-                // Attachment '+' button
-                IconButton(
-                    onClick = onAttach,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Attach",
-                        tint = OpenFieldSecondaryText,
-                        modifier = Modifier.size(20.dp)
-                    )
+                if (onAttach != null) {
+                    IconButton(
+                        onClick = onAttach,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Attach",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
 
-                Spacer(modifier = Modifier.width(4.dp))
-
-                // Text input
                 BasicTextField(
                     value = value,
                     onValueChange = onValueChange,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 8.dp),
+                    maxLines = 5,
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         color = OpenFieldNavyText,
-                        fontSize = 14.sp
+                        fontSize = 14.5.sp,
+                        lineHeight = 20.sp
                     ),
                     cursorBrush = SolidColor(OpenFieldPrimaryBlue),
                     decorationBox = { innerTextField ->
-                        if (value.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = OpenFieldMutedText,
-                                    fontSize = 14.sp
+                        Box {
+                            if (value.isEmpty()) {
+                                Text(
+                                    text = placeholder,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = OpenFieldMutedText,
+                                        fontSize = 14.5.sp
+                                    )
                                 )
-                            )
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
                     }
                 )
 
-                // Voice input button
-                IconButton(
-                    onClick = onVoiceClick,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Voice input",
-                        tint = OpenFieldSecondaryText,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                // Send button
-                if (value.isNotBlank()) {
+                if (onVoiceClick != null && !isGenerating) {
                     IconButton(
-                        onClick = {
-                            if (value.isNotBlank() && enabled) {
-                                onSend(value)
-                            }
-                        },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(OpenFieldPrimaryBlue),
-                        enabled = enabled
+                        onClick = onVoiceClick,
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = "Voice input",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+                if (isGenerating && onStopGenerating != null) {
+                    CircleAction(
+                        icon = Icons.Default.Stop,
+                        description = "Stop generating",
+                        background = OpenFieldNavyText,
+                        onClick = onStopGenerating
+                    )
+                } else {
+                    val canSend = value.isNotBlank() && enabled && !isGenerating
+                    CircleAction(
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        description = "Send",
+                        background = if (canSend) OpenFieldPrimaryBlue else OpenFieldPrimaryBlue.copy(alpha = 0.35f),
+                        enabled = canSend,
+                        onClick = { onSend(value) }
+                    )
                 }
             }
         }

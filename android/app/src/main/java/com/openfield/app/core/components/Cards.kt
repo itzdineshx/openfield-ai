@@ -99,9 +99,11 @@ fun RoundedFeatureCard(
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
+                    lineHeight = 19.sp,
                     color = OpenFieldNavyText
                 ),
-                maxLines = 1,
+                maxLines = 2,
+                minLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
 

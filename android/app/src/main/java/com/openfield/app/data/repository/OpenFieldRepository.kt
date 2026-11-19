@@ -12,6 +12,7 @@ import com.openfield.app.core.model.KnowledgePack
 import com.openfield.app.core.model.LearningTopic
 import com.openfield.app.core.model.ToolFilterCategory
 import com.openfield.app.core.model.TroubleshootStep
+import com.openfield.app.core.text.Markdown
 import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.data.local.entity.ChatSessionEntity
@@ -369,69 +370,8 @@ class OpenFieldRepository(
         }
     }
 
-    fun sendMessage(sessionId: String, userPrompt: String, attachedImage: Any? = null) {
-        val userMsgId = UUID.randomUUID().toString()
-        val assistantMsgId = UUID.randomUUID().toString()
-        val now = System.currentTimeMillis()
-
-        scope.launch {
-            val userEntity = ChatMessageEntity(
-                id = userMsgId,
-                sessionId = sessionId,
-                isUser = true,
-                text = userPrompt,
-                timestamp = now,
-                imageUri = attachedImage?.toString(),
-                isComplete = true
-            )
-            database.chatDao().insertMessage(userEntity)
-
-            val assistantEntity = ChatMessageEntity(
-                id = assistantMsgId,
-                sessionId = sessionId,
-                isUser = false,
-                text = "",
-                timestamp = now + 1,
-                isComplete = false
-            )
-            database.chatDao().insertMessage(assistantEntity)
-
-            val currentSession = database.chatDao().getSession(sessionId)
-            if (currentSession != null) {
-                database.chatDao().updateSession(
-                    currentSession.copy(
-                        preview = userPrompt.take(60),
-                        lastUpdated = now,
-                        messageCount = currentSession.messageCount + 2
-                    )
-                )
-            }
-
-            val error = ensureEngineReady()
-            if (error != null) {
-                database.chatDao().updateMessageContent(assistantMsgId, error, isComplete = true)
-                return@launch
-            }
-
-            var fullResponse = ""
-            try {
-                aiEngine.generateConversationStream(sessionId, userPrompt).collect { token ->
-                    fullResponse += token
-                    database.chatDao().updateMessageContent(assistantMsgId, fullResponse, isComplete = false)
-                }
-                database.chatDao().updateMessageContent(assistantMsgId, fullResponse, isComplete = true)
-
-                val sessionAfter = database.chatDao().getSession(sessionId)
-                if (sessionAfter != null) {
-                    database.chatDao().updateSession(
-                        sessionAfter.copy(preview = fullResponse.take(60) + if (fullResponse.length > 60) "..." else "")
-                    )
-                }
-            } catch (e: Exception) {
-                val errorMsg = if (fullResponse.isNotBlank()) fullResponse else "Generation failed: ${e.message}"
-                database.chatDao().updateMessageContent(assistantMsgId, errorMsg, isComplete = true)
-            }
-        }
+    fun sendMessage(sessionId: String, userPrompt: String) {
+        chatController.sendMessage(sessionId, userPrompt)
     }
 
     fun createNewSession(title: String): String {
@@ -506,111 +446,23 @@ class OpenFieldRepository(
     fun analyzeSelectedImage(uri: Uri, context: Context, prompt: String? = null) {
         imageAnalysisController.setImage(context, uri)
         imageAnalysisController.analyzeImage(prompt)
-        scope.launch {
-            // Show the image immediately so the preview doesn't flash blank while waiting
-            _currentImageAnalysis.value = ImageAnalysisResult(
-                id = UUID.randomUUID().toString(),
-                title = "Analyzing…",
-                commonName = "", scientificName = "", family = "",
-                keyFeatures = emptyList(), safetyNotice = "",
-                imageUri = uri
-            )
-            _isAnalyzingImage.value = true
-
-            try {
-                val activeModelFile = modelRepository.getActiveModelFile()
-                if (activeModelFile == null) {
-                    _currentImageAnalysis.value = ImageAnalysisResult(
-                        id = UUID.randomUUID().toString(),
-                        title = "AI Model Required",
-                        commonName = "", scientificName = "", family = "",
-                        keyFeatures = emptyList(),
-                        safetyNotice = "Install the on-device AI model from AI Model Management to analyze images.",
-                        imageUri = uri,
-                        rawText = "",
-                        isError = true
-                    )
-                    return@launch
-                }
-
-                val error = ensureEngineReady()
-                if (error != null) {
-                    _currentImageAnalysis.value = ImageAnalysisResult(
-                        id = UUID.randomUUID().toString(),
-                        title = "Model not ready",
-                        commonName = "", scientificName = "", family = "",
-                        keyFeatures = emptyList(),
-                        safetyNotice = error,
-                        imageUri = uri,
-                        rawText = "",
-                        isError = true
-                    )
-                    return@launch
-                }
-
-                val tempFile = copyUriToTempFile(context, uri)
-                val visionPrompt = prompt
-                    ?: "Analyze this image thoroughly. Describe what you see in detail. If it is a living organism (plant, animal, insect, fungus), provide: Common name, Scientific name, Family/Category, key visual features, and any safety notices. For other subjects (objects, scenes, documents, etc.), provide a detailed description of what is shown."
-                var resultText = ""
-                aiEngine.generateWithImageStream(tempFile.absolutePath, visionPrompt).collect { token ->
-                    resultText += token
-                }
-
-                val features = resultText.lines()
-                    .filter { it.trimStart().let { l -> l.startsWith("-") || l.startsWith("•") || l.matches(Regex("^\\d+\\..*")) } }
-                    .map { it.trimStart('-', '•', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ' ') }
-                    .filter { it.isNotBlank() }
-                    .take(5)
-
-                _currentImageAnalysis.value = ImageAnalysisResult(
-                    id = UUID.randomUUID().toString(),
-                    title = parseField(resultText, "Common Name")
-                        ?: parseField(resultText, "Subject")
-                        ?: "Analysis Result",
-                    commonName = parseField(resultText, "Common Name") ?: parseField(resultText, "Subject") ?: "",
-                    scientificName = parseField(resultText, "Scientific Name") ?: "",
-                    family = parseField(resultText, "Family") ?: parseField(resultText, "Category") ?: "",
-                    keyFeatures = features,
-                    safetyNotice = parseField(resultText, "Safety") ?: parseField(resultText, "Safety Notice") ?: "",
-                    imageUri = uri,
-                    rawText = resultText
-                )
-            } catch (e: Exception) {
-                _currentImageAnalysis.value = ImageAnalysisResult(
-                    id = UUID.randomUUID().toString(),
-                    title = "Analysis Error",
-                    commonName = "", scientificName = "", family = "",
-                    keyFeatures = emptyList(),
-                    safetyNotice = e.message ?: "Unknown vision error",
-                    imageUri = uri,
-                    rawText = "",
-                    isError = true
-                )
-            } finally {
-                _isAnalyzingImage.value = false
-            }
-        }
-    }
-
-    private fun copyUriToTempFile(context: Context, uri: Uri): File {
-        val tempFile = File(context.cacheDir, "vision_${System.currentTimeMillis()}.jpg")
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            FileOutputStream(tempFile).use { output ->
-                input.copyTo(output)
-            }
-        }
-        return tempFile
-    }
-
-    private fun parseField(text: String, label: String): String? {
-        val line = text.lines().find { it.contains(label, ignoreCase = true) } ?: return null
-        return line.substringAfter(":").trim().takeIf { it.isNotBlank() }
     }
 
     fun saveCurrentAnalysis() {
-        _currentImageAnalysis.value?.let { current ->
-            _savedImageAnalyses.update { listOf(current) + it }
-        }
+        val sections = imageAnalysisController.analysisSections.value ?: return
+        val result = ImageAnalysisResult(
+            id = UUID.randomUUID().toString(),
+            title = sections.subject,
+            commonName = sections.possibleIdentification?.let(Markdown::stripInline) ?: sections.subject,
+            scientificName = "",
+            family = "",
+            keyFeatures = sections.importantDetails.map(Markdown::stripInline),
+            safetyNotice = sections.uncertaintyAndLimitations?.let(Markdown::toPlainText).orEmpty(),
+            imageUri = imageAnalysisController.selectedImageUri.value,
+            rawText = imageAnalysisController.rawAnalysisText.value
+        )
+        _currentImageAnalysis.value = result
+        _savedImageAnalyses.update { listOf(result) + it }
     }
 
     // -------------------------------------------------------------
@@ -618,45 +470,7 @@ class OpenFieldRepository(
     // -------------------------------------------------------------
 
     fun importRealDocument(context: Context, uri: Uri) {
-        scope.launch {
-            val extractionResult = pdfExtractor.extractDocument(uri)
-            extractionResult.fold(
-                onSuccess = { extracted ->
-                    val docId = UUID.randomUUID().toString()
-
-                    var summaryText = "Document: ${extracted.fileName}. Pages: ${extracted.pageCount}. Words: ${extracted.totalWordCount}."
-                    if (aiEngine.isReady() && !extracted.isScanned && extracted.pages.isNotEmpty()) {
-                        try {
-                            val sampleText = extracted.pages.take(2).joinToString(" ") { it.text }.take(1000)
-                            val generatedSummary = StringBuilder()
-                            summarizeUseCase.execute(sampleText).collect { token -> generatedSummary.append(token) }
-                            if (generatedSummary.isNotBlank()) summaryText = generatedSummary.toString()
-                        } catch (ignored: Exception) {}
-                    }
-
-                    val entity = DocumentEntity(
-                        id = docId,
-                        name = extracted.fileName,
-                        uriString = uri.toString(),
-                        sizeBytes = extracted.sizeBytes,
-                        formattedSize = extracted.formattedSize,
-                        pageCount = extracted.pageCount,
-                        summary = summaryText,
-                        isScanned = extracted.isScanned,
-                        createdAt = System.currentTimeMillis()
-                    )
-                    database.documentDao().insertDocument(entity)
-
-                    val chunks = documentChunker.chunkDocument(docId, extracted.pages)
-                    if (chunks.isNotEmpty()) {
-                        database.documentDao().insertChunks(chunks)
-                    }
-                },
-                onFailure = { error ->
-                    error.printStackTrace()
-                }
-            )
-        }
+        documentQaController.importPdf(context, uri)
     }
 
     fun deleteDocument(docId: String) {

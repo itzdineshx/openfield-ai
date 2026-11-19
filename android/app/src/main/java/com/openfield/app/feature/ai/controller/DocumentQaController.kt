@@ -78,6 +78,7 @@ class DocumentQaController(
     val indexingState: StateFlow<DocumentIndexingState> = _indexingState.asStateFlow()
 
     private var activeIndexingJob: Job? = null
+    private var activeQueryJob: Job? = null
 
     fun selectDocument(documentId: String) {
         _activeDocumentId.value = documentId
@@ -224,7 +225,7 @@ class DocumentQaController(
     }
 
     fun askQuestion(question: String) {
-        if (question.isBlank()) return
+        if (question.isBlank() || _isQuerying.value) return
 
         val selectedScope = _selectedDocumentIds.value
         val targetDocIds = if (selectedScope.isNotEmpty()) {
@@ -248,16 +249,20 @@ class DocumentQaController(
         val assistantMsg = ChatMessage(
             id = assistantMsgId,
             isUser = false,
-            text = "Searching document excerpts…",
+            text = "",
             timestamp = "Just now",
             isComplete = false
         )
 
         _messages.value = _messages.value + listOf(userMsg, assistantMsg)
+        _isQuerying.value = true
 
-        scope.launch(Dispatchers.IO) {
-            _isQuerying.value = true
+        activeQueryJob = scope.launch(Dispatchers.IO) {
             try {
+                if (!orchestrator.awaitReady()) {
+                    updateAssistantMessage(assistantMsgId, MODEL_NOT_READY, isComplete = true)
+                    return@launch
+                }
                 if (targetDocIds.size == 1) {
                     val docId = targetDocIds.first()
                     val doc = documentDao.getDocument(docId)
@@ -318,15 +323,29 @@ class DocumentQaController(
                     }
                     updateAssistantMessage(assistantMsgId, accumulated, isComplete = true, sourcePage = pageLabel)
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                finalizeIfPending(assistantMsgId)
             } catch (e: Exception) {
-                updateAssistantMessage(assistantMsgId, "Error answering question: ${e.message}", isComplete = true)
+                updateAssistantMessage(assistantMsgId, "Sorry, I couldn't answer that: ${e.message}", isComplete = true)
             } finally {
+                finalizeIfPending(assistantMsgId)
                 _isQuerying.value = false
             }
         }
     }
 
+    fun stopAnswer() {
+        if (_isQuerying.value) orchestrator.cancelGeneration()
+        activeQueryJob?.cancel()
+    }
+
+    private fun finalizeIfPending(id: String) {
+        val msg = _messages.value.firstOrNull { it.id == id } ?: return
+        if (!msg.isComplete) updateAssistantMessage(id, msg.text.ifBlank { "_Stopped._" }, isComplete = true)
+    }
+
     fun summarizeDocument(documentId: String) {
+        if (_isQuerying.value) return
         val userMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             isUser = true,
@@ -337,16 +356,20 @@ class DocumentQaController(
         val assistantMsg = ChatMessage(
             id = assistantMsgId,
             isUser = false,
-            text = "Reading document overview excerpts…",
+            text = "",
             timestamp = "Just now",
             isComplete = false
         )
 
         _messages.value = _messages.value + listOf(userMsg, assistantMsg)
+        _isQuerying.value = true
 
-        scope.launch(Dispatchers.IO) {
-            _isQuerying.value = true
+        activeQueryJob = scope.launch(Dispatchers.IO) {
             try {
+                if (!orchestrator.awaitReady()) {
+                    updateAssistantMessage(assistantMsgId, MODEL_NOT_READY, isComplete = true)
+                    return@launch
+                }
                 val doc = documentDao.getDocument(documentId) ?: return@launch
                 val chunks = documentDao.getChunksForDocument(documentId).take(5)
                 if (chunks.isEmpty()) {
@@ -361,15 +384,19 @@ class DocumentQaController(
                     updateAssistantMessage(assistantMsgId, accumulated, isComplete = false, sourcePage = "Pages 1-${chunks.last().pageNumber}")
                 }
                 updateAssistantMessage(assistantMsgId, accumulated, isComplete = true, sourcePage = "Pages 1-${chunks.last().pageNumber}")
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                finalizeIfPending(assistantMsgId)
             } catch (e: Exception) {
-                updateAssistantMessage(assistantMsgId, "Summary error: ${e.message}", isComplete = true)
+                updateAssistantMessage(assistantMsgId, "Sorry, the summary failed: ${e.message}", isComplete = true)
             } finally {
+                finalizeIfPending(assistantMsgId)
                 _isQuerying.value = false
             }
         }
     }
 
     fun compareDocuments(docIdA: String, docIdB: String, focusQuery: String? = null) {
+        if (_isQuerying.value) return
         val userMsg = ChatMessage(
             id = UUID.randomUUID().toString(),
             isUser = true,
@@ -380,16 +407,20 @@ class DocumentQaController(
         val assistantMsg = ChatMessage(
             id = assistantMsgId,
             isUser = false,
-            text = "Analyzing comparative passages…",
+            text = "",
             timestamp = "Just now",
             isComplete = false
         )
 
         _messages.value = _messages.value + listOf(userMsg, assistantMsg)
+        _isQuerying.value = true
 
-        scope.launch(Dispatchers.IO) {
-            _isQuerying.value = true
+        activeQueryJob = scope.launch(Dispatchers.IO) {
             try {
+                if (!orchestrator.awaitReady()) {
+                    updateAssistantMessage(assistantMsgId, MODEL_NOT_READY, isComplete = true)
+                    return@launch
+                }
                 val docA = documentDao.getDocument(docIdA)
                 val docB = documentDao.getDocument(docIdB)
                 if (docA == null || docB == null) {
@@ -410,12 +441,24 @@ class DocumentQaController(
                     updateAssistantMessage(assistantMsgId, accumulated, isComplete = false, sourcePage = "${docA.name} & ${docB.name}")
                 }
                 updateAssistantMessage(assistantMsgId, accumulated, isComplete = true, sourcePage = "${docA.name} & ${docB.name}")
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                finalizeIfPending(assistantMsgId)
             } catch (e: Exception) {
-                updateAssistantMessage(assistantMsgId, "Comparison error: ${e.message}", isComplete = true)
+                updateAssistantMessage(assistantMsgId, "Sorry, the comparison failed: ${e.message}", isComplete = true)
             } finally {
+                finalizeIfPending(assistantMsgId)
                 _isQuerying.value = false
             }
         }
+    }
+
+    fun dismissIndexingError() {
+        _indexingState.value = DocumentIndexingState()
+    }
+
+    private companion object {
+        const val MODEL_NOT_READY =
+            "The on-device AI model isn't loaded yet. Open **AI Model Management** from the Home banner, then ask again."
     }
 
     private fun addAssistantMessage(text: String) {

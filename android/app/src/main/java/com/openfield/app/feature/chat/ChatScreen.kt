@@ -1,35 +1,32 @@
 package com.openfield.app.feature.chat
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,21 +41,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openfield.app.core.components.ChatBottomComposer
 import com.openfield.app.core.components.ChatMessageBubble
 import com.openfield.app.core.components.ConfirmationDialog
+import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.ScreenTopBar
+import com.openfield.app.core.components.SuggestionChips
 import com.openfield.app.core.theme.OpenFieldBackground
-import com.openfield.app.core.theme.OpenFieldError
 import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.voice.SpeechSynthesisManager
-import com.openfield.app.feature.voice.VoiceInputManager
-import com.openfield.app.feature.voice.VoiceInputState
+import com.openfield.app.feature.voice.rememberVoiceInput
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val chatSuggestions = listOf(
+    "Explain how a battery works",
+    "My phone battery drains fast — why?",
+    "Tips to study more effectively",
+    "What is a good daily stretching routine?"
+)
+
 @Composable
 fun ChatScreen(
     sessionId: String,
@@ -76,97 +81,72 @@ fun ChatScreen(
     var showClearDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val voiceInputManager = remember { VoiceInputManager(context) }
-    val voiceState by voiceInputManager.state.collectAsState()
-    val isListening = voiceState is VoiceInputState.Listening
+    val voice = rememberVoiceInput { recognized ->
+        inputMessage = if (inputMessage.isBlank()) recognized else "$inputMessage $recognized"
+    }
 
     val speechManager = remember { SpeechSynthesisManager(context) }
     val isSpeaking by speechManager.isSpeaking.collectAsState()
     val currentUtteranceId by speechManager.currentUtteranceId.collectAsState()
 
     DisposableEffect(Unit) {
-        onDispose {
-            voiceInputManager.release()
-            speechManager.release()
-        }
+        onDispose { speechManager.release() }
     }
 
-    val micPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            voiceInputManager.startListening { recognizedText ->
-                inputMessage = if (inputMessage.isBlank()) recognizedText else "$inputMessage $recognizedText"
-            }
-        }
+    fun send(text: String) {
+        if (text.isBlank() || isGenerating) return
+        repository.chatController.sendMessage(sessionId, text)
+        inputMessage = ""
     }
 
-    // Scroll to bottom when new messages arrive or text streams
-    LaunchedEffect(messages.size, messages.lastOrNull()?.text) {
-        if (messages.isNotEmpty()) {
-            listState.scrollToItem(messages.size - 1)
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex, Int.MAX_VALUE)
+    }
+    LaunchedEffect(messages.lastOrNull()?.text?.length, messages.lastOrNull()?.isComplete) {
+        val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+        if (messages.isNotEmpty() && lastVisible >= messages.lastIndex - 1) {
+            listState.scrollToItem(messages.lastIndex, Int.MAX_VALUE)
         }
     }
 
     Scaffold(
         topBar = {
             ScreenTopBar(
-                title = "Ask AI",
+                title = "AI Chat",
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {
-                    if (isGenerating) {
-                        IconButton(onClick = { repository.chatController.stopGeneration() }) {
-                            Icon(
-                                imageVector = Icons.Default.StopCircle,
-                                contentDescription = "Stop generation",
-                                tint = OpenFieldError
-                            )
-                        }
-                    }
-
                     IconButton(onClick = { showMenu = !showMenu }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Chat options"
-                        )
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Chat options")
                     }
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
-                            text = { Text("Regenerate Response") },
+                            text = { Text("Regenerate response") },
                             onClick = {
                                 showMenu = false
                                 repository.chatController.regenerateLastResponse(sessionId)
                             },
-                            leadingIcon = {
-                                Icon(Icons.Default.Autorenew, contentDescription = null)
-                            },
-                            enabled = messages.isNotEmpty() && !isGenerating
+                            leadingIcon = { Icon(Icons.Default.Autorenew, contentDescription = null) },
+                            enabled = messages.any { it.isUser } && !isGenerating
                         )
                         DropdownMenuItem(
-                            text = { Text("Clear Messages") },
+                            text = { Text("Clear messages") },
                             onClick = {
                                 showMenu = false
                                 showClearDialog = true
                             },
-                            leadingIcon = {
-                                Icon(Icons.Default.Refresh, contentDescription = null)
-                            }
+                            leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                            enabled = messages.isNotEmpty()
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete Conversation") },
+                            text = { Text("Delete conversation") },
                             onClick = {
                                 showMenu = false
+                                repository.chatController.stopGeneration()
                                 repository.deleteSession(sessionId)
                                 onNavigateBack()
                             },
-                            leadingIcon = {
-                                Icon(Icons.Default.DeleteOutline, contentDescription = null)
-                            }
+                            leadingIcon = { Icon(Icons.Default.DeleteOutline, contentDescription = null) }
                         )
                     }
                 }
@@ -176,22 +156,14 @@ fun ChatScreen(
             ChatBottomComposer(
                 value = inputMessage,
                 onValueChange = { inputMessage = it },
-                onSend = { text ->
-                    repository.chatController.sendMessage(sessionId, text)
-                    inputMessage = ""
-                },
-                onAttach = { /* Attach picker invoked from Home / Library */ },
-                onVoiceClick = {
-                    if (isListening) {
-                        voiceInputManager.stopListening()
-                    } else {
-                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                    }
-                },
-                isListening = isListening,
-                onStopListening = { voiceInputManager.stopListening() },
-                onCancelListening = { voiceInputManager.cancelListening() },
-                placeholder = "Ask a question...",
+                onSend = ::send,
+                onVoiceClick = voice.toggle,
+                isListening = voice.isListening,
+                onStopListening = voice.stop,
+                onCancelListening = voice.cancel,
+                isGenerating = isGenerating,
+                onStopGenerating = { repository.chatController.stopGeneration() },
+                placeholder = "Ask a follow-up…",
                 modifier = Modifier.imePadding()
             )
         },
@@ -205,32 +177,32 @@ fun ChatScreen(
                 .padding(innerPadding)
                 .background(OpenFieldBackground)
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-            ) {
-                items(messages, key = { it.id }) { msg ->
-                    ChatMessageBubble(
-                        isUser = msg.isUser,
-                        message = msg.text,
-                        timestamp = msg.timestamp,
-                        steps = msg.steps,
-                        imageUri = msg.imageUri,
-                        sourcePage = msg.sourcePage,
-                        isComplete = msg.isComplete,
-                        onSpeakClick = if (!msg.isUser) {
-                            {
-                                if (isSpeaking && currentUtteranceId == msg.id) {
-                                    speechManager.stop()
-                                } else {
-                                    speechManager.speak(msg.text, msg.id)
+            if (messages.isEmpty()) {
+                ChatEmptyState(onSuggestion = ::send)
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
+                ) {
+                    items(messages, key = { it.id }) { msg ->
+                        ChatMessageBubble(
+                            isUser = msg.isUser,
+                            message = msg.text,
+                            timestamp = msg.timestamp,
+                            steps = msg.steps,
+                            imageUri = msg.imageUri,
+                            sourcePage = msg.sourcePage,
+                            isComplete = msg.isComplete,
+                            onSpeakClick = if (!msg.isUser) {
+                                {
+                                    if (isSpeaking && currentUtteranceId == msg.id) speechManager.stop()
+                                    else speechManager.speak(msg.text, msg.id)
                                 }
-                            }
-                        } else null,
-                        isSpeaking = isSpeaking && currentUtteranceId == msg.id
-                    )
+                            } else null,
+                            isSpeaking = isSpeaking && currentUtteranceId == msg.id
+                        )
+                    }
                 }
             }
         }
@@ -238,14 +210,46 @@ fun ChatScreen(
 
     ConfirmationDialog(
         show = showClearDialog,
-        title = "Clear Conversation",
-        message = "Are you sure you want to clear all messages in this conversation?",
+        title = "Clear conversation",
+        message = "Remove all messages in this conversation?",
         confirmText = "Clear",
         isDestructive = true,
         onConfirm = {
+            repository.chatController.stopGeneration()
             repository.chatController.clearSession(sessionId)
             showClearDialog = false
         },
         onDismiss = { showClearDialog = false }
     )
+}
+
+@Composable
+private fun ChatEmptyState(onSuggestion: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        OpenFieldLogo(size = 56.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Ask me anything",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Answers are generated on your device and work without internet.",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium.copy(color = OpenFieldSecondaryText, fontSize = 14.sp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        SuggestionChips(
+            suggestions = chatSuggestions,
+            onClick = onSuggestion,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
