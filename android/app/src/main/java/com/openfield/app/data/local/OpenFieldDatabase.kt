@@ -12,6 +12,7 @@ import com.openfield.app.data.local.dao.DocumentDao
 import com.openfield.app.data.local.dao.KnowledgePackDao
 import com.openfield.app.data.local.dao.ModeSessionDao
 import com.openfield.app.data.local.dao.SettingsDao
+import com.openfield.app.data.local.dao.TaskDao
 import com.openfield.app.data.local.dao.TaskSessionDao
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.data.local.entity.ChatSessionEntity
@@ -23,6 +24,7 @@ import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
 import com.openfield.app.data.local.entity.KnowledgePackEntity
 import com.openfield.app.data.local.entity.LearningSessionEntity
 import com.openfield.app.data.local.entity.SettingEntity
+import com.openfield.app.data.local.entity.TaskItemEntity
 import com.openfield.app.data.local.entity.TaskSessionEntity
 import com.openfield.app.data.local.entity.TroubleshootSessionEntity
 import com.openfield.app.data.local.entity.WritingDraftEntity
@@ -41,9 +43,10 @@ import com.openfield.app.data.local.entity.WritingDraftEntity
         WritingDraftEntity::class,
         KnowledgeCollectionEntity::class,
         CollectionSourceCrossRefEntity::class,
-        TaskSessionEntity::class
+        TaskSessionEntity::class,
+        TaskItemEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class OpenFieldDatabase : RoomDatabase() {
@@ -55,6 +58,7 @@ abstract class OpenFieldDatabase : RoomDatabase() {
     abstract fun modeSessionDao(): ModeSessionDao
     abstract fun collectionDao(): CollectionDao
     abstract fun taskSessionDao(): TaskSessionDao
+    abstract fun taskDao(): TaskDao
 
     companion object {
         @Volatile
@@ -158,6 +162,29 @@ abstract class OpenFieldDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `task_items` (
+                        `id` TEXT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `description` TEXT NOT NULL,
+                        `status` TEXT NOT NULL,
+                        `priority` TEXT NOT NULL,
+                        `dueDate` INTEGER,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        `subtasksJson` TEXT NOT NULL,
+                        `linkedSourceIdsJson` TEXT NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_task_items_updatedAt` ON `task_items` (`updatedAt`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_task_items_status` ON `task_items` (`status`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_task_items_priority` ON `task_items` (`priority`)")
+            }
+        }
+
         fun getInstance(context: Context): OpenFieldDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -165,7 +192,7 @@ abstract class OpenFieldDatabase : RoomDatabase() {
                     OpenFieldDatabase::class.java,
                     "openfield.db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .fallbackToDestructiveMigration(dropAllTables = false)
                     .build()
                     .also { INSTANCE = it }

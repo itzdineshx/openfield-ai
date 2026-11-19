@@ -91,11 +91,13 @@ class OutputValidatorTest {
                 LessonSection("Prerequisites", "Array must be sorted.")
             ),
             practicalExample = "Looking up a name in a physical phone book.",
-            quiz = LessonQuiz(
-                question = "What is the time complexity of Binary Search?",
-                options = listOf("O(log n)", "O(n)", "O(n^2)"),
-                correctOptionIndex = 0,
-                explanation = "Halving the search space each step produces logarithmic time."
+            quizzes = listOf(
+                LessonQuiz(
+                    question = "What is the time complexity of Binary Search?",
+                    options = listOf("O(log n)", "O(n)", "O(n^2)"),
+                    correctOptionIndex = 0,
+                    explanation = "Halving the search space each step produces logarithmic time."
+                )
             )
         )
         val result = OutputValidator.validateStructuredLesson(lesson)
@@ -111,11 +113,13 @@ class OutputValidatorTest {
             overview = "Overview text",
             sections = listOf(LessonSection("Section 1", "Content")),
             practicalExample = "Example",
-            quiz = LessonQuiz(
-                question = "Test Question?",
-                options = listOf("Option A", "Option B"),
-                correctOptionIndex = 5, // Out of bounds
-                explanation = "Explanation"
+            quizzes = listOf(
+                LessonQuiz(
+                    question = "Test Question?",
+                    options = listOf("Option A", "Option B"),
+                    correctOptionIndex = 5, // Out of bounds
+                    explanation = "Explanation"
+                )
             )
         )
         val result = OutputValidator.validateStructuredLesson(lesson)

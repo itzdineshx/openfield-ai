@@ -27,6 +27,7 @@ import com.openfield.app.feature.ai.controller.ImageAnalysisController
 import com.openfield.app.feature.ai.controller.LearningController
 import com.openfield.app.feature.ai.controller.TroubleshootingController
 import com.openfield.app.feature.ai.controller.WritingController
+import com.openfield.app.feature.ai.mode.LenientJson
 import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.engine.LocalAiEngine
 import com.openfield.app.feature.ai.mode.AiOrchestrator
@@ -178,6 +179,62 @@ class OpenFieldRepository(
 
     suspend fun deleteCollection(id: String) {
         database.collectionDao().deleteCollection(id)
+    }
+
+    val tasks: StateFlow<List<com.openfield.app.data.local.entity.TaskItemEntity>> = database.taskDao().getAllTasksFlow()
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    suspend fun createTask(
+        title: String,
+        description: String,
+        priority: String = "MEDIUM",
+        subtaskTitles: List<String> = emptyList(),
+        dueDate: Long? = null
+    ): String {
+        val taskId = "task_${System.currentTimeMillis()}"
+        val subtasks = subtaskTitles.mapIndexed { idx, stTitle ->
+            mapOf("id" to "st_${taskId}_$idx", "title" to stTitle, "isCompleted" to false)
+        }
+        val subtasksJson = LenientJson.write(subtasks)
+        val entity = com.openfield.app.data.local.entity.TaskItemEntity(
+            id = taskId,
+            title = title,
+            description = description,
+            status = "PENDING",
+            priority = priority,
+            dueDate = dueDate,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
+            subtasksJson = subtasksJson
+        )
+        database.taskDao().insertTask(entity)
+        return taskId
+    }
+
+    suspend fun toggleSubtask(taskId: String, subtaskId: String) {
+        val task = database.taskDao().getTaskById(taskId) ?: return
+        val rawList = (LenientJson.parse(task.subtasksJson) as? List<*>) ?: return
+        val updated = rawList.map { item ->
+            val map = (item as? Map<*, *>)?.toMutableMap() ?: return@map item
+            if (map["id"] == subtaskId) {
+                val current = map["isCompleted"] as? Boolean ?: false
+                map["isCompleted"] = !current
+            }
+            map
+        }
+        val allDone = updated.all { (it as? Map<*, *>)?.get("isCompleted") == true }
+        val newStatus = if (allDone && updated.isNotEmpty()) "COMPLETED" else "IN_PROGRESS"
+        database.taskDao().updateTask(
+            task.copy(
+                subtasksJson = LenientJson.write(updated),
+                status = newStatus,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun deleteTask(taskId: String) {
+        database.taskDao().deleteTask(taskId)
     }
 
     suspend fun addSourceToCollection(collectionId: String, sourceId: String, sourceType: String) {
@@ -435,6 +492,16 @@ class OpenFieldRepository(
                 category = ToolFilterCategory.TEXT,
                 iconName = "calculate",
                 inputPlaceholder = "Enter calculation or conversion...",
+                sampleInput = "",
+                sampleOutput = ""
+            ),
+            AiToolItem(
+                id = "tasks",
+                title = "Workflows & Checklists",
+                description = "Automated checklists and action-oriented task planning",
+                category = ToolFilterCategory.TEXT,
+                iconName = "tasks",
+                inputPlaceholder = "Describe task or workflow to plan...",
                 sampleInput = "",
                 sampleOutput = ""
             )

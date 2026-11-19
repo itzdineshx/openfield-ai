@@ -189,23 +189,17 @@ class AiOrchestrator(
         return aiEngine.generateStream(prompt, config)
     }
 
-    suspend fun executeLessonGeneration(
+    /** Additional knowledge checks for an existing lesson (also used once to repair a lesson with no valid quiz). */
+    fun streamLessonPractice(
         topic: String,
-        level: LearningLevel
-    ): ValidationResult<StructuredLesson> {
-        val rawBuffer = StringBuilder()
-        try {
-            streamLessonGeneration(topic, level).collect { token ->
-                rawBuffer.append(token)
-            }
-            val raw = rawBuffer.toString()
-            val parsed = StructuredOutputParser.parseStructuredLesson(raw, topic, level)
-            return OutputValidator.validateStructuredLesson(parsed, raw)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return ValidationResult.Failure("Lesson generation failed: ${e.message}", rawBuffer.toString())
-        }
+        lessonTitle: String,
+        lessonContext: String?,
+        existingQuestions: List<String>,
+        customConfig: AiGenerationConfig? = null
+    ): Flow<String> {
+        val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.LEARN_EXPLAIN).defaultGenConfig
+        val prompt = PromptBuilder.buildLessonPracticePrompt(topic, lessonTitle, lessonContext, existingQuestions)
+        return aiEngine.generateStream(prompt, config)
     }
 
     fun streamLessonFollowUp(

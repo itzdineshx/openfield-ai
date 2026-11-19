@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
@@ -70,6 +71,7 @@ fun ToolsScreen(
     onNavigateToDocumentQA: () -> Unit,
     onNavigateToCreateWrite: () -> Unit = {},
     onNavigateToCalculator: () -> Unit = {},
+    onNavigateToTasks: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -158,6 +160,7 @@ fun ToolsScreen(
                             "doc_qa" -> onNavigateToDocumentQA()
                             "write_create" -> onNavigateToCreateWrite()
                             "calculator" -> onNavigateToCalculator()
+                            "tasks" -> onNavigateToTasks()
                             else -> onNavigateToToolDetail(tool.id)
                         }
                     }
@@ -248,6 +251,7 @@ fun getToolIcon(toolId: String): ImageVector {
         "translate" -> Icons.Default.Translate
         "reframe" -> Icons.Default.AutoAwesome
         "calculator" -> Icons.Default.Calculate
+        "tasks" -> Icons.AutoMirrored.Filled.PlaylistAddCheck
         else -> Icons.Default.Refresh
     }
 }

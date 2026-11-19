@@ -2,11 +2,9 @@ package com.openfield.app.feature.learn
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,9 +24,9 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -48,14 +45,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openfield.app.core.components.AnswerOptionRow
 import com.openfield.app.core.components.ChatBottomComposer
-import com.openfield.app.core.components.ChatMessageBubble
 import com.openfield.app.core.components.ChoicePill
 import com.openfield.app.core.components.FeatureHeaderCard
 import com.openfield.app.core.components.GeneratingCard
@@ -74,7 +69,6 @@ import com.openfield.app.core.theme.OpenFieldError
 import com.openfield.app.core.theme.OpenFieldErrorBg
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
-import com.openfield.app.core.theme.OpenFieldPrimaryBlueBorder
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.core.theme.OpenFieldSuccess
@@ -83,7 +77,11 @@ import com.openfield.app.data.local.entity.LearningSessionEntity
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.ai.controller.LearningController
 import com.openfield.app.feature.ai.controller.LearningUiState
+import com.openfield.app.feature.ai.controller.LessonPhase
+import com.openfield.app.feature.ai.controller.PracticeStatus
 import com.openfield.app.feature.ai.mode.LearningLevel
+import com.openfield.app.feature.ai.mode.LessonQuiz
+import com.openfield.app.feature.ai.mode.QuizProgress
 import com.openfield.app.feature.voice.rememberVoiceInput
 
 private val topicSuggestions = listOf(
@@ -114,8 +112,8 @@ fun LearnScreen(
     }
 
     val active = uiState as? LearningUiState.ActiveLesson
-    val followUpCount = active?.followUps?.size ?: 0
-    val lastFollowUpLength = active?.followUps?.lastOrNull()?.text?.length ?: 0
+    val followUpCount = active?.notes?.size ?: 0
+    val lastFollowUpLength = active?.notes?.lastOrNull()?.text?.length ?: 0
 
     LaunchedEffect(uiState::class) { scrollState.scrollTo(0) }
     LaunchedEffect(followUpCount) {
@@ -158,8 +156,14 @@ fun LearnScreen(
                     isListening = voice.isListening,
                     onStopListening = voice.stop,
                     onCancelListening = voice.cancel,
-                    isGenerating = active.isAnswering,
-                    onStopGenerating = { controller.stopFollowUp() },
+                    isGenerating = active.isBusy,
+                    onStopGenerating = {
+                        when {
+                            active.isStreaming -> controller.cancelGeneration()
+                            active.practiceStatus == PracticeStatus.GENERATING -> controller.stopPractice()
+                            else -> controller.stopFollowUp()
+                        }
+                    },
                     placeholder = "Ask a follow-up…",
                     modifier = Modifier.imePadding()
                 )
@@ -194,11 +198,11 @@ fun LearnScreen(
                     FeatureHeaderCard(
                         icon = Icons.AutoMirrored.Filled.MenuBook,
                         title = "Preparing your lesson",
-                        subtitle = "Explanation, examples and a quick quiz."
+                        subtitle = "Key ideas, diagrams, examples and knowledge checks."
                     )
                     GeneratingCard(
                         message = state.message,
-                        detail = "Lessons are written on your device and can take a minute or two.",
+                        detail = "The on-device model is reading your topic. The lesson appears here block by block as it is written.",
                         onStop = { controller.cancelGeneration() }
                     )
                 }
@@ -231,7 +235,7 @@ private fun IdleContent(
     FeatureHeaderCard(
         icon = Icons.AutoMirrored.Filled.MenuBook,
         title = "Learn anything",
-        subtitle = "Get a clear explanation, real examples and a quick quiz — all offline."
+        subtitle = "Lessons are written live by the on-device model — key ideas, diagrams, examples and quizzes, fully offline."
     )
 
     SectionTitle("What would you like to understand?")
@@ -299,7 +303,7 @@ private fun IdleContent(
                         )
                         val levelName = runCatching { LearningLevel.valueOf(session.level).displayName }.getOrDefault(session.level)
                         Text(
-                            text = "$levelName • ${if (session.isQuizCompleted) "Quiz done" else "In progress"}",
+                            text = "$levelName • ${if (session.isQuizCompleted) "Checks done" else "In progress"}",
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = OpenFieldSecondaryText)
                         )
                     }
@@ -320,6 +324,14 @@ private fun IdleContent(
 @Composable
 private fun LessonContent(state: LearningUiState.ActiveLesson, controller: LearningController) {
     val lesson = state.lesson
+    val isComplete = state.phase == LessonPhase.COMPLETE
+
+    LessonStatusBanner(
+        isStreaming = state.isStreaming,
+        stopReason = state.stopReason,
+        onStop = controller::cancelGeneration,
+        onRegenerate = controller::retry
+    )
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Surface(shape = RoundedCornerShape(12.dp), color = OpenFieldPrimaryBlueLight) {
@@ -339,205 +351,119 @@ private fun LessonContent(state: LearningUiState.ActiveLesson, controller: Learn
     }
 
     Text(
-        text = lesson.title,
+        text = lesson.title.ifBlank { lesson.topic },
         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = 21.sp, lineHeight = 27.sp, color = OpenFieldNavyText)
     )
-    MarkdownContent(text = lesson.overview)
+    if (lesson.overview.isNotBlank()) MarkdownContent(text = lesson.overview)
 
-    if (lesson.topic.contains("battery", ignoreCase = true) || lesson.title.contains("battery", ignoreCase = true)) {
-        Spacer(modifier = Modifier.height(10.dp))
-        BatteryConceptDiagram()
-        Spacer(modifier = Modifier.height(10.dp))
-        Surface(
-            shape = CardShape,
-            color = OpenFieldBackground,
-            border = BorderStroke(1.dp, OpenFieldCardBorder),
-            modifier = Modifier.fillMaxWidth()
+    // Generative UI: each block appears only if the model produced that kind of content for this topic.
+    if (lesson.keyPoints.isNotEmpty()) KeyPointsBlock(lesson.keyPoints)
+    if (lesson.flowSteps.size >= 2) FlowDiagramBlock(lesson.flowSteps)
+    if (lesson.parts.isNotEmpty()) PartsDiagramBlock(lesson.topic, lesson.parts)
+    lesson.sections.forEachIndexed { index, section -> ConceptBlock(index, section) }
+    if (lesson.practicalExample.isNotBlank()) ExampleBlock(lesson.practicalExample)
+    if (lesson.terms.isNotEmpty()) TermsBlock(lesson.terms)
+
+    if (isComplete) {
+        SectionTitle("Go deeper")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChoicePill("Explain simpler", selected = false, onClick = controller::explainMoreSimply, enabled = !state.isBusy)
+            ChoicePill("Another example", selected = false, onClick = controller::showAnotherExample, enabled = !state.isBusy)
+            ChoicePill("Summarize", selected = false, onClick = controller::summarizeTopic, enabled = !state.isBusy)
+        }
+    }
+
+    KnowledgeChecks(state, controller)
+
+    if (state.isStreaming && state.pendingQuizCount == 0) {
+        LiveWritingIndicator(label = (state.writingBlock?.writingLabel ?: "Writing") + "…")
+    }
+
+    if (isComplete) {
+        ExplainBackCard(
+            question = controller.freeResponseQuestion(lesson),
+            enabled = !state.isBusy,
+            onSubmit = controller::submitFreeResponseCheck
+        )
+    }
+
+    if (state.notes.isNotEmpty()) {
+        SectionTitle("Tutor notes")
+        state.notes.forEach { note -> TutorNoteBlock(note) }
+    }
+}
+
+@Composable
+private fun KnowledgeChecks(state: LearningUiState.ActiveLesson, controller: LearningController) {
+    val quizzes = state.lesson.quizzes
+    val isComplete = state.phase == LessonPhase.COMPLETE
+    val generatingPractice = state.practiceStatus == PracticeStatus.GENERATING
+    if (quizzes.isEmpty() && state.pendingQuizCount == 0 && !isComplete) return
+
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        SectionTitle("Knowledge checks", modifier = Modifier.weight(1f))
+        if (quizzes.isNotEmpty()) {
+            Text(
+                text = "${state.correctCount} of ${quizzes.size} correct",
+                style = MaterialTheme.typography.labelMedium.copy(color = OpenFieldSecondaryText, fontWeight = FontWeight.Medium)
+            )
+        }
+    }
+    if (quizzes.isNotEmpty()) {
+        LinearProgressIndicator(
+            progress = { state.answeredCount.toFloat() / quizzes.size },
+            color = OpenFieldPrimaryBlue,
+            trackColor = OpenFieldPrimaryBlueLight,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+        )
+    }
+
+    quizzes.forEachIndexed { index, quiz ->
+        QuizCard(
+            index = index,
+            total = quizzes.size,
+            quiz = quiz,
+            progress = state.progress[index] ?: QuizProgress(),
+            hintShown = index in state.hintsShown,
+            controller = controller
+        )
+    }
+
+    if (state.isStreaming && state.pendingQuizCount > 0) {
+        LiveWritingIndicator(label = "Writing knowledge check ${quizzes.size + 1}…")
+    }
+
+    if (isComplete) {
+        if (generatingPractice) {
+            LiveWritingIndicator(label = "Writing new practice questions…")
+        } else {
+            if (state.practiceStatus == PracticeStatus.FAILED && state.practiceMessage != null) {
                 Text(
-                    text = "In short:",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText)
+                    text = state.practiceMessage,
+                    style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.5.sp)
                 )
-                listOf(
-                    "It has two ends: positive and negative.",
-                    "A chemical reaction inside makes electrons move.",
-                    "That motion creates electric current.",
-                    "The current powers your device."
-                ).forEach { pt ->
-                    Row(verticalAlignment = Alignment.Top) {
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 6.dp)
-                                .size(5.dp)
-                                .clip(CircleShape)
-                                .background(OpenFieldNavyText)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = pt,
-                            style = MaterialTheme.typography.bodyMedium.copy(color = OpenFieldNavyText, fontSize = 14.sp)
-                        )
-                    }
-                }
             }
-        }
-    }
-
-    lesson.sections.forEachIndexed { index, section ->
-        Surface(
-            shape = CardShape,
-            color = OpenFieldBackground,
-            border = BorderStroke(1.dp, OpenFieldCardBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = controller::generatePractice,
+                enabled = !state.isBusy,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, OpenFieldCardBorder),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "${index + 1}. ${section.heading}",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = OpenFieldPrimaryBlue)
-                )
-                MarkdownContent(text = section.content)
-            }
-        }
-    }
-
-    if (lesson.practicalExample.isNotBlank()) {
-        Surface(
-            shape = CardShape,
-            color = OpenFieldPrimaryBlueLight,
-            border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
-                Icon(Icons.Default.Lightbulb, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(22.dp))
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Everyday example", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldPrimaryBlue))
-                    MarkdownContent(text = lesson.practicalExample)
-                }
-            }
-        }
-    }
-
-    SectionTitle("Go deeper")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        ChoicePill("Explain simpler", selected = false, onClick = controller::explainMoreSimply, enabled = !state.isAnswering)
-        ChoicePill("Another example", selected = false, onClick = controller::showAnotherExample, enabled = !state.isAnswering)
-        ChoicePill("Summarize", selected = false, onClick = controller::summarizeTopic, enabled = !state.isAnswering)
-    }
-
-    lesson.quiz?.let { quiz ->
-        SectionTitle("Quick check")
-        Surface(
-            shape = CardShape,
-            color = OpenFieldBackground,
-            border = BorderStroke(1.dp, OpenFieldCardBorder),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                InlineMarkdown(
-                    text = quiz.question,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 22.sp, color = OpenFieldNavyText)
-                )
-                quiz.options.forEachIndexed { idx, option ->
-                    val optionState = when {
-                        state.isAnswerSubmitted && idx == quiz.correctOptionIndex -> OptionState.CORRECT
-                        state.isAnswerSubmitted && idx == state.selectedQuizOptionIndex -> OptionState.WRONG
-                        !state.isAnswerSubmitted && idx == state.selectedQuizOptionIndex -> OptionState.SELECTED
-                        else -> OptionState.DEFAULT
-                    }
-                    AnswerOptionRow(
-                        text = option,
-                        state = optionState,
-                        enabled = !state.isAnswerSubmitted,
-                        onClick = { controller.selectQuizOption(idx) }
-                    )
-                }
-
-                if (!state.isAnswerSubmitted && quiz.hint != null) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable(onClick = controller::toggleHint)
-                            .padding(vertical = 4.dp, horizontal = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (state.showHint) "Hide hint" else "Need a hint?",
-                            style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldPrimaryBlue, fontWeight = FontWeight.Medium, fontSize = 13.sp)
-                        )
-                    }
-                    if (state.showHint) {
-                        MarkdownContent(
-                            text = quiz.hint,
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 19.sp, color = OpenFieldSecondaryText)
-                        )
-                    }
-                }
-
-                if (!state.isAnswerSubmitted) {
-                    PrimaryButton(
-                        text = "Check answer",
-                        onClick = controller::submitQuizAnswer,
-                        enabled = state.selectedQuizOptionIndex != null,
-                        height = 48.dp
-                    )
-                } else {
-                    val correct = state.selectedQuizOptionIndex == quiz.correctOptionIndex
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (correct) OpenFieldSuccessBg else OpenFieldErrorBg,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = if (correct) "Correct — nice work!" else "Not quite.",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (correct) OpenFieldSuccess else OpenFieldError
-                                )
-                            )
-                            if (quiz.explanation.isNotBlank()) {
-                                MarkdownContent(
-                                    text = quiz.explanation,
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 20.sp, color = OpenFieldNavyText)
-                                )
-                            }
-                        }
-                    }
-                    if (!correct) {
-                        OutlinedButton(
-                            onClick = controller::retryQuiz,
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, OpenFieldCardBorder)
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, tint = OpenFieldNavyText, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Try again", color = OpenFieldNavyText, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    ExplainBackCard(enabled = !state.isAnswering, onSubmit = controller::submitFreeResponseCheck)
-
-    if (state.followUps.isNotEmpty()) {
-        SectionTitle("Your questions")
-        Column {
-            state.followUps.forEach { msg ->
-                ChatMessageBubble(
-                    isUser = msg.isUser,
-                    message = msg.text,
-                    isComplete = msg.isComplete
+                    text = if (quizzes.isEmpty()) "Create practice questions" else "More practice",
+                    color = OpenFieldNavyText,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -545,7 +471,119 @@ private fun LessonContent(state: LearningUiState.ActiveLesson, controller: Learn
 }
 
 @Composable
-private fun ExplainBackCard(enabled: Boolean, onSubmit: (String) -> Unit) {
+private fun QuizCard(
+    index: Int,
+    total: Int,
+    quiz: LessonQuiz,
+    progress: QuizProgress,
+    hintShown: Boolean,
+    controller: LearningController
+) {
+    Surface(
+        shape = CardShape,
+        color = OpenFieldBackground,
+        border = BorderStroke(1.dp, OpenFieldCardBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = "Check ${index + 1} of $total",
+                style = MaterialTheme.typography.labelMedium.copy(color = OpenFieldPrimaryBlue, fontWeight = FontWeight.SemiBold)
+            )
+            InlineMarkdown(
+                text = quiz.question,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 22.sp, color = OpenFieldNavyText)
+            )
+            quiz.options.forEachIndexed { optionIndex, option ->
+                val optionState = when {
+                    progress.submitted && optionIndex == quiz.correctOptionIndex -> OptionState.CORRECT
+                    progress.submitted && optionIndex == progress.selectedIndex -> OptionState.WRONG
+                    !progress.submitted && optionIndex == progress.selectedIndex -> OptionState.SELECTED
+                    else -> OptionState.DEFAULT
+                }
+                AnswerOptionRow(
+                    text = option,
+                    state = optionState,
+                    enabled = !progress.submitted,
+                    onClick = { controller.selectQuizOption(index, optionIndex) }
+                )
+            }
+
+            if (!progress.submitted && quiz.hint != null) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { controller.toggleHint(index) }
+                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (hintShown) "Hide hint" else "Need a hint?",
+                        style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldPrimaryBlue, fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                    )
+                }
+                if (hintShown) {
+                    MarkdownContent(
+                        text = quiz.hint,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 19.sp, color = OpenFieldSecondaryText)
+                    )
+                }
+            }
+
+            if (!progress.submitted) {
+                PrimaryButton(
+                    text = "Check answer",
+                    onClick = { controller.submitQuizAnswer(index) },
+                    enabled = progress.selectedIndex != null,
+                    height = 48.dp
+                )
+            } else {
+                val correct = progress.isCorrect(quiz)
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (correct) OpenFieldSuccessBg else OpenFieldErrorBg,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = when {
+                                correct && progress.attempts <= 1 -> "Correct — nice work!"
+                                correct -> "Correct on attempt ${progress.attempts}."
+                                else -> "Not quite."
+                            },
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (correct) OpenFieldSuccess else OpenFieldError
+                            )
+                        )
+                        if (quiz.explanation.isNotBlank()) {
+                            MarkdownContent(
+                                text = quiz.explanation,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.5.sp, lineHeight = 20.sp, color = OpenFieldNavyText)
+                            )
+                        }
+                    }
+                }
+                if (!correct) {
+                    OutlinedButton(
+                        onClick = { controller.retryQuiz(index) },
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, OpenFieldCardBorder)
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = OpenFieldNavyText, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Try again", color = OpenFieldNavyText, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExplainBackCard(question: String, enabled: Boolean, onSubmit: (String) -> Unit) {
     var answer by remember { mutableStateOf("") }
     Surface(
         shape = CardShape,
@@ -559,7 +597,7 @@ private fun ExplainBackCard(enabled: Boolean, onSubmit: (String) -> Unit) {
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText)
             )
             Text(
-                "Write a short explanation and get feedback on what you got right.",
+                "$question The tutor will point out what you got right and what to fix.",
                 style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.5.sp)
             )
             OutlinedTextField(
@@ -583,135 +621,6 @@ private fun ExplainBackCard(enabled: Boolean, onSubmit: (String) -> Unit) {
                 enabled = enabled && answer.isNotBlank(),
                 height = 48.dp
             )
-        }
-    }
-}
-
-@Composable
-fun BatteryConceptDiagram(modifier: Modifier = Modifier) {
-    Surface(
-        shape = CardShape,
-        color = OpenFieldBackground,
-        border = BorderStroke(1.dp, OpenFieldCardBorder),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Left Labels
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "Positive (+)",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(60.dp))
-                    Text(
-                        text = "Negative (-)",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(14.dp))
-
-                // Center Battery Graphic
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Positive Terminal Nub
-                    Box(
-                        modifier = Modifier
-                            .width(22.dp)
-                            .height(7.dp)
-                            .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
-                            .background(Color(0xFF90A4AE))
-                    )
-                    // Battery Body Cylinder
-                    Box(
-                        modifier = Modifier
-                            .width(62.dp)
-                            .height(105.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(2.dp, OpenFieldNavyText, RoundedCornerShape(8.dp))
-                    ) {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            // Top Layer: Reaction (Yellow/Orange)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .background(Color(0xFFFFB74D))
-                            )
-                            // Divider line
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(1.dp)
-                                    .background(OpenFieldNavyText.copy(alpha = 0.3f))
-                            )
-                            // Bottom Layer: Electron Flow (Blue)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .background(Color(0xFF64B5F6))
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(14.dp))
-
-                // Right Description Labels
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier.weight(1.3f)
-                ) {
-                    Text(
-                        text = "Chemical\nreaction",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Text(
-                        text = "(creates electrons)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            color = OpenFieldSecondaryText
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "Electrical\nenergy output",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText
-                        )
-                    )
-                    Text(
-                        text = "(powers your device)",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            color = OpenFieldSecondaryText
-                        )
-                    )
-                }
-            }
         }
     }
 }

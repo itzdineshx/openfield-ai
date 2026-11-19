@@ -38,6 +38,7 @@ import com.openfield.app.feature.settings.AboutScreen
 import com.openfield.app.feature.settings.ProfileMenuSheet
 import com.openfield.app.feature.settings.SettingsScreen
 import com.openfield.app.feature.splash.SplashScreen
+import com.openfield.app.feature.tasks.TaskAutomationScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
 import com.openfield.app.feature.tools.ToolsScreen
 import com.openfield.app.feature.tools.math.CalculatorConverterScreen
@@ -239,6 +240,9 @@ fun AppNavigation(
                         },
                         onNavigateToCalculator = {
                             navController.navigate(AppRoutes.CALCULATOR)
+                        },
+                        onNavigateToTasks = {
+                            navController.navigate(AppRoutes.TASKS)
                         }
                     )
                 }
@@ -246,6 +250,13 @@ fun AppNavigation(
                 // 11b. Offline Calculator & Units (Deterministic)
                 composable(AppRoutes.CALCULATOR) {
                     CalculatorConverterScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                // 11c. Personal Task Automation (Gate 6)
+                composable(AppRoutes.TASKS) {
+                    TaskAutomationScreen(
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }

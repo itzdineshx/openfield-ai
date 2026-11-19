@@ -66,27 +66,26 @@ object OutputValidator {
             return ValidationResult.Failure("Lesson overview is blank.", rawText)
         }
 
-        if (lesson.sections.isEmpty()) {
+        if (lesson.sections.isEmpty() && lesson.keyPoints.isEmpty() && lesson.flowSteps.isEmpty()) {
             return ValidationResult.Failure("Lesson must contain at least one conceptual section.", rawText)
         }
 
-        val quiz = lesson.quiz
-        if (quiz != null) {
-            if (quiz.question.isBlank()) {
-                return ValidationResult.Failure("Quiz question cannot be blank.", rawText)
-            }
-            if (quiz.options.size < 2) {
-                return ValidationResult.Failure("Quiz must provide at least 2 answer choices.", rawText)
-            }
-            if (quiz.correctOptionIndex !in quiz.options.indices) {
-                return ValidationResult.Failure(
-                    "Quiz correctOptionIndex (${quiz.correctOptionIndex}) is out of bounds for options of size ${quiz.options.size}.",
-                    rawText
-                )
-            }
+        for (quiz in lesson.quizzes) {
+            validateQuiz(quiz)?.let { return ValidationResult.Failure(it, rawText) }
         }
 
         return ValidationResult.Success(lesson)
+    }
+
+    /** Returns a reason when a knowledge check cannot be rendered as an interactive question, else null. */
+    fun validateQuiz(quiz: LessonQuiz): String? {
+        if (quiz.question.isBlank()) return "Quiz question cannot be blank."
+        if (quiz.options.size < 2) return "Quiz must provide at least 2 answer choices."
+        if (quiz.options.any { it.isBlank() }) return "Quiz options cannot be blank."
+        if (quiz.correctOptionIndex !in quiz.options.indices) {
+            return "Quiz correctOptionIndex (${quiz.correctOptionIndex}) is out of bounds for options of size ${quiz.options.size}."
+        }
+        return null
     }
 
     fun validateWritingDraft(draft: WritingDraftResult): ValidationResult<WritingDraftResult> {

@@ -4,6 +4,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.CollectionSourceCrossRefEntity
 import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
+import com.openfield.app.data.local.entity.TaskItemEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -92,5 +93,49 @@ class DatabaseMigrationTest {
         assertTrue(allSql.contains("CREATE TABLE IF NOT EXISTS `task_sessions`"))
         assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_sessions_updatedAt`"))
         assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_sessions_status`"))
+    }
+
+    @Test
+    fun migration_6_to_7_hasCorrectVersions() {
+        assertEquals(6, OpenFieldDatabase.MIGRATION_6_7.startVersion)
+        assertEquals(7, OpenFieldDatabase.MIGRATION_6_7.endVersion)
+    }
+
+    @Test
+    fun migration_6_to_7_executesExpectedDdlStatements() {
+        val executedSql = mutableListOf<String>()
+        val mockDb = Proxy.newProxyInstance(
+            SupportSQLiteDatabase::class.java.classLoader,
+            arrayOf(SupportSQLiteDatabase::class.java)
+        ) { _, method, args ->
+            if (method.name == "execSQL" && args != null && args.isNotEmpty()) {
+                executedSql.add(args[0] as String)
+            }
+            null
+        } as SupportSQLiteDatabase
+
+        OpenFieldDatabase.MIGRATION_6_7.migrate(mockDb)
+
+        val allSql = executedSql.joinToString("\n")
+        assertTrue(allSql.contains("CREATE TABLE IF NOT EXISTS `task_items`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_items_updatedAt`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_items_status`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_items_priority`"))
+    }
+
+    @Test
+    fun taskItemEntity_instantiatesWithValidDefaults() {
+        val task = TaskItemEntity(
+            id = "task_1",
+            title = "Study Physics",
+            description = "Chapter 1 review",
+            status = "PENDING",
+            priority = "HIGH"
+        )
+        assertEquals("task_1", task.id)
+        assertEquals("Study Physics", task.title)
+        assertEquals("PENDING", task.status)
+        assertEquals("HIGH", task.priority)
+        assertTrue(task.createdAt > 0)
     }
 }

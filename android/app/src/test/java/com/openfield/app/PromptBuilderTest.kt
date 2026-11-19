@@ -89,8 +89,10 @@ class PromptBuilderTest {
         val beginnerPrompt = PromptBuilder.buildLearningLessonPrompt("Quantum Entanglement", LearningLevel.BEGINNER)
         assertTrue(beginnerPrompt.contains("Quantum Entanglement"))
         assertTrue(beginnerPrompt.contains("Beginner"))
-        assertTrue(beginnerPrompt.contains("\"quiz\""))
-        assertTrue(beginnerPrompt.contains("\"practicalExample\""))
+        assertTrue(beginnerPrompt.contains("QUIZ:"))
+        assertTrue(beginnerPrompt.contains("EXAMPLE:"))
+        assertTrue(beginnerPrompt.contains("FLOW:"))
+        assertTrue(beginnerPrompt.contains("ANSWER:"))
 
         val advPrompt = PromptBuilder.buildLearningLessonPrompt("Quantum Entanglement", LearningLevel.ADVANCED)
         assertTrue(advPrompt.contains("Advanced"))

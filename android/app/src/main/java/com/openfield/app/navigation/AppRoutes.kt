@@ -23,6 +23,7 @@ object AppRoutes {
     const val CREATE_WRITE = "create_write"
     const val TOOL_DETAIL = "tool_detail"
     const val CALCULATOR = "calculator"
+    const val TASKS = "tasks"
     const val PACK_DETAIL = "pack_detail"
     const val SETTINGS = "settings"
     const val ABOUT = "about"

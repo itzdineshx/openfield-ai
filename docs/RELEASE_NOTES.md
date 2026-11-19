@@ -1,5 +1,47 @@
 # OpenField Release Notes
 
+## Version 0.5.0 — Phase 3 Practical Offline Intelligence & Task Workflows
+
+**Release Date:** November 2026
+
+OpenField v0.5.0 introduces automated personal task planning, structured workflow execution, and deterministic offline date and data calculation tools. Users can now convert natural-language goals into structured, actionable checklists with progress tracking, while accessing high-reliability offline utilities without internet connectivity or cloud inference:
+
+---
+
+### Highlights & Key Features
+
+#### 1. Personal Task & Workflow Automation (`TaskAutomationScreen` & `TaskDao`)
+- **Action-Oriented Goal Breakdown:** Converts high-level user goals into structured, editable action checklists.
+- **Natural-Language Task Planning (`PromptBuilder.buildTaskPlanningPrompt`):** Directs the local Gemma 4 model to decompose complex tasks into concrete, prioritized subtasks with categories.
+- **Structured Plan Validation (`StructuredOutputParser.parseTaskPlan`):** Validates generated plan schemas, guaranteeing valid titles, descriptions, priorities, and subtask arrays.
+- **Interactive Checklist Execution:** Real-time completion toggling, progress bars, task expansion, and deletion controls.
+- **Workflow Templates:** One-tap templates for Exam Preparation, Technology Learning, Device Maintenance, and Research Projects.
+- **Local Persistence (`TaskItemEntity`):** Persistent task storage in Room SQLite with full offline reliability.
+
+#### 2. Deterministic Date, Time & Calendar Calculator (`DateTimeCalculator`)
+- **Zero-LLM Accuracy:** Uses Android `java.time` APIs for deterministic date and calendar arithmetic.
+- **Calendar & Business Days:** Calculates exact day differences and excludes weekends for accurate work/business day schedules.
+- **Duration Arithmetic:** Precision addition and subtraction of days, months, and years.
+- **Future Day-of-Week Resolution:** Deterministic calculations for recurring schedules and upcoming milestones.
+
+#### 3. Structured Data & CSV Table Inspector (`StructuredDataInspector`)
+- **Bounded-Memory Offline Parsing:** Robust CSV parsing handling nested quotes, commas, and escaped characters.
+- **Statistical Column Analysis:** Automatically detects numeric columns and computes min, max, sum, and average metrics.
+
+#### 4. Room Database v7 Non-Destructive Migration (`MIGRATION_6_7`)
+- **Automated Tasks Schema:** Adds `task_items` table with indices on `updatedAt`, `status`, and `priority`.
+- **100% Non-Destructive:** Retains all existing conversations, documents, collections, and drafts without data loss.
+
+#### 5. Verification & Release Artifacts
+- **Automated Test Suite:** **173/173 unit tests passing (100% green)** including date arithmetic, CSV statistics, task schema parsing, and migration DDL.
+- **Signed Release APK:**
+  - File: `android/app/build/outputs/apk/release/app-release.apk`
+  - Size: 115,003,298 bytes (~109.67 MB)
+  - SHA-256: `82764A0E664C7B492228C2360B2E0001594A2DDE10F1CA921DA3C2B8EFD4E621`
+  - Target: Android 14+ / ARM64, Unisoc T616 / Snapdragon CPU local execution.
+
+---
+
 ## Version 0.4.0 — Phase 3 Context-Aware Personal Assistant & Practical Offline Intelligence
 
 **Release Date:** November 2026

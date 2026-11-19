@@ -59,10 +59,10 @@ class PromptEfficiencyTest {
 
         assertTrue(prompt.contains("Photosynthesis"))
         assertTrue(prompt.contains("Beginner"))
-        assertTrue(prompt.contains("sections"))
-        assertTrue(prompt.contains("practicalExample"))
-        assertTrue(prompt.contains("quiz"))
-        assertTrue(prompt.contains("correctOptionIndex"))
+        // Every tag the lesson parser renders must be requested.
+        listOf("TITLE:", "OVERVIEW:", "KEY:", "FLOW:", "PART:", "SECTION:", "EXAMPLE:", "TERM:", "QUIZ:", "ANSWER:", "WHY:", "HINT:")
+            .forEach { assertTrue("missing $it", prompt.contains(it)) }
+        assertFalse(prompt.contains("{"))
         assertTrue(prompt.length < 1500)
     }
 }

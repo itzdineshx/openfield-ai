@@ -210,6 +210,30 @@ GROUNDED ANSWER:
 """.trimIndent()
     }
 
+    fun buildTaskPlanningPrompt(userInput: String): String {
+        return """
+The user wants to plan and execute a task or workflow:
+"$userInput"
+
+Break down this goal into a structured, practical, action-oriented plan.
+OUTPUT JSON FORMAT ONLY:
+```json
+{
+  "title": "Concise actionable title for the overall task",
+  "description": "Clear 1-2 sentence description of what done looks like",
+  "priority": "HIGH" or "MEDIUM" or "LOW",
+  "suggestedCategory": "Category (e.g. Study, Technical, Maintenance, Project, Writing)",
+  "subtasks": [
+    "First concrete action step",
+    "Second concrete action step",
+    "Third concrete action step",
+    "Fourth concrete action step"
+  ]
+}
+```
+""".trimIndent()
+    }
+
     fun buildTroubleshootIntakePrompt(problemDescription: String, hasImage: Boolean = false): String {
         val imageNotice = if (hasImage) {
             "\nNote: A contextual photo of the physical equipment/part is provided. Inspect the image for visible symptoms, burnt components, leakage, error codes, or damage, and integrate visual findings directly into your diagnostic check.\n"
@@ -306,48 +330,70 @@ RULES:
 """.trimIndent()
     }
 
+    /**
+     * Lesson prompt in a line-tagged format (parsed by [LessonMarkupParser]). Tags are emitted in the
+     * order the screen renders them, so the title, overview and key ideas appear within seconds while the
+     * rest streams in. Line tags are cheaper and far more reliable for a 2B on-device model than nested JSON.
+     */
     fun buildLearningLessonPrompt(topic: String, level: LearningLevel): String {
+        val (keyCount, sectionCount) = when (level) {
+            LearningLevel.BEGINNER -> "3" to "2"
+            LearningLevel.INTERMEDIATE -> "3 to 4" to "2 to 3"
+            LearningLevel.ADVANCED -> "4" to "3"
+        }
         return """
-Create an interactive lesson on the topic: "$topic"
-Target Learning Level: ${level.displayName} (${level.promptDescription})
+Teach a ${level.displayName} lesson about: "$topic"
+Level: ${level.promptDescription}
 
-OUTPUT JSON FORMAT ONLY:
-```json
-{
-  "topic": "$topic",
-  "title": "Clear Engaging Lesson Title",
-  "overview": "2-3 sentence core summary of what this concept is and why it matters.",
-  "sections": [
-    {
-      "heading": "First Key Principle",
-      "content": "Clear explanation of how this part works."
-    },
-    {
-      "heading": "Second Key Principle",
-      "content": "Further details or real-world application."
+Write the lesson using ONLY the tagged lines below, in this order. Start every tagged line with its TAG and a colon. No JSON, no markdown headings, no text before TITLE.
+
+TITLE: short engaging title
+OVERVIEW: 2-3 sentences on what it is and why it matters
+KEY: one key fact in under 15 words ($keyCount KEY lines)
+FLOW: first step -> next step -> next step -> result (how it works in 3-5 short steps; skip if it is not a process)
+PART: part name = what it does (2-4 PART lines for its main parts or ingredients; skip if none)
+SECTION: concept heading
+one short paragraph explaining it ($sectionCount SECTION blocks)
+EXAMPLE: one everyday example or analogy
+TERM: word = simple meaning (2-3 TERM lines)
+QUIZ: a question that checks understanding
+A) option
+B) option
+C) option
+D) option
+ANSWER: letter of the correct option
+WHY: one sentence on why it is correct
+HINT: a clue that does not reveal the answer
+(write 2 QUIZ blocks, each with its own ANSWER, WHY and HINT)
+
+Be accurate. Leave out any detail you are unsure of.
+""".trimIndent()
     }
-  ],
-  "practicalExample": "Everyday intuitive analogy or practical real-world scenario demonstrating this concept.",
-  "quiz": {
-    "question": "A conceptual multiple-choice question to test understanding of this lesson?",
-    "options": [
-      "Option A text",
-      "Option B text",
-      "Option C text",
-      "Option D text"
-    ],
-    "correctOptionIndex": 0,
-    "explanation": "Why the correct option is right and common pitfalls of wrong answers.",
-    "hint": "A helpful clue to think about before answering."
-  }
-}
-```
 
-RULES:
-- Match the depth to the ${level.displayName} level.
-- Provide 2 to 3 well-written sections.
-- The quiz must have 3 or 4 options with exactly 1 correct option index (0-based: 0, 1, 2, or 3).
-- Respond with valid JSON.
+    /** Asks for additional knowledge checks in the same QUIZ line format, avoiding questions already asked. */
+    fun buildLessonPracticePrompt(
+        topic: String,
+        lessonTitle: String,
+        lessonContext: String?,
+        existingQuestions: List<String>,
+        count: Int = 2
+    ): String {
+        val avoid = if (existingQuestions.isEmpty()) "" else
+            "\nAlready asked (write different questions):\n" +
+                existingQuestions.takeLast(6).joinToString("\n") { "- ${it.take(140)}" } + "\n"
+        return """
+Topic: "$topic"
+Lesson: "$lessonTitle"
+${lessonContextBlock(lessonContext)}$avoid
+Write $count new multiple-choice questions that check understanding of this lesson. Use ONLY this format for each question:
+QUIZ: the question
+A) option
+B) option
+C) option
+D) option
+ANSWER: letter of the correct option
+WHY: one sentence on why it is correct
+HINT: a clue that does not reveal the answer
 """.trimIndent()
     }
 

@@ -114,11 +114,12 @@ object ModeConfigRegistry {
                     "Generate a structured lesson tailored to the requested learning level. " +
                     "Include clear explanations, intuitive analogies, and an interactive multiple-choice quiz with explanations.",
             defaultGenConfig = AiGenerationConfig(
-                temperature = 0.5,
+                temperature = 0.4,
                 topK = 40,
                 topP = 0.9,
                 systemPrompt = "You are OpenField's interactive tutor. Teach clearly with everyday analogies and short paragraphs. " +
-                    "When asked for a lesson in JSON, reply with a single valid JSON object only. Otherwise " + FORMAT_GUIDE
+                    "When asked for a lesson or questions in a tagged line format, follow that format exactly with no extra text. " +
+                    "Otherwise " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.STRUCTURED_INPUT,
             outputFormat = ModeOutputFormat.STRUCTURED_JSON,
