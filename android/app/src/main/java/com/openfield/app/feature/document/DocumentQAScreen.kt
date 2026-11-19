@@ -206,6 +206,7 @@ fun DocumentQAScreen(
                     timestamp = msg.timestamp,
                     steps = msg.steps,
                     sourcePage = msg.sourcePage,
+                    isComplete = msg.isComplete,
                     onSourceClick = {
                         activeDoc?.let { onNavigateToDocumentDetail(it.id) }
                     }

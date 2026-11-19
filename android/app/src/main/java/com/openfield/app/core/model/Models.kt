@@ -10,7 +10,8 @@ data class ChatMessage(
     val timestamp: String,
     val steps: List<StepItem> = emptyList(),
     val imageUri: Any? = null,
-    val sourcePage: String? = null
+    val sourcePage: String? = null,
+    val isComplete: Boolean = true
 )
 
 data class ChatSession(
@@ -31,7 +32,9 @@ data class ImageAnalysisResult(
     val family: String,
     val keyFeatures: List<String>,
     val safetyNotice: String,
-    val imageUri: Any? = null
+    val imageUri: Any? = null,
+    val rawText: String = "",
+    val isError: Boolean = false
 )
 
 // Document Models

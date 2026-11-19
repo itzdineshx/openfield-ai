@@ -100,6 +100,9 @@ class OpenFieldRepository(
     private val _currentImageAnalysis = MutableStateFlow<ImageAnalysisResult?>(null)
     val currentImageAnalysis: StateFlow<ImageAnalysisResult?> = _currentImageAnalysis.asStateFlow()
 
+    private val _isAnalyzingImage = MutableStateFlow(false)
+    val isAnalyzingImage: StateFlow<Boolean> = _isAnalyzingImage.asStateFlow()
+
     private val _savedImageAnalyses = MutableStateFlow<List<ImageAnalysisResult>>(emptyList())
     val savedImageAnalyses: StateFlow<List<ImageAnalysisResult>> = _savedImageAnalyses.asStateFlow()
 
@@ -177,7 +180,8 @@ class OpenFieldRepository(
                                     timestamp = formatTimestamp(entity.timestamp),
                                     steps = parseSteps(entity.stepsJson),
                                     imageUri = entity.imageUri,
-                                    sourcePage = entity.sourcePage
+                                    sourcePage = entity.sourcePage,
+                                    isComplete = entity.isComplete
                                 )
                             }
                             _messagesBySession.update { it + (session.id to chatMsgs) }
@@ -307,7 +311,8 @@ class OpenFieldRepository(
                     timestamp = formatTimestamp(entity.timestamp),
                     steps = parseSteps(entity.stepsJson),
                     imageUri = entity.imageUri,
-                    sourcePage = entity.sourcePage
+                    sourcePage = entity.sourcePage,
+                    isComplete = entity.isComplete
                 )
             }
         }
@@ -434,72 +439,87 @@ class OpenFieldRepository(
 
     fun analyzeSelectedImage(uri: Uri, context: Context, prompt: String? = null) {
         scope.launch {
-            val activeModelFile = modelRepository.getActiveModelFile()
-
-            if (activeModelFile == null) {
-                _currentImageAnalysis.value = ImageAnalysisResult(
-                    id = UUID.randomUUID().toString(),
-                    title = "AI Model Required",
-                    commonName = "",
-                    scientificName = "",
-                    family = "",
-                    keyFeatures = emptyList(),
-                    safetyNotice = "Install the on-device AI model from AI Model Management to analyze images.",
-                    imageUri = uri
-                )
-                return@launch
-            }
+            // Show the image immediately so the preview doesn't flash blank while waiting
+            _currentImageAnalysis.value = ImageAnalysisResult(
+                id = UUID.randomUUID().toString(),
+                title = "Analyzing…",
+                commonName = "", scientificName = "", family = "",
+                keyFeatures = emptyList(), safetyNotice = "",
+                imageUri = uri
+            )
+            _isAnalyzingImage.value = true
 
             try {
+                val activeModelFile = modelRepository.getActiveModelFile()
+                if (activeModelFile == null) {
+                    _currentImageAnalysis.value = ImageAnalysisResult(
+                        id = UUID.randomUUID().toString(),
+                        title = "AI Model Required",
+                        commonName = "", scientificName = "", family = "",
+                        keyFeatures = emptyList(),
+                        safetyNotice = "Install the on-device AI model from AI Model Management to analyze images.",
+                        imageUri = uri,
+                        rawText = "",
+                        isError = true
+                    )
+                    return@launch
+                }
+
                 val error = ensureEngineReady()
                 if (error != null) {
                     _currentImageAnalysis.value = ImageAnalysisResult(
                         id = UUID.randomUUID().toString(),
                         title = "Model not ready",
-                        commonName = "",
-                        scientificName = "",
-                        family = "",
+                        commonName = "", scientificName = "", family = "",
                         keyFeatures = emptyList(),
                         safetyNotice = error,
-                        imageUri = uri
+                        imageUri = uri,
+                        rawText = "",
+                        isError = true
                     )
                     return@launch
                 }
 
                 val tempFile = copyUriToTempFile(context, uri)
                 val visionPrompt = prompt
-                    ?: "Identify and analyze the subject in this image. Provide: Common name, scientific name if applicable, family or category, 3-4 key visual features, and any safety notices."
+                    ?: "Analyze this image thoroughly. Describe what you see in detail. If it is a living organism (plant, animal, insect, fungus), provide: Common name, Scientific name, Family/Category, key visual features, and any safety notices. For other subjects (objects, scenes, documents, etc.), provide a detailed description of what is shown."
                 var resultText = ""
                 aiEngine.generateWithImageStream(tempFile.absolutePath, visionPrompt).collect { token ->
                     resultText += token
                 }
 
                 val features = resultText.lines()
-                    .filter { it.startsWith("-") || it.startsWith("•") || it.matches(Regex("^\\d+\\..*")) }
+                    .filter { it.trimStart().let { l -> l.startsWith("-") || l.startsWith("•") || l.matches(Regex("^\\d+\\..*")) } }
                     .map { it.trimStart('-', '•', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ' ') }
-                    .take(4)
+                    .filter { it.isNotBlank() }
+                    .take(5)
 
                 _currentImageAnalysis.value = ImageAnalysisResult(
                     id = UUID.randomUUID().toString(),
-                    title = "Analyzed Photo",
+                    title = parseField(resultText, "Common Name")
+                        ?: parseField(resultText, "Subject")
+                        ?: "Analysis Result",
                     commonName = parseField(resultText, "Common Name") ?: parseField(resultText, "Subject") ?: "",
                     scientificName = parseField(resultText, "Scientific Name") ?: "",
                     family = parseField(resultText, "Family") ?: parseField(resultText, "Category") ?: "",
                     keyFeatures = features,
-                    safetyNotice = parseField(resultText, "Safety") ?: "",
-                    imageUri = uri
+                    safetyNotice = parseField(resultText, "Safety") ?: parseField(resultText, "Safety Notice") ?: "",
+                    imageUri = uri,
+                    rawText = resultText
                 )
             } catch (e: Exception) {
                 _currentImageAnalysis.value = ImageAnalysisResult(
                     id = UUID.randomUUID().toString(),
                     title = "Analysis Error",
-                    commonName = "",
-                    scientificName = "",
-                    family = "",
+                    commonName = "", scientificName = "", family = "",
                     keyFeatures = emptyList(),
                     safetyNotice = e.message ?: "Unknown vision error",
-                    imageUri = uri
+                    imageUri = uri,
+                    rawText = "",
+                    isError = true
                 )
+            } finally {
+                _isAnalyzingImage.value = false
             }
         }
     }

@@ -139,7 +139,8 @@ fun ChatScreen(
                         timestamp = msg.timestamp,
                         steps = msg.steps,
                         imageUri = msg.imageUri,
-                        sourcePage = msg.sourcePage
+                        sourcePage = msg.sourcePage,
+                        isComplete = msg.isComplete
                     )
                 }
             }

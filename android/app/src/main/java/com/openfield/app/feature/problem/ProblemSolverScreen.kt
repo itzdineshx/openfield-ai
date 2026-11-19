@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openfield.app.core.components.MarkdownText
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.theme.CardShape
@@ -235,7 +236,7 @@ fun ProblemSolverScreen(
                     border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.2f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
+                    MarkdownText(
                         text = diagnosis,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 13.sp,

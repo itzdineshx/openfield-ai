@@ -1,5 +1,6 @@
 package com.openfield.app.navigation
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,12 +37,21 @@ import com.openfield.app.feature.splash.SplashScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
 import com.openfield.app.feature.tools.ToolsScreen
 
+private const val PREFS_NAME = "openfield_prefs"
+private const val KEY_ONBOARDING_DONE = "onboarding_completed"
+
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
+    val context = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val startDestination = remember {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_ONBOARDING_DONE, false)) AppRoutes.HOME else AppRoutes.SPLASH
+    }
 
     var showProfileSheet by remember { mutableStateOf(false) }
 
@@ -76,7 +87,7 @@ fun AppNavigation(
         ) {
             NavHost(
                 navController = navController,
-                startDestination = AppRoutes.SPLASH
+                startDestination = startDestination
             ) {
                 // 1. Splash Screen
                 composable(AppRoutes.SPLASH) {
@@ -93,6 +104,10 @@ fun AppNavigation(
                 composable(AppRoutes.ONBOARDING_1) {
                     OnboardingScreen(
                         onFinishOnboarding = {
+                            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                .edit()
+                                .putBoolean(KEY_ONBOARDING_DONE, true)
+                                .apply()
                             navController.navigate(AppRoutes.HOME) {
                                 popUpTo(AppRoutes.ONBOARDING_1) { inclusive = true }
                             }

@@ -38,6 +38,8 @@ secrets.json
 # ──────────────────────────────────────────────
 # Android / Kotlin / Gradle
 # ──────────────────────────────────────────────
+*.apk
+*.aab
 android/.gradle/
 android/build/
 android/app/build/

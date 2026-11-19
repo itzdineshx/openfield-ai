@@ -92,6 +92,11 @@ class LiteRtLmEngine : LocalAiEngine {
                     AiBackend.CPU, AiBackend.AUTO -> Backend.CPU()
                 }
 
+                val visionBackend = when (preferredBackend) {
+                    AiBackend.GPU -> Backend.GPU()
+                    AiBackend.CPU, AiBackend.AUTO -> Backend.CPU()
+                }
+
                 val backendLabel = when (preferredBackend) {
                     AiBackend.GPU -> "GPU"
                     AiBackend.CPU, AiBackend.AUTO -> "CPU"
@@ -99,7 +104,9 @@ class LiteRtLmEngine : LocalAiEngine {
 
                 val engineConfig = EngineConfig(
                     modelPath = modelFile.absolutePath,
-                    backend = targetBackend
+                    backend = targetBackend,
+                    visionBackend = visionBackend,
+                    maxNumImages = 1
                 )
 
                 Log.i(
@@ -209,7 +216,7 @@ class LiteRtLmEngine : LocalAiEngine {
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
-                val message = Message.of(prompt)
+                val message = Message.user(Contents.of(prompt))
                 var accumulated = ""
 
                 conversation.sendMessageAsync(message).collect { responseMsg ->
@@ -230,6 +237,7 @@ class LiteRtLmEngine : LocalAiEngine {
                 conversation.cancelProcess()
                 throw c
             } finally {
+                try { conversation.close() } catch (ignored: Exception) {}
                 activeConversation = null
                 currentCapabilities?.let { _engineState.value = AiEngineState.Ready(it) }
             }
@@ -247,7 +255,7 @@ class LiteRtLmEngine : LocalAiEngine {
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
-                val message = Message.of(prompt)
+                val message = Message.user(Contents.of(prompt))
                 var accumulated = ""
 
                 conversation.sendMessageAsync(message).collect { responseMsg ->
@@ -290,9 +298,11 @@ class LiteRtLmEngine : LocalAiEngine {
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
-                val message = Message.of(
-                    Content.ImageFile(imagePath),
-                    Content.Text(prompt)
+                val message = Message.user(
+                    Contents.of(
+                        Content.ImageFile(imagePath),
+                        Content.Text(prompt)
+                    )
                 )
                 var accumulated = ""
 
@@ -314,6 +324,7 @@ class LiteRtLmEngine : LocalAiEngine {
                 conversation.cancelProcess()
                 throw c
             } finally {
+                try { conversation.close() } catch (ignored: Exception) {}
                 activeConversation = null
                 currentCapabilities?.let { _engineState.value = AiEngineState.Ready(it) }
             }

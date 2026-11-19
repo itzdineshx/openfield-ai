@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openfield.app.core.components.ChatBottomComposer
+import com.openfield.app.core.components.MarkdownText
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.theme.BubbleShapeUser
@@ -143,8 +144,8 @@ private fun ExplanationModeContent(topic: com.openfield.app.core.model.LearningT
             Row(verticalAlignment = Alignment.Top) {
                 OpenFieldLogo(size = 28.dp)
                 Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = topic.definition.ifBlank { "Generating explanation..." },
+                MarkdownText(
+                    text = topic.definition.ifBlank { "Generating explanation…" },
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 14.sp,
                         lineHeight = 20.sp,

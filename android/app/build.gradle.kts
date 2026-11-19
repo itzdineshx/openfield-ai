@@ -77,5 +77,6 @@ dependencies {
     // PDFBox Android for real document text extraction
     implementation(libs.pdfbox.android)
 
+    testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

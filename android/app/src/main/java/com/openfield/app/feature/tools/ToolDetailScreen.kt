@@ -49,6 +49,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openfield.app.core.components.MarkdownText
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.theme.CardShape
@@ -270,7 +271,7 @@ fun ToolDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
                     border = BorderStroke(1.dp, OpenFieldCardBorder)
                 ) {
-                    Text(
+                    MarkdownText(
                         text = outputText,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 14.sp,

@@ -68,8 +68,11 @@ Open `/docs` on the local server for the API schema.
 - `docs/PRD.md` — Phase 1 product requirements
 - `docs/TECHNICAL_ARCHITECTURE.md` — Android, AI and backend architecture
 - `docs/DATABASE_API.md` — data model and API contract
-- `docs/ROADMAP.md` — milestones and development checklist
-- `docs/IMPLEMENTATION_BLUEPRINT.md` — coding sequence and acceptance tests
+- `docs/ROADMAP_P1.md` — milestones and development checklist
+- `docs/PRIVACY_NOTICE.md` — offline privacy commitments and zero telemetry
+- `docs/FAQ.md` — frequently asked questions and troubleshooting
+- `docs/SUPPORTED_DEVICES.md` — hardware compatibility matrix and specifications
+- `docs/RELEASE_NOTES.md` — release history and highlights
 
 ## Privacy
 
@@ -81,4 +84,4 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md), open an issue before substantial work
 
 ## License
 
-The repository license must be finalized before public release. See `LICENSE` and the project maintainers' decision.
+OpenField is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details. Third-party model weights and runtime libraries are subject to their respective terms.

@@ -1,5 +1,10 @@
 package com.openfield.app.core.components
-import androidx.compose.ui.graphics.Color
+
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,12 +23,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -52,37 +65,45 @@ fun ChatMessageBubble(
     steps: List<StepItem> = emptyList(),
     imageUri: Any? = null,
     sourcePage: String? = null,
+    isComplete: Boolean = true,
     onSourceClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
         if (!isUser) {
             OpenFieldLogo(
                 size = 28.dp,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        // AI messages take remaining width; user messages capped at 82% via widthIn
+        val columnModifier = if (!isUser) {
+            Modifier.weight(1f)
+        } else {
+            Modifier.widthIn(max = 320.dp)
         }
 
         Column(
-            modifier = Modifier.widthIn(max = 300.dp),
+            modifier = columnModifier,
             horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
         ) {
             Surface(
                 shape = if (isUser) BubbleShapeUser else BubbleShapeAssistant,
                 color = if (isUser) OpenFieldPrimaryBlueLight else OpenFieldBackground,
-                border = if (isUser) null else androidx.compose.foundation.BorderStroke(1.dp, OpenFieldCardBorder),
+                border = if (isUser) null else androidx.compose.foundation.BorderStroke(
+                    1.dp, OpenFieldCardBorder
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier.padding(14.dp)
-                ) {
-                    // Attached image (real user attachment only)
+                Column(modifier = Modifier.padding(14.dp)) {
+                    // Attached image
                     if (imageUri != null) {
                         Box(
                             modifier = Modifier
@@ -104,18 +125,36 @@ fun ChatMessageBubble(
                         Spacer(modifier = Modifier.height(10.dp))
                     }
 
-                    if (message.isNotEmpty()) {
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = OpenFieldNavyText
-                            )
-                        )
+                    when {
+                        // Streaming: AI message still arriving — show typing dots
+                        !isUser && !isComplete && message.isEmpty() -> {
+                            TypingIndicator()
+                        }
+                        // Message text present
+                        message.isNotEmpty() -> {
+                            if (isUser) {
+                                Text(
+                                    text = message,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                            } else {
+                                MarkdownText(
+                                    text = message,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = 14.sp,
+                                        lineHeight = 21.sp,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                            }
+                        }
                     }
 
-                    // Numbered Steps if present (e.g. "Try these steps:")
+                    // Numbered Steps if present
                     if (steps.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
@@ -149,9 +188,7 @@ fun ChatMessageBubble(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-
                                 Spacer(modifier = Modifier.width(8.dp))
-
                                 Text(
                                     text = step.text,
                                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -165,7 +202,7 @@ fun ChatMessageBubble(
                         }
                     }
 
-                    // Source Reference Card if present (e.g. in Document Q&A)
+                    // Source reference (Document Q&A)
                     if (sourcePage != null && onSourceClick != null) {
                         Spacer(modifier = Modifier.height(10.dp))
                         SourceReferenceCard(
@@ -176,16 +213,124 @@ fun ChatMessageBubble(
                 }
             }
 
-            if (timestamp != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+            if (timestamp != null && isComplete) {
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = timestamp,
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 11.sp,
-                        color = OpenFieldSecondaryText.copy(alpha = 0.7f)
+                        color = OpenFieldSecondaryText.copy(alpha = 0.6f)
                     ),
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TypingIndicator() {
+    val transition = rememberInfiniteTransition(label = "typing")
+    val alpha by transition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "typingAlpha"
+    )
+    Text(
+        text = "● ● ●",
+        style = MaterialTheme.typography.bodyMedium.copy(
+            color = OpenFieldSecondaryText.copy(alpha = alpha),
+            letterSpacing = 2.sp,
+            fontSize = 10.sp
+        )
+    )
+}
+
+@Composable
+fun MarkdownText(
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier
+) {
+    val annotated = remember(text) { buildMarkdownAnnotated(text, style) }
+    Text(text = annotated, style = style, modifier = modifier)
+}
+
+fun buildMarkdownAnnotated(text: String, style: TextStyle) = buildAnnotatedString {
+    val lines = text.split('\n')
+    lines.forEachIndexed { idx, rawLine ->
+        val trimmed = rawLine.trim()
+        when {
+            trimmed.startsWith("### ") -> {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, fontSize = 14.sp)) {
+                    appendInlineBold(trimmed.removePrefix("### "))
+                }
+            }
+            trimmed.startsWith("## ") -> {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp)) {
+                    appendInlineBold(trimmed.removePrefix("## "))
+                }
+            }
+            trimmed.startsWith("# ") -> {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp)) {
+                    appendInlineBold(trimmed.removePrefix("# "))
+                }
+            }
+            trimmed.startsWith("- ") || trimmed.startsWith("• ") -> {
+                val content = if (trimmed.startsWith("- ")) trimmed.removePrefix("- ") else trimmed.removePrefix("• ")
+                append("  • ")
+                appendInlineBold(content)
+            }
+            trimmed.startsWith("* ") && !trimmed.startsWith("**") -> {
+                append("  • ")
+                appendInlineBold(trimmed.removePrefix("* "))
+            }
+            trimmed.matches(Regex("^\\d+\\. .*")) -> {
+                val dotIdx = trimmed.indexOf(". ")
+                if (dotIdx > 0) {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
+                        append("  ${trimmed.substring(0, dotIdx + 2)}")
+                    }
+                    appendInlineBold(trimmed.substring(dotIdx + 2))
+                } else {
+                    appendInlineBold(rawLine)
+                }
+            }
+            trimmed.startsWith("> ") -> {
+                withStyle(SpanStyle(color = Color(0xFF68758A), fontStyle = FontStyle.Italic)) {
+                    appendInlineBold(trimmed.removePrefix("> "))
+                }
+            }
+            trimmed.startsWith("**") && trimmed.endsWith("**") && trimmed.length > 4 -> {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(trimmed.removeSurrounding("**"))
+                }
+            }
+            else -> appendInlineBold(rawLine)
+        }
+        if (idx < lines.size - 1) append('\n')
+    }
+}
+
+fun androidx.compose.ui.text.AnnotatedString.Builder.appendInlineBold(text: String) {
+    // Split on ** markers — odd-indexed segments are bold
+    val parts = text.split("**")
+    parts.forEachIndexed { idx, part ->
+        if (idx % 2 == 1) {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(part) }
+        } else {
+            // Handle *italic* inside non-bold segments
+            val italicParts = part.split("*")
+            italicParts.forEachIndexed { iIdx, iPart ->
+                if (iIdx % 2 == 1) {
+                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(iPart) }
+                } else {
+                    append(iPart)
+                }
             }
         }
     }
