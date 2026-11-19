@@ -1,6 +1,7 @@
 package com.openfield.app.feature.ai.engine
 import com.google.ai.edge.litertlm.Contents
 import android.util.Log
+import com.openfield.app.core.util.PerformanceTracker
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Conversation
@@ -124,8 +125,11 @@ class LiteRtLmEngine : LocalAiEngine {
                 // Neither OutOfMemoryError nor Throwable catches below will fire for that —
                 // the whole process dies with SIGABRT. The user must see the Loading state
                 // in the UI so that when a crash happens they know which action caused it.
+                val initStart = System.currentTimeMillis()
                 candidate.initialize()
-                Log.i(TAG, "Engine.initialize() returned OK on $backendLabel")
+                val initElapsed = System.currentTimeMillis() - initStart
+                PerformanceTracker.recordColdInit(initElapsed, backendLabel)
+                Log.i(TAG, "Engine.initialize() returned OK on $backendLabel in ${initElapsed}ms")
 
                 activeEngine = candidate
 
@@ -213,6 +217,9 @@ class LiteRtLmEngine : LocalAiEngine {
         inferenceMutex.withLock {
             val conversation = getOrCreateConversation(null, config)
             activeConversation = conversation
+            val startTime = System.currentTimeMillis()
+            var isFirstToken = true
+            var emittedChunks = 0
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
@@ -223,6 +230,13 @@ class LiteRtLmEngine : LocalAiEngine {
                     val chunkText = responseMsg.text
 
                     if (chunkText.isNotEmpty()) {
+                        if (isFirstToken) {
+                            val ttft = System.currentTimeMillis() - startTime
+                            PerformanceTracker.recordTimeToFirstToken(ttft)
+                            isFirstToken = false
+                        }
+                        emittedChunks++
+
                         if (chunkText.startsWith(accumulated) && accumulated.isNotEmpty()) {
                             val delta = chunkText.substring(accumulated.length)
                             accumulated = chunkText
@@ -237,6 +251,8 @@ class LiteRtLmEngine : LocalAiEngine {
                 conversation.cancelProcess()
                 throw c
             } finally {
+                val duration = System.currentTimeMillis() - startTime
+                PerformanceTracker.recordGenerationStats(emittedChunks, duration)
                 try { conversation.close() } catch (ignored: Exception) {}
                 activeConversation = null
                 currentCapabilities?.let { _engineState.value = AiEngineState.Ready(it) }
@@ -252,6 +268,9 @@ class LiteRtLmEngine : LocalAiEngine {
         inferenceMutex.withLock {
             val conversation = getOrCreateConversation(sessionId, config)
             activeConversation = conversation
+            val startTime = System.currentTimeMillis()
+            var isFirstToken = true
+            var emittedChunks = 0
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
@@ -262,6 +281,13 @@ class LiteRtLmEngine : LocalAiEngine {
                     val chunkText = responseMsg.text
 
                     if (chunkText.isNotEmpty()) {
+                        if (isFirstToken) {
+                            val ttft = System.currentTimeMillis() - startTime
+                            PerformanceTracker.recordTimeToFirstToken(ttft)
+                            isFirstToken = false
+                        }
+                        emittedChunks++
+
                         if (chunkText.startsWith(accumulated) && accumulated.isNotEmpty()) {
                             val delta = chunkText.substring(accumulated.length)
                             accumulated = chunkText
@@ -276,6 +302,8 @@ class LiteRtLmEngine : LocalAiEngine {
                 conversation.cancelProcess()
                 throw c
             } finally {
+                val duration = System.currentTimeMillis() - startTime
+                PerformanceTracker.recordGenerationStats(emittedChunks, duration)
                 activeConversation = null
                 currentCapabilities?.let { _engineState.value = AiEngineState.Ready(it) }
             }
@@ -295,6 +323,9 @@ class LiteRtLmEngine : LocalAiEngine {
 
             val conversation = getOrCreateConversation(null, config)
             activeConversation = conversation
+            val startTime = System.currentTimeMillis()
+            var isFirstToken = true
+            var emittedChunks = 0
 
             try {
                 _engineState.value = AiEngineState.Generating(prompt)
@@ -310,6 +341,13 @@ class LiteRtLmEngine : LocalAiEngine {
                     val chunkText = responseMsg.text
 
                     if (chunkText.isNotEmpty()) {
+                        if (isFirstToken) {
+                            val ttft = System.currentTimeMillis() - startTime
+                            PerformanceTracker.recordTimeToFirstToken(ttft)
+                            isFirstToken = false
+                        }
+                        emittedChunks++
+
                         if (chunkText.startsWith(accumulated) && accumulated.isNotEmpty()) {
                             val delta = chunkText.substring(accumulated.length)
                             accumulated = chunkText
@@ -324,6 +362,8 @@ class LiteRtLmEngine : LocalAiEngine {
                 conversation.cancelProcess()
                 throw c
             } finally {
+                val duration = System.currentTimeMillis() - startTime
+                PerformanceTracker.recordGenerationStats(emittedChunks, duration)
                 try { conversation.close() } catch (ignored: Exception) {}
                 activeConversation = null
                 currentCapabilities?.let { _engineState.value = AiEngineState.Ready(it) }

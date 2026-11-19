@@ -4,20 +4,18 @@
 
 OpenField is an open-source, offline-first Android AI companion for everyday questions, learning, document understanding, image analysis, and guided problem solving. The Phase 1 goal is to keep core AI experiences local and private by default.
 
-> **Project status:** Early development / Phase 1. Features and supported devices are being validated. Do not assume image, audio, or every model capability is available on all phones.
+> **Project status:** Active Development / Phase 2 (v0.2.0). Mode-Based AI Architecture, local multimodal reasoning, interactive tutoring, diagnostic branching, multi-document retrieval, and local export are implemented and verified offline with Google LiteRT-LM and Gemma 4 E2B IT.
 
-## Phase 1 focus
+## Phase 2 Core Workspaces & Capabilities
 
-- Local AI chat
-- Ask questions about imported documents
-- Image analysis (after runtime/device validation)
-- Learn & Explain
-- Guided problem solving
-- AI utilities: summarize, explain, translate, rewrite, extract, create
-- Local library and knowledge-pack management
-- Optional pack catalog/download backend
-
-Trips, emergency response, and survival workflows are **not Phase 1 scope**.
+- **Ask AI:** Conversational chatbot with streaming text, response regeneration, copy, and cooperative stop.
+- **Analyze Image:** Dedicated multimodal workspace with image replace/remove, dimension safety checks, structured observations, and contextual follow-up Q&A.
+- **Ask Document:** Local RAG with heading-aware chunking, SQLite FTS4 retrieval, multi-document selection scope, document comparison, and executive summaries.
+- **Solve a Problem:** Multi-step diagnostic state machine supporting contextual equipment photo intake, selectable observation options, alternative cause branching, and safety escalation alerts.
+- **Learn & Explain:** Interactive AI tutor with difficulty level selection, structured principles, analogies, interactive multiple-choice quizzes with hints, free-response evaluations, and lesson progress saving.
+- **Create & Write:** Document studio supporting email, report, assignment, summary drafting, rewriting, grammar fixing, local export to Markdown (`.md`) and Plain text (`.txt`), and formatted system sharing.
+- **Personalization & Memory:** User-controlled explanation levels, response lengths, tones, and transparent on-device memory inspection with 1-tap wipe.
+- **AI Tools & Library:** Quick offline text utilities, PDF document management, and knowledge pack catalog.
 
 ## Architecture principles
 

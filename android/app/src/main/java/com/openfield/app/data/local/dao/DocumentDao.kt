@@ -43,6 +43,17 @@ interface DocumentDao {
     @Query("""
         SELECT c.* FROM document_chunks c 
         JOIN document_chunks_fts f ON c.rowid = f.rowid 
+        WHERE document_chunks_fts MATCH :query AND c.documentId IN (:documentIds) 
+        LIMIT :limit
+    """)
+    suspend fun searchChunksInDocuments(documentIds: List<String>, query: String, limit: Int = 5): List<DocumentChunkEntity>
+
+    @Query("SELECT * FROM document_chunks WHERE documentId IN (:documentIds) ORDER BY documentId, pageNumber ASC, chunkIndex ASC")
+    suspend fun getChunksForDocuments(documentIds: List<String>): List<DocumentChunkEntity>
+
+    @Query("""
+        SELECT c.* FROM document_chunks c 
+        JOIN document_chunks_fts f ON c.rowid = f.rowid 
         WHERE document_chunks_fts MATCH :query 
         LIMIT :limit
     """)

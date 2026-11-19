@@ -21,14 +21,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -77,6 +80,20 @@ fun LibraryScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val packs by repository.knowledgePacks.collectAsState()
     val documents by repository.documents.collectAsState()
+    var packSearchQuery by remember { mutableStateOf("") }
+
+    val filteredPacks = remember(packs, packSearchQuery) {
+        if (packSearchQuery.isBlank()) packs
+        else {
+            val q = packSearchQuery.trim().lowercase()
+            packs.filter { pack ->
+                pack.title.lowercase().contains(q) ||
+                pack.description.lowercase().contains(q) ||
+                pack.category.lowercase().contains(q) ||
+                pack.topics.any { it.lowercase().contains(q) }
+            }
+        }
+    }
 
     var docToDeleteId by remember { mutableStateOf<String?>(null) }
 
@@ -202,10 +219,73 @@ fun LibraryScreen(
 
             // Tab Content
             if (selectedTab == 0) {
-                if (packs.isEmpty()) {
+                // Search & Discovery Bar for Knowledge Packs
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = OpenFieldSecondaryBackground,
+                    border = BorderStroke(1.dp, OpenFieldCardBorder),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search packs",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        BasicTextField(
+                            value = packSearchQuery,
+                            onValueChange = { packSearchQuery = it },
+                            modifier = Modifier.weight(1f),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = OpenFieldNavyText,
+                                fontSize = 13.sp
+                            ),
+                            decorationBox = { innerTextField ->
+                                if (packSearchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Search packs by keyword, category, or topic…",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = OpenFieldSecondaryText,
+                                            fontSize = 13.sp
+                                        )
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        )
+                        if (packSearchQuery.isNotEmpty()) {
+                            IconButton(
+                                onClick = { packSearchQuery = "" },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear search",
+                                    tint = OpenFieldSecondaryText,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (filteredPacks.isEmpty()) {
                     EmptyState(
-                        title = "No knowledge packs available",
-                        message = "Knowledge packs will appear here when a pack catalog is connected or when custom packs are imported."
+                        title = if (packSearchQuery.isBlank()) "No knowledge packs available" else "No matching packs found",
+                        message = if (packSearchQuery.isBlank()) {
+                            "Knowledge packs will appear here when a pack catalog is connected or when custom packs are imported."
+                        } else {
+                            "Try searching with a different keyword or browse all available packs."
+                        }
                     )
                 } else {
                     LazyColumn(
@@ -214,7 +294,7 @@ fun LibraryScreen(
                             .padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        items(packs, key = { it.id }) { pack ->
+                        items(filteredPacks, key = { it.id }) { pack ->
                             KnowledgePackCard(
                                 title = pack.title,
                                 description = pack.description,

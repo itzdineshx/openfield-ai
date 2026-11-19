@@ -3,10 +3,13 @@ package com.openfield.app.feature.document.rag
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.openfield.app.core.util.PerformanceTracker
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.util.Locale
@@ -34,7 +37,11 @@ class PdfTextExtractor(private val context: Context) {
         } catch (ignored: Exception) {}
     }
 
-    suspend fun extractDocument(uri: Uri): Result<DocumentExtractionResult> = withContext(Dispatchers.IO) {
+    suspend fun extractDocument(
+        uri: Uri,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
+    ): Result<DocumentExtractionResult> = withContext(Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
         try {
             var fileName = "Document_${System.currentTimeMillis()}"
             var sizeBytes = 0L
@@ -57,21 +64,27 @@ class PdfTextExtractor(private val context: Context) {
             val mimeType = context.contentResolver.getType(uri) ?: ""
             val isPdf = fileName.endsWith(".pdf", ignoreCase = true) || mimeType.contains("pdf", ignoreCase = true)
 
-            if (isPdf) {
-                extractPdf(uri, fileName, formattedSize, sizeBytes)
+            val extractionResult = if (isPdf) {
+                extractPdf(uri, fileName, formattedSize, sizeBytes, onProgress)
             } else {
                 extractPlainText(uri, fileName, formattedSize, sizeBytes)
             }
+            val elapsed = System.currentTimeMillis() - startTime
+            PerformanceTracker.recordDocumentExtraction(elapsed)
+            extractionResult
         } catch (e: Exception) {
+            val elapsed = System.currentTimeMillis() - startTime
+            PerformanceTracker.recordDocumentExtraction(elapsed)
             Result.failure(e)
         }
     }
 
-    private fun extractPdf(
+    private suspend fun extractPdf(
         uri: Uri,
         fileName: String,
         formattedSize: String,
-        sizeBytes: Long
+        sizeBytes: Long,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
     ): Result<DocumentExtractionResult> {
         val inputStream: InputStream = context.contentResolver.openInputStream(uri)
             ?: return Result.failure(IllegalStateException("Unable to open stream for $uri"))
@@ -85,6 +98,9 @@ class PdfTextExtractor(private val context: Context) {
                 var totalWords = 0
 
                 for (pageIndex in 1..pageCount) {
+                    currentCoroutineContext().ensureActive()
+                    onProgress?.invoke(pageIndex, pageCount)
+
                     stripper.startPage = pageIndex
                     stripper.endPage = pageIndex
                     val pageText = stripper.getText(pdDocument).trim()

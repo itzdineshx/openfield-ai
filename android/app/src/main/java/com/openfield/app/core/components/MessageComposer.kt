@@ -20,9 +20,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -198,7 +200,10 @@ fun ChatBottomComposer(
     onVoiceClick: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "Ask a follow-up...",
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    isListening: Boolean = false,
+    onStopListening: () -> Unit = {},
+    onCancelListening: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -215,78 +220,127 @@ fun ChatBottomComposer(
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Attachment '+' button
-            IconButton(
-                onClick = onAttach,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Attach",
-                    tint = OpenFieldSecondaryText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            // Text input
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = OpenFieldNavyText,
-                    fontSize = 14.sp
-                ),
-                cursorBrush = SolidColor(OpenFieldPrimaryBlue),
-                decorationBox = { innerTextField ->
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = OpenFieldMutedText,
-                                fontSize = 14.sp
-                            )
-                        )
-                    }
-                    innerTextField()
-                }
-            )
-
-            // Voice input button
-            IconButton(
-                onClick = onVoiceClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Mic,
-                    contentDescription = "Voice input",
-                    tint = OpenFieldSecondaryText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            // Send button
-            if (value.isNotBlank()) {
-                IconButton(
-                    onClick = {
-                        if (value.isNotBlank() && enabled) {
-                            onSend(value)
-                        }
-                    },
+            if (isListening) {
+                Row(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(OpenFieldPrimaryBlue),
-                    enabled = enabled
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = null,
+                        tint = Color(0xFFE53935),
+                        modifier = Modifier.size(20.dp)
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (value.isNotBlank()) value else "Listening... (speak clearly)",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = if (value.isNotBlank()) OpenFieldNavyText else OpenFieldSecondaryText,
+                            fontSize = 13.sp
+                        ),
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = onStopListening,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Stop,
+                            contentDescription = "Finish recording",
+                            tint = OpenFieldPrimaryBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    IconButton(
+                        onClick = onCancelListening,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel voice input",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            } else {
+                // Attachment '+' button
+                IconButton(
+                    onClick = onAttach,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Attach",
+                        tint = OpenFieldSecondaryText,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // Text input
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        color = OpenFieldNavyText,
+                        fontSize = 14.sp
+                    ),
+                    cursorBrush = SolidColor(OpenFieldPrimaryBlue),
+                    decorationBox = { innerTextField ->
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = OpenFieldMutedText,
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+
+                // Voice input button
+                IconButton(
+                    onClick = onVoiceClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Voice input",
+                        tint = OpenFieldSecondaryText,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // Send button
+                if (value.isNotBlank()) {
+                    IconButton(
+                        onClick = {
+                            if (value.isNotBlank() && enabled) {
+                                onSend(value)
+                            }
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(OpenFieldPrimaryBlue),
+                        enabled = enabled
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }

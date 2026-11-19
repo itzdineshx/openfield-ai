@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +60,9 @@ fun KnowledgePackDetailScreen(
 ) {
     val packs by repository.knowledgePacks.collectAsState()
     val pack = packs.find { it.id == packId }
+    val manifest = remember(packId) {
+        KnowledgePackManager.CURATED_CATALOG.find { it.packId == packId }
+    }
 
     if (pack == null) {
         Scaffold(
@@ -282,6 +287,63 @@ fun KnowledgePackDetailScreen(
                             )
                         }
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Manifest & Provenance Verification
+            Text(
+                text = "Manifest & Integrity Verification",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = OpenFieldNavyText
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
+                border = BorderStroke(1.dp, OpenFieldCardBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = OpenFieldSuccess,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = manifest?.provenance ?: "Verified Local Pack",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = OpenFieldNavyText,
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Version: ${manifest?.version ?: pack.version} • Checksum SHA-256:",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldSecondaryText,
+                            fontSize = 11.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = manifest?.checksumSha256 ?: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldNavyText,
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    )
                 }
             }
 

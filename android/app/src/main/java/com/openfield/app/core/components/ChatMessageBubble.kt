@@ -19,6 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -66,7 +74,9 @@ fun ChatMessageBubble(
     imageUri: Any? = null,
     sourcePage: String? = null,
     isComplete: Boolean = true,
-    onSourceClick: (() -> Unit)? = null
+    onSourceClick: (() -> Unit)? = null,
+    onSpeakClick: (() -> Unit)? = null,
+    isSpeaking: Boolean = false
 ) {
     Row(
         modifier = modifier
@@ -213,16 +223,55 @@ fun ChatMessageBubble(
                 }
             }
 
-            if (timestamp != null && isComplete) {
+            if (isComplete && (timestamp != null || (!isUser && message.isNotEmpty()))) {
                 Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = timestamp,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 11.sp,
-                        color = OpenFieldSecondaryText.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (timestamp != null) {
+                        Text(
+                            text = timestamp,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.sp,
+                                color = OpenFieldSecondaryText.copy(alpha = 0.6f)
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+                    if (!isUser && message.isNotEmpty()) {
+                        val clipboard = LocalClipboardManager.current
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (onSpeakClick != null) {
+                                IconButton(
+                                    onClick = onSpeakClick,
+                                    modifier = Modifier.size(20.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                                        contentDescription = if (isSpeaking) "Stop speaking" else "Read aloud",
+                                        tint = if (isSpeaking) OpenFieldPrimaryBlue else OpenFieldSecondaryText.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { clipboard.setText(AnnotatedString(message)) },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copy response",
+                                    tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

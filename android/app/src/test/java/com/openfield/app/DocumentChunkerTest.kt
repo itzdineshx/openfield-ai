@@ -63,4 +63,17 @@ class DocumentChunkerTest {
         assertEquals(1, chunks[0].pageNumber)
         assertEquals(42, chunks[1].pageNumber)
     }
+
+    @Test
+    fun chunkDocument_withHeading_preservesSectionContextInChunks() {
+        val pages = listOf(
+            ExtractedPage(
+                pageNumber = 3,
+                text = "## Inverter Wiring Diagram\nConnect the red DC cable to positive terminal and black to negative."
+            )
+        )
+        val chunks = chunker.chunkDocument("doc_heading", pages)
+        assertEquals(1, chunks.size)
+        assertTrue(chunks[0].text.contains("[Section: Inverter Wiring Diagram]"))
+    }
 }

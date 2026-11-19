@@ -19,6 +19,7 @@ object AppRoutes {
     const val DOCUMENT_DETAIL = "document_detail"
     const val PROBLEM_SOLVER = "problem_solver"
     const val LEARN_EXPLAIN = "learn_explain"
+    const val CREATE_WRITE = "create_write"
     const val TOOL_DETAIL = "tool_detail"
     const val PACK_DETAIL = "pack_detail"
     const val SETTINGS = "settings"

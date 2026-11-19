@@ -15,6 +15,16 @@ interface ChatDao {
     @Query("SELECT * FROM chat_sessions ORDER BY isPinned DESC, lastUpdated DESC")
     fun getSessionsFlow(): Flow<List<ChatSessionEntity>>
 
+    @Query("""
+        SELECT DISTINCT s.* FROM chat_sessions s
+        LEFT JOIN chat_messages m ON s.id = m.sessionId
+        WHERE s.title LIKE '%' || :query || '%' 
+           OR s.preview LIKE '%' || :query || '%'
+           OR m.text LIKE '%' || :query || '%'
+        ORDER BY s.isPinned DESC, s.lastUpdated DESC
+    """)
+    suspend fun searchSessionsWithMessages(query: String): List<ChatSessionEntity>
+
     @Query("SELECT * FROM chat_sessions WHERE id = :id LIMIT 1")
     suspend fun getSession(id: String): ChatSessionEntity?
 

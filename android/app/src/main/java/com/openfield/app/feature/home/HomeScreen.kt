@@ -1,5 +1,6 @@
 package com.openfield.app.feature.home
 
+import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +50,8 @@ import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.model.ModelInstallationState
 import com.openfield.app.feature.ai.model.ModelManagementDialog
 import com.openfield.app.core.components.OfflineStatusBanner
+import com.openfield.app.feature.voice.VoiceInputManager
+import com.openfield.app.feature.voice.VoiceInputState
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.RoundedFeatureCard
 import com.openfield.app.core.theme.OpenFieldBackground
@@ -74,6 +78,26 @@ fun HomeScreen(
     val engineState by repository.aiEngine.engineState.collectAsState()
     var promptInput by remember { mutableStateOf("") }
     var showModelDialog by remember { mutableStateOf(false) }
+
+    val voiceInputManager = remember { VoiceInputManager(context) }
+    val voiceState by voiceInputManager.state.collectAsState()
+    val isListening = voiceState is VoiceInputState.Listening
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voiceInputManager.release()
+        }
+    }
+
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            voiceInputManager.startListening { recognizedText ->
+                promptInput = if (promptInput.isBlank()) recognizedText else "$promptInput $recognizedText"
+            }
+        }
+    }
 
     // Image Picker for direct attachment from Home
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -190,7 +214,13 @@ fun HomeScreen(
                 },
                 onPickImage = { imagePickerLauncher.launch("image/*") },
                 onCameraClick = { imagePickerLauncher.launch("image/*") },
-                onVoiceClick = { /* Voice capture not implemented; no fake fill-in. */ },
+                onVoiceClick = {
+                    if (isListening) {
+                        voiceInputManager.stopListening()
+                    } else {
+                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
                 onPickDocument = {
                     documentPickerLauncher.launch(arrayOf("application/pdf", "text/plain"))
                 }

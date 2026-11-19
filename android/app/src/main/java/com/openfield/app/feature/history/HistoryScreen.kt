@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,11 +74,11 @@ fun HistoryScreen(
     var searchQuery by remember { mutableStateOf("") }
     var sessionToDeleteId by remember { mutableStateOf<String?>(null) }
 
-    val filteredSessions = remember(sessions, searchQuery) {
-        if (searchQuery.isBlank()) sessions
-        else sessions.filter {
-            it.title.contains(searchQuery, ignoreCase = true) ||
-                    it.preview.contains(searchQuery, ignoreCase = true)
+    val filteredSessions by produceState(initialValue = sessions, key1 = sessions, key2 = searchQuery) {
+        value = if (searchQuery.isBlank()) {
+            sessions
+        } else {
+            repository.searchConversations(searchQuery)
         }
     }
 

@@ -20,8 +20,14 @@ interface KnowledgePackDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(packs: List<KnowledgePackEntity>)
 
+    @Query("SELECT * FROM knowledge_packs WHERE id = :id LIMIT 1")
+    suspend fun getPackById(id: String): KnowledgePackEntity?
+
     @Query("UPDATE knowledge_packs SET isInstalled = :isInstalled WHERE id = :id")
     suspend fun updateInstallation(id: String, isInstalled: Boolean)
+
+    @Query("DELETE FROM knowledge_packs WHERE id = :id")
+    suspend fun deletePack(id: String)
 }
 
 @Dao

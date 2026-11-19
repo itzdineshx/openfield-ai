@@ -1,0 +1,124 @@
+package com.openfield.app.feature.ai.mode
+
+// =================================================================
+// 1. TROUBLESHOOTING MODELS
+// =================================================================
+
+data class DiagnosticOption(
+    val id: String,
+    val text: String,
+    val detail: String? = null
+)
+
+data class DiagnosticStepHistory(
+    val stepIndex: Int,
+    val question: String,
+    val selectedOptionText: String
+)
+
+data class DiagnosticAssessment(
+    val category: String,
+    val safetyNotice: String? = null,
+    val currentStepNumber: Int = 1,
+    val totalEstimatedSteps: Int = 3,
+    val question: String,
+    val explanation: String? = null,
+    val options: List<DiagnosticOption> = emptyList(),
+    val isResolutionReached: Boolean = false,
+    val likelyCause: String? = null,
+    val recommendedSolution: String? = null,
+    val isEscalationNeeded: Boolean = false,
+    val escalationReason: String? = null
+)
+
+// =================================================================
+// 2. LEARNING & EXPLAIN MODELS
+// =================================================================
+
+enum class LearningLevel(val displayName: String, val promptDescription: String) {
+    BEGINNER("Beginner", "Explain in simple, everyday language using intuitive analogies without heavy technical jargon."),
+    INTERMEDIATE("Intermediate", "Provide clear technical depth, real-world practical examples, and core working principles."),
+    ADVANCED("Advanced", "Provide rigorous conceptual breakdown, mechanisms, edge cases, and formal terminology.")
+}
+
+data class LessonSection(
+    val heading: String,
+    val content: String
+)
+
+data class LessonQuiz(
+    val question: String,
+    val options: List<String>,
+    val correctOptionIndex: Int,
+    val explanation: String,
+    val hint: String? = null
+)
+
+data class StructuredLesson(
+    val topic: String,
+    val level: LearningLevel,
+    val title: String,
+    val overview: String,
+    val sections: List<LessonSection>,
+    val practicalExample: String,
+    val quiz: LessonQuiz?
+)
+
+// =================================================================
+// 3. CREATE & WRITE MODELS
+// =================================================================
+
+enum class WritingIntent(val displayName: String, val defaultTitle: String) {
+    EMAIL("Email", "Draft Email"),
+    REPORT("Report", "Project Report"),
+    ASSIGNMENT("Assignment", "Assignment Draft"),
+    SUMMARY("Summary", "Executive Summary"),
+    PROFESSIONAL_MESSAGE("Message", "Professional Message"),
+    REWRITE("Rewrite & Polish", "Polished Draft"),
+    GRAMMAR("Grammar Fix", "Corrected Text"),
+    TONE_CHANGE("Tone Shift", "Tone-Adjusted Text")
+}
+
+enum class WritingTone(val displayName: String) {
+    PROFESSIONAL("Professional"),
+    CASUAL("Casual"),
+    PERSUASIVE("Persuasive"),
+    CONCISE("Concise"),
+    ACADEMIC("Academic"),
+    EMPATHETIC("Empathetic")
+}
+
+data class WritingDraftResult(
+    val intent: WritingIntent,
+    val tone: WritingTone,
+    val title: String,
+    val content: String,
+    val wordCount: Int,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+// =================================================================
+// 4. IMAGE ANALYSIS SECTIONS
+// =================================================================
+
+data class ImageAnalysisSections(
+    val subject: String,
+    val whatISee: String,
+    val importantDetails: List<String>,
+    val explanation: String,
+    val possibleIdentification: String? = null,
+    val suggestedNextSteps: List<String> = emptyList(),
+    val uncertaintyAndLimitations: String? = null
+)
+
+// =================================================================
+// 5. VALIDATION
+// =================================================================
+
+sealed interface ValidationResult<out T> {
+    data class Success<T>(val data: T) : ValidationResult<T>
+    data class Failure(val reason: String, val rawOutput: String? = null) : ValidationResult<Nothing>
+
+    val isSuccess: Boolean get() = this is Success
+    fun getOrNull(): T? = (this as? Success)?.data
+}

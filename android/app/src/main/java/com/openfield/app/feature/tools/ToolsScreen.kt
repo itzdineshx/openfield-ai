@@ -67,6 +67,7 @@ fun ToolsScreen(
     onNavigateToToolDetail: (String) -> Unit,
     onNavigateToImageAnalysis: () -> Unit,
     onNavigateToDocumentQA: () -> Unit,
+    onNavigateToCreateWrite: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -153,6 +154,7 @@ fun ToolsScreen(
                         when (tool.id) {
                             "image_analysis" -> onNavigateToImageAnalysis()
                             "doc_qa" -> onNavigateToDocumentQA()
+                            "write_create" -> onNavigateToCreateWrite()
                             else -> onNavigateToToolDetail(tool.id)
                         }
                     }

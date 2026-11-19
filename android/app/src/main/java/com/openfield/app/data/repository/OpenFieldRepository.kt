@@ -16,8 +16,15 @@ import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.data.local.entity.ChatSessionEntity
 import com.openfield.app.data.local.entity.DocumentEntity
+import com.openfield.app.feature.ai.controller.ChatController
+import com.openfield.app.feature.ai.controller.DocumentQaController
+import com.openfield.app.feature.ai.controller.ImageAnalysisController
+import com.openfield.app.feature.ai.controller.LearningController
+import com.openfield.app.feature.ai.controller.TroubleshootingController
+import com.openfield.app.feature.ai.controller.WritingController
 import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.engine.LocalAiEngine
+import com.openfield.app.feature.ai.mode.AiOrchestrator
 import com.openfield.app.feature.ai.model.ModelRepository
 import com.openfield.app.feature.ai.tools.ExplainConceptUseCase
 import com.openfield.app.feature.ai.tools.ReframeUseCase
@@ -28,10 +35,12 @@ import com.openfield.app.feature.document.rag.DocumentChunker
 import com.openfield.app.feature.document.rag.DocumentQaUseCase
 import com.openfield.app.feature.document.rag.DocumentRetriever
 import com.openfield.app.feature.document.rag.PdfTextExtractor
+import com.openfield.app.feature.library.KnowledgePackManager
 import com.openfield.app.feature.problem.ProblemSolverUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,7 +64,11 @@ data class AppSettings(
     val availableModels: List<String> = listOf("Gemma 4 E2B IT"),
     val language: String = "English",
     val themeMode: String = "Light (System)",
-    val telemetryEnabled: Boolean = false
+    val telemetryEnabled: Boolean = false,
+    val preferredExplanationLevel: String = "Beginner",
+    val preferredResponseLength: String = "Balanced",
+    val preferredWritingTone: String = "Professional",
+    val userCustomMemory: String = ""
 )
 
 class OpenFieldRepository(
@@ -79,6 +92,23 @@ class OpenFieldRepository(
     val reframeUseCase = ReframeUseCase(aiEngine)
     val writeContentUseCase = WriteContentUseCase(aiEngine)
     val problemSolverUseCase = ProblemSolverUseCase(aiEngine)
+
+    // Shared AI Orchestration & Mode Controllers
+    val orchestrator = AiOrchestrator(aiEngine)
+    val chatController = ChatController(database.chatDao(), orchestrator, scope)
+    val imageAnalysisController = ImageAnalysisController(orchestrator, scope)
+    val documentQaController = DocumentQaController(
+        database.documentDao(),
+        documentRetriever,
+        pdfExtractor,
+        documentChunker,
+        orchestrator,
+        scope
+    )
+    val troubleshootingController = TroubleshootingController(orchestrator, database.modeSessionDao(), scope)
+    val learningController = LearningController(orchestrator, database.modeSessionDao(), scope)
+    val writingController = WritingController(orchestrator, database.modeSessionDao(), scope)
+    val knowledgePackManager = KnowledgePackManager(database.knowledgePackDao())
 
     // Chat sessions & messages — backed by Room, no seed data.
     val sessions: StateFlow<List<ChatSession>> = database.chatDao().getSessionsFlow()
@@ -146,6 +176,7 @@ class OpenFieldRepository(
     val knowledgePacks: StateFlow<List<KnowledgePack>> = database.knowledgePackDao().getKnowledgePacksFlow()
         .map { entities ->
             entities.map { entity ->
+                val manifest = KnowledgePackManager.CURATED_CATALOG.find { it.packId == entity.id }
                 KnowledgePack(
                     id = entity.id,
                     title = entity.title,
@@ -154,7 +185,8 @@ class OpenFieldRepository(
                     isInstalled = entity.isInstalled,
                     category = entity.category,
                     iconColorHex = entity.iconColorHex,
-                    topics = parseTopics(entity.topicsJson)
+                    topics = parseTopics(entity.topicsJson),
+                    version = manifest?.version ?: "1.0.0"
                 )
             }
         }
@@ -167,6 +199,9 @@ class OpenFieldRepository(
         initTools()
         monitorActiveChatSession()
         autoLoadModelIfInstalled()
+        scope.launch(Dispatchers.IO) {
+            knowledgePackManager.seedDefaultPacksIfEmpty()
+        }
     }
 
     private fun autoLoadModelIfInstalled() {
@@ -432,6 +467,21 @@ class OpenFieldRepository(
         return newId
     }
 
+    suspend fun searchConversations(query: String): List<ChatSession> = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext sessions.value
+        val matches = database.chatDao().searchSessionsWithMessages(query)
+        matches.map { entity ->
+            ChatSession(
+                id = entity.id,
+                title = entity.title,
+                preview = entity.preview,
+                lastUpdated = formatTimestamp(entity.lastUpdated),
+                messageCount = entity.messageCount,
+                isPinned = entity.isPinned
+            )
+        }
+    }
+
     fun deleteSession(sessionId: String) {
         scope.launch {
             database.chatDao().deleteSession(sessionId)
@@ -454,6 +504,8 @@ class OpenFieldRepository(
     // -------------------------------------------------------------
 
     fun analyzeSelectedImage(uri: Uri, context: Context, prompt: String? = null) {
+        imageAnalysisController.setImage(context, uri)
+        imageAnalysisController.analyzeImage(prompt)
         scope.launch {
             // Show the image immediately so the preview doesn't flash blank while waiting
             _currentImageAnalysis.value = ImageAnalysisResult(
@@ -762,12 +814,14 @@ class OpenFieldRepository(
     // -------------------------------------------------------------
 
     fun toggleKnowledgePack(packId: String) {
-        scope.launch {
-            val packs = database.knowledgePackDao().getKnowledgePacks()
-            val target = packs.find { it.id == packId }
-            if (target != null) {
-                database.knowledgePackDao().updateInstallation(packId, !target.isInstalled)
-            }
+        scope.launch(Dispatchers.IO) {
+            knowledgePackManager.togglePackInstallation(packId)
+        }
+    }
+
+    fun updateKnowledgePack(packId: String) {
+        scope.launch(Dispatchers.IO) {
+            knowledgePackManager.updatePackToLatest(packId)
         }
     }
 
@@ -785,6 +839,26 @@ class OpenFieldRepository(
 
     fun updateLanguage(lang: String) {
         _settings.update { it.copy(language = lang) }
+    }
+
+    fun updatePreferredExplanationLevel(level: String) {
+        _settings.update { it.copy(preferredExplanationLevel = level) }
+    }
+
+    fun updatePreferredResponseLength(length: String) {
+        _settings.update { it.copy(preferredResponseLength = length) }
+    }
+
+    fun updatePreferredWritingTone(tone: String) {
+        _settings.update { it.copy(preferredWritingTone = tone) }
+    }
+
+    fun updateUserCustomMemory(memory: String) {
+        _settings.update { it.copy(userCustomMemory = memory.trim()) }
+    }
+
+    fun clearUserCustomMemory() {
+        _settings.update { it.copy(userCustomMemory = "") }
     }
 
     fun clearAppCache(context: Context): Long {

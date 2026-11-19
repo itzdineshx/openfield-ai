@@ -36,6 +36,7 @@ import com.openfield.app.feature.settings.SettingsScreen
 import com.openfield.app.feature.splash.SplashScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
 import com.openfield.app.feature.tools.ToolsScreen
+import com.openfield.app.feature.write.CreateWriteScreen
 
 private const val PREFS_NAME = "openfield_prefs"
 private const val KEY_ONBOARDING_DONE = "onboarding_completed"
@@ -134,7 +135,7 @@ fun AppNavigation(
                             navController.navigate(AppRoutes.LEARN_EXPLAIN)
                         },
                         onNavigateToCreateWrite = {
-                            navController.navigate(AppRoutes.toolDetailRoute("write_create"))
+                            navController.navigate(AppRoutes.CREATE_WRITE)
                         },
                         onOpenProfileMenu = {
                             showProfileSheet = true
@@ -220,7 +221,17 @@ fun AppNavigation(
                         },
                         onNavigateToDocumentQA = {
                             navController.navigate(AppRoutes.DOCUMENT_QA)
+                        },
+                        onNavigateToCreateWrite = {
+                            navController.navigate(AppRoutes.CREATE_WRITE)
                         }
+                    )
+                }
+
+                // 12. Create & Write Dedicated Studio
+                composable(AppRoutes.CREATE_WRITE) {
+                    CreateWriteScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
