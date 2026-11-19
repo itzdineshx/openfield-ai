@@ -1,5 +1,54 @@
 # OpenField Release Notes
 
+## Version 0.3.0 — Phase 3 Unified Personal Knowledge
+
+**Release Date:** November 2026
+
+OpenField v0.3.0 transforms the application from independent specialized workspaces into a unified personal knowledge platform. Users can now organize, discover, and reason across their documents, notes, conversations, and installed knowledge packs with cross-source synthesis, strict evidence verification, and interactive inspection.
+
+---
+
+### Highlights & Key Features
+
+#### 1. Unified Knowledge Center (`KnowledgeCenterScreen`)
+- **Complete Library Overhaul:** Replaces the legacy tabbed library with a modern high-density Knowledge Hub featuring:
+  - **Metrics Overview:** Real-time visibility into total indexed sources, document count, saved notes, chat sessions, and installed packs.
+  - **Semantic Collections Shelf:** Organize related items into user-defined collections with custom titles and color accents.
+  - **Multi-Source Selection & Batch Actions:** Select any combination of documents, notes, and packs to launch cross-source queries or batch-manage items.
+  - **Quick Ingestion Floating Actions:** 1-tap import for PDFs and text documents.
+
+#### 2. Cross-Source Multi-Document Q&A (`CrossSourceQaScreen` & `CrossSourceRetriever`)
+- **Reasoning Across Disparate Sources:** Enables synthesis, comparison, and contrast across multiple documents and knowledge packs simultaneously (e.g. comparing repair guidelines in a pack with error codes in a user manual).
+- **Fair-Share Context Budgeting:** Bounded to ~1,200 tokens across sources, guaranteeing fast Time to First Token (< 6s) on mobile CPUs without single-source starvation.
+- **Source Attribution Tags:** Enforces precise provenance tags formatted as `[Source: <Title> (Page <P>)]` or `[Source: <Title>]` directly in model generation instructions.
+- **Conflict Identification:** Directs Gemma to explicitly call out conflicting recommendations between different sources.
+
+#### 3. Post-Generation Citation Verification (`CitationValidator`)
+- **Zero-Tolerance Hallucination Check:** Deterministically verifies that all inline citations in model responses strictly correspond to actual retrieved evidence passages and valid page numbers.
+- **Hallucination Flagging:** Flags fabricated sources or non-existent page numbers in the UI, preserving user trust.
+
+#### 4. Evidence Explorer (`EvidenceExplorerSheet`)
+- **Radical Transparency:** Expandable Material 3 bottom sheet accessible directly from the Cross-Source Q&A screen.
+- **Grounding Passages Inspector:** Lists every exact passage, page number, section, and relevance score supplied to Gemma for the active response.
+
+#### 5. High-Speed Unified Local Search (`UnifiedSearchEngine`)
+- **Sub-80ms Lexical Retrieval:** Parallel asynchronous search across SQLite FTS4 document chunks, chat history, writing drafts, and installed knowledge packs.
+- **Highlighted Excerpts:** Dynamic snippet generation centered around query match terms with contextual boundary clipping.
+
+#### 6. Room Database v5 Non-Destructive Migration (`MIGRATION_4_5`)
+- **Schema Evolution:** Introduces `knowledge_collections` and `collection_source_cross_ref` tables with foreign key cascades and composite primary keys.
+- **100% Data Preservation:** Fully automated migration preserves all pre-existing user documents, conversations, notes, packs, and learning sessions without data loss.
+
+#### 7. Verification & Release Artifacts
+- **Automated Test Suite:** **126/126 unit tests passing (100% green)** including migration DDL, search ranking, prompt formatting, and citation validation suites.
+- **Signed Release APK:**
+  - File: `android/app/build/outputs/apk/release/app-release.apk`
+  - Size: 114,888,610 bytes (~109.5 MB)
+  - SHA-256: `67127CB0B59B4660870E3E5C3C4B45148F281F509DB266FEFFC3B9FF42A2E2D3`
+  - Target: Android 14+ / ARM64, Unisoc T616 / Snapdragon / Tensor CPU execution.
+
+---
+
 ## Version 0.2.1 — Phase 2.1 Offline Intelligence, Reliable OCR & Real Catalog
 
 **Release Date:** November 2026

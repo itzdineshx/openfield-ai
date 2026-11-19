@@ -8,7 +8,9 @@ import com.openfield.app.core.model.ChatMessage
 import com.openfield.app.core.model.ChatSession
 import com.openfield.app.core.model.DocumentItem
 import com.openfield.app.core.model.ImageAnalysisResult
+import com.openfield.app.core.model.KnowledgeCollection
 import com.openfield.app.core.model.KnowledgePack
+import com.openfield.app.core.model.KnowledgeSource
 import com.openfield.app.core.model.LearningTopic
 import com.openfield.app.core.model.ToolFilterCategory
 import com.openfield.app.core.model.TroubleshootStep
@@ -16,7 +18,9 @@ import com.openfield.app.core.text.Markdown
 import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.data.local.entity.ChatSessionEntity
+import com.openfield.app.data.local.entity.CollectionSourceCrossRefEntity
 import com.openfield.app.data.local.entity.DocumentEntity
+import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
 import com.openfield.app.feature.ai.controller.ChatController
 import com.openfield.app.feature.ai.controller.DocumentQaController
 import com.openfield.app.feature.ai.controller.ImageAnalysisController
@@ -32,10 +36,12 @@ import com.openfield.app.feature.ai.tools.ReframeUseCase
 import com.openfield.app.feature.ai.tools.SummarizeUseCase
 import com.openfield.app.feature.ai.tools.TranslateUseCase
 import com.openfield.app.feature.ai.tools.WriteContentUseCase
+import com.openfield.app.feature.document.rag.CrossSourceRetriever
 import com.openfield.app.feature.document.rag.DocumentChunker
 import com.openfield.app.feature.document.rag.DocumentQaUseCase
 import com.openfield.app.feature.document.rag.DocumentRetriever
 import com.openfield.app.feature.document.rag.PdfTextExtractor
+import com.openfield.app.feature.document.rag.UnifiedSearchEngine
 import com.openfield.app.feature.library.KnowledgePackManager
 import com.openfield.app.feature.problem.ProblemSolverUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -110,6 +116,78 @@ class OpenFieldRepository(
     val learningController = LearningController(orchestrator, database.modeSessionDao(), scope)
     val writingController = WritingController(orchestrator, database.modeSessionDao(), scope)
     val knowledgePackManager = KnowledgePackManager(database.knowledgePackDao())
+
+    // Phase 3 Unified Personal Knowledge System
+    val collectionDao = database.collectionDao()
+    val knowledgeSourceRegistry = KnowledgeSourceRegistry(
+        database.documentDao(),
+        database.chatDao(),
+        database.modeSessionDao(),
+        database.knowledgePackDao(),
+        database.collectionDao()
+    )
+    val unifiedSearchEngine = UnifiedSearchEngine(
+        database.documentDao(),
+        database.chatDao(),
+        database.modeSessionDao(),
+        database.knowledgePackDao()
+    )
+    val crossSourceRetriever = CrossSourceRetriever(
+        database.documentDao(),
+        database.knowledgePackDao()
+    )
+    val crossSourceQaController = com.openfield.app.feature.ai.controller.CrossSourceQaController(
+        crossSourceRetriever,
+        orchestrator,
+        scope
+    )
+
+    // Reactive Collections Flow
+    val collections: StateFlow<List<KnowledgeCollection>> = database.collectionDao().getCollectionsFlow()
+        .map { entities ->
+            entities.map { entity ->
+                val count = database.collectionDao().getSourceCountForCollection(entity.id)
+                KnowledgeCollection(
+                    id = entity.id,
+                    name = entity.name,
+                    description = entity.description,
+                    colorHex = entity.colorHex,
+                    sourceCount = count,
+                    createdAt = entity.createdAt,
+                    updatedAt = entity.updatedAt
+                )
+            }
+        }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    suspend fun createCollection(name: String, description: String, colorHex: Long): String {
+        val id = "col_${System.currentTimeMillis()}"
+        val entity = KnowledgeCollectionEntity(
+            id = id,
+            name = name,
+            description = description,
+            colorHex = colorHex
+        )
+        database.collectionDao().insertCollection(entity)
+        return id
+    }
+
+    suspend fun deleteCollection(id: String) {
+        database.collectionDao().deleteCollection(id)
+    }
+
+    suspend fun addSourceToCollection(collectionId: String, sourceId: String, sourceType: String) {
+        val ref = CollectionSourceCrossRefEntity(
+            collectionId = collectionId,
+            sourceId = sourceId,
+            sourceType = sourceType
+        )
+        database.collectionDao().addSourceToCollection(ref)
+    }
+
+    suspend fun removeSourceFromCollection(collectionId: String, sourceId: String) {
+        database.collectionDao().removeSourceFromCollection(collectionId, sourceId)
+    }
 
     // Chat sessions & messages — backed by Room, no seed data.
     val sessions: StateFlow<List<ChatSession>> = database.chatDao().getSessionsFlow()

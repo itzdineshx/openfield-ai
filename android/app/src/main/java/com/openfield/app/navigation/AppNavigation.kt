@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -19,13 +20,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.chat.ChatScreen
+import com.openfield.app.feature.document.CrossSourceQaScreen
 import com.openfield.app.feature.document.DocumentDetailScreen
 import com.openfield.app.feature.document.DocumentQAScreen
 import com.openfield.app.feature.history.HistoryScreen
 import com.openfield.app.feature.home.HomeScreen
 import com.openfield.app.feature.image.ImageAnalysisScreen
 import com.openfield.app.feature.learn.LearnScreen
+import com.openfield.app.feature.library.KnowledgeCenterScreen
 import com.openfield.app.feature.library.KnowledgePackDetailScreen
 import com.openfield.app.feature.library.LibraryScreen
 import com.openfield.app.feature.onboarding.OnboardingScreen
@@ -37,6 +41,7 @@ import com.openfield.app.feature.splash.SplashScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
 import com.openfield.app.feature.tools.ToolsScreen
 import com.openfield.app.feature.write.CreateWriteScreen
+import kotlinx.coroutines.launch
 
 private const val PREFS_NAME = "openfield_prefs"
 private const val KEY_ONBOARDING_DONE = "onboarding_completed"
@@ -247,18 +252,36 @@ fun AppNavigation(
                     )
                 }
 
-                // 13. My Library
+                // 13. Knowledge Center (Phase 3 Unified Personal Knowledge)
                 composable(AppRoutes.LIBRARY) {
-                    LibraryScreen(
+                    val repo = remember { OpenFieldRepository.getInstance() }
+                    val coroutineScope = rememberCoroutineScope()
+                    KnowledgeCenterScreen(
+                        repository = repo,
                         onNavigateToPackDetail = { packId ->
                             navController.navigate(AppRoutes.packDetailRoute(packId))
                         },
                         onNavigateToDocumentDetail = { docId ->
                             navController.navigate(AppRoutes.documentDetailRoute(docId))
                         },
+                        onNavigateToCrossSourceQa = { sourceIds, collectionId ->
+                            coroutineScope.launch {
+                                val sources = sourceIds.mapNotNull { repo.knowledgeSourceRegistry.getSourceById(it) }
+                                val coll = collectionId?.let { cid -> repo.collections.value.find { it.id == cid } }
+                                repo.crossSourceQaController.setScope(sources, coll)
+                                navController.navigate(AppRoutes.CROSS_SOURCE_QA)
+                            }
+                        },
                         onOpenDrawerOrMenu = {
                             showProfileSheet = true
                         }
+                    )
+                }
+
+                // 13b. Cross-Source Multi-Document Q&A
+                composable(AppRoutes.CROSS_SOURCE_QA) {
+                    CrossSourceQaScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 

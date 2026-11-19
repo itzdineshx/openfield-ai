@@ -46,72 +46,72 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### PRD and project review
 
-- [ ] Read the authoritative Phase 1 PRD v1.1 (Expanded Specification).
-- [ ] Read Phase 1 implementation documentation.
-- [ ] Read the completed Phase 2 roadmap and implementation report.
-- [ ] Read the completed Phase 2.1 roadmap and implementation report.
-- [ ] Review the v0.2.1 release notes and Git history.
-- [ ] Identify all existing implemented features.
-- [ ] Identify incomplete features and known limitations.
-- [ ] Map Phase 3 requirements against the original PRD.
-- [ ] Identify conflicts between Phase 3 proposals and approved PRD requirements.
-- [ ] Obtain approval for any scope change that conflicts with the PRD.
+- [x] Read the authoritative Phase 1 PRD v1.1 (Expanded Specification).
+- [x] Read Phase 1 implementation documentation.
+- [x] Read the completed Phase 2 roadmap and implementation report.
+- [x] Read the completed Phase 2.1 roadmap and implementation report.
+- [x] Review the v0.2.1 release notes and Git history.
+- [x] Identify all existing implemented features.
+- [x] Identify incomplete features and known limitations.
+- [x] Map Phase 3 requirements against the original PRD.
+- [x] Identify conflicts between Phase 3 proposals and approved PRD requirements.
+- [x] Obtain approval for any scope change that conflicts with the PRD.
 
 ### GitHub planning
 
-- [ ] Create Phase 3 GitHub milestone.
-- [ ] Create release milestones for v0.3.0 through v1.0.0.
-- [ ] Create issues for every Phase 3 gate.
-- [ ] Create feature-specific issues with clear acceptance criteria.
-- [ ] Add labels for architecture, database, AI, retrieval, UI, testing, performance, privacy, and release.
-- [ ] Add priority labels.
-- [ ] Define issue dependencies.
-- [ ] Create a Phase 3 GitHub Project board.
-- [ ] Define Definition of Ready and Definition of Done.
-- [ ] Link implementation reports and architecture documents to relevant issues.
+- [x] Create Phase 3 GitHub milestone.
+- [x] Create release milestones for v0.3.0 through v1.0.0.
+- [x] Create issues for every Phase 3 gate.
+- [x] Create feature-specific issues with clear acceptance criteria.
+- [x] Add labels for architecture, database, AI, retrieval, UI, testing, performance, privacy, and release.
+- [x] Add priority labels.
+- [x] Define issue dependencies.
+- [x] Create a Phase 3 GitHub Project board.
+- [x] Define Definition of Ready and Definition of Done.
+- [x] Link implementation reports and architecture documents to relevant issues.
 
 ### Existing architecture audit
 
-- [ ] Audit current Gradle modules and dependencies.
-- [ ] Audit package and feature organization.
-- [ ] Audit existing navigation and screen architecture.
-- [ ] Audit ViewModels, controllers, repositories, and use cases.
-- [ ] Audit shared UI components and design system.
-- [ ] Audit AiOrchestrator and LiteRT-LM lifecycle.
-- [ ] Audit PromptBuilder and mode-specific prompts.
-- [ ] Audit all existing Room entities and DAO interfaces.
-- [ ] Audit Room database version and migration history.
-- [ ] Audit FTS4 tables, triggers, and indexing lifecycle.
-- [ ] Audit document import, extraction, OCR, and chunking.
-- [ ] Audit conversation and message persistence.
-- [ ] Audit knowledge-pack catalog and installation.
-- [ ] Audit local memory and personalization.
-- [ ] Audit background tasks and coroutine lifecycle.
-- [ ] Audit Android permissions and file-storage handling.
-- [ ] Identify duplicated logic and reusable implementations.
-- [ ] Identify performance bottlenecks and reliability risks.
+- [x] Audit current Gradle modules and dependencies.
+- [x] Audit package and feature organization.
+- [x] Audit existing navigation and screen architecture.
+- [x] Audit ViewModels, controllers, repositories, and use cases.
+- [x] Audit shared UI components and design system.
+- [x] Audit AiOrchestrator and LiteRT-LM lifecycle.
+- [x] Audit PromptBuilder and mode-specific prompts.
+- [x] Audit all existing Room entities and DAO interfaces.
+- [x] Audit Room database version and migration history.
+- [x] Audit FTS4 tables, triggers, and indexing lifecycle.
+- [x] Audit document import, extraction, OCR, and chunking.
+- [x] Audit conversation and message persistence.
+- [x] Audit knowledge-pack catalog and installation.
+- [x] Audit local memory and personalization.
+- [x] Audit background tasks and coroutine lifecycle.
+- [x] Audit Android permissions and file-storage handling.
+- [x] Identify duplicated logic and reusable implementations.
+- [x] Identify performance bottlenecks and reliability risks.
 
 ### Architecture and technical documentation
 
-- [ ] Create `docs/PHASE_3_ROADMAP.md`.
-- [ ] Create `docs/PHASE_3_PRD.md`.
-- [ ] Create `docs/PHASE_3_ARCHITECTURE_AUDIT.md`.
-- [ ] Create `docs/PHASE_3_ARCHITECTURE.md`.
-- [ ] Create `docs/PHASE_3_DATABASE_DESIGN.md`.
-- [ ] Create `docs/PHASE_3_IMPLEMENTATION_PLAN.md`.
-- [ ] Create `docs/PHASE_3_TEST_STRATEGY.md`.
-- [ ] Define the unified knowledge architecture.
-- [ ] Define the source registry architecture.
-- [ ] Define the unified retrieval architecture.
-- [ ] Define context and task-session architecture.
-- [ ] Define the deterministic utility architecture.
-- [ ] Define task-management architecture.
-- [ ] Define data migration and rollback strategy.
-- [ ] Define performance budgets based on actual v0.2.1 measurements.
-- [ ] Define physical-device verification strategy.
-- [ ] Define Phase 3 acceptance criteria.
+- [x] Create `docs/PHASE_3_ROADMAP.md`.
+- [x] Create `docs/PHASE_3_PRD.md`.
+- [x] Create `docs/PHASE_3_ARCHITECTURE_AUDIT.md`.
+- [x] Create `docs/PHASE_3_ARCHITECTURE.md`.
+- [x] Create `docs/PHASE_3_DATABASE_DESIGN.md`.
+- [x] Create `docs/PHASE_3_IMPLEMENTATION_PLAN.md`.
+- [x] Create `docs/PHASE_3_TEST_STRATEGY.md`.
+- [x] Define the unified knowledge architecture.
+- [x] Define the source registry architecture.
+- [x] Define the unified retrieval architecture.
+- [x] Define context and task-session architecture.
+- [x] Define the deterministic utility architecture.
+- [x] Define task-management architecture.
+- [x] Define data migration and rollback strategy.
+- [x] Define performance budgets based on actual v0.2.1 measurements.
+- [x] Define physical-device verification strategy.
+- [x] Define Phase 3 acceptance criteria.
 
-**Gate 0 Completion:** The architecture audit, PRD traceability, database assessment, technical design, GitHub issues, and test strategy must be reviewed before feature implementation begins.
+**Gate 0 Completion:** The architecture audit, PRD traceability, database assessment, technical design, GitHub issues, and test strategy must be reviewed before feature implementation begins. — **COMPLETE (Commit `218d0d7`)**
 
 ---
 
@@ -121,72 +121,72 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Knowledge source architecture
 
-- [ ] Audit all existing local content types.
-- [ ] Identify documents, conversations, notes, generated documents, learning materials, and knowledge packs.
-- [ ] Define a common knowledge-source representation.
-- [ ] Define stable source identifiers.
-- [ ] Define source-type identification.
-- [ ] Define source metadata contracts.
-- [ ] Define source availability and indexing states.
-- [ ] Implement or adapt a centralized KnowledgeSourceRegistry.
-- [ ] Implement a unified source-resolution mechanism.
-- [ ] Connect existing document records to the registry.
-- [ ] Connect existing conversation records to the registry.
-- [ ] Connect existing local notes to the registry where supported.
-- [ ] Connect generated documents to the registry.
-- [ ] Connect installed knowledge packs to the registry.
-- [ ] Preserve references to original local records.
-- [ ] Avoid unnecessary duplication of large source content.
-- [ ] Implement source availability validation.
-- [ ] Implement deleted-source detection.
-- [ ] Implement source metadata synchronization.
-- [ ] Implement source indexing-state tracking.
+- [x] Audit all existing local content types.
+- [x] Identify documents, conversations, notes, generated documents, learning materials, and knowledge packs.
+- [x] Define a common knowledge-source representation (`KnowledgeSource`).
+- [x] Define stable source identifiers.
+- [x] Define source-type identification (`KnowledgeSourceType`).
+- [x] Define source metadata contracts.
+- [x] Define source availability and indexing states.
+- [x] Implement or adapt a centralized KnowledgeSourceRegistry (`KnowledgeSourceRegistry.kt`).
+- [x] Implement a unified source-resolution mechanism.
+- [x] Connect existing document records to the registry.
+- [x] Connect existing conversation records to the registry.
+- [x] Connect existing local notes to the registry where supported.
+- [x] Connect generated documents to the registry.
+- [x] Connect installed knowledge packs to the registry.
+- [x] Preserve references to original local records.
+- [x] Avoid unnecessary duplication of large source content.
+- [x] Implement source availability validation.
+- [x] Implement deleted-source detection.
+- [x] Implement source metadata synchronization.
+- [x] Implement source indexing-state tracking.
 
 ### Unified knowledge repository
 
-- [ ] Audit existing repositories before creating new ones.
-- [ ] Implement or adapt UnifiedKnowledgeRepository.
-- [ ] Implement source listing and filtering.
-- [ ] Implement source metadata retrieval.
-- [ ] Implement source opening and resolution.
-- [ ] Implement source deletion and cleanup coordination.
-- [ ] Implement source re-indexing coordination.
-- [ ] Implement repository-level error handling.
-- [ ] Implement cancellation support.
-- [ ] Add repository unit tests.
-- [ ] Add source lifecycle integration tests.
+- [x] Audit existing repositories before creating new ones.
+- [x] Implement or adapt UnifiedKnowledgeRepository (`OpenFieldRepository.kt`).
+- [x] Implement source listing and filtering.
+- [x] Implement source metadata retrieval.
+- [x] Implement source opening and resolution.
+- [x] Implement source deletion and cleanup coordination.
+- [x] Implement source re-indexing coordination.
+- [x] Implement repository-level error handling.
+- [x] Implement cancellation support.
+- [x] Add repository unit tests.
+- [x] Add source lifecycle integration tests.
 
 ### Unified indexing architecture
 
-- [ ] Audit existing PDF indexing and OCR pipeline.
-- [ ] Audit existing conversation indexing.
-- [ ] Audit knowledge-pack indexing.
-- [ ] Define reusable indexing contracts.
-- [ ] Implement or adapt a unified indexing coordinator.
-- [ ] Preserve existing FTS4 indexing where appropriate.
-- [ ] Define parser and index version tracking.
-- [ ] Prevent duplicate indexing.
-- [ ] Handle source content updates.
-- [ ] Handle deleted sources.
-- [ ] Handle partial indexing failures.
-- [ ] Support indexing cancellation.
-- [ ] Support safe retry and recovery.
-- [ ] Preserve page and section metadata.
-- [ ] Verify FTS4 synchronization after updates and deletion.
-- [ ] Test index consistency after application restart.
+- [x] Audit existing PDF indexing and OCR pipeline.
+- [x] Audit existing conversation indexing.
+- [x] Audit knowledge-pack indexing.
+- [x] Define reusable indexing contracts.
+- [x] Implement or adapt a unified indexing coordinator.
+- [x] Preserve existing FTS4 indexing where appropriate.
+- [x] Define parser and index version tracking.
+- [x] Prevent duplicate indexing.
+- [x] Handle source content updates.
+- [x] Handle deleted sources.
+- [x] Handle partial indexing failures.
+- [x] Support indexing cancellation.
+- [x] Support safe retry and recovery.
+- [x] Preserve page and section metadata.
+- [x] Verify FTS4 synchronization after updates and deletion.
+- [x] Test index consistency after application restart.
 
 ### Data integrity
 
-- [ ] Define source-to-content relationships.
-- [ ] Define foreign keys where appropriate.
-- [ ] Define indexing metadata and status fields.
-- [ ] Add appropriate database indexes.
-- [ ] Define deletion behavior for original files and derived indexes.
-- [ ] Prevent orphaned chunks and search records.
-- [ ] Test interrupted indexing.
-- [ ] Test repeated indexing.
-- [ ] Test source replacement and update.
-- [ ] Test database consistency after process termination.
+- [x] Define source-to-content relationships.
+- [x] Define foreign keys where appropriate (`MIGRATION_4_5`).
+- [x] Define indexing metadata and status fields.
+- [x] Add appropriate database indexes.
+- [x] Define deletion behavior for original files and derived indexes.
+- [x] Prevent orphaned chunks and search records.
+- [x] Test interrupted indexing.
+- [x] Test repeated indexing.
+- [x] Test source replacement and update.
+- [x] Test database consistency after process termination.
 
 ---
 
@@ -196,58 +196,58 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Knowledge Center interface
 
-- [ ] Design a dedicated Knowledge Center entry point.
-- [ ] Implement Knowledge Center overview.
-- [ ] Display total indexed sources.
-- [ ] Display total documents.
-- [ ] Display total notes.
-- [ ] Display saved conversations.
-- [ ] Display installed knowledge packs.
-- [ ] Display recent knowledge activity.
-- [ ] Display indexing failures.
-- [ ] Display unavailable or deleted sources appropriately.
-- [ ] Implement All Sources screen.
-- [ ] Implement Documents section.
-- [ ] Implement Conversations section.
-- [ ] Implement Notes section where supported.
-- [ ] Implement Generated Content section.
-- [ ] Implement Knowledge Packs section.
-- [ ] Implement Recent Activity section.
-- [ ] Implement empty, loading, success, and error states.
-- [ ] Implement responsive layouts.
-- [ ] Preserve existing OpenField visual consistency.
+- [x] Design a dedicated Knowledge Center entry point (`KnowledgeCenterScreen.kt`).
+- [x] Implement Knowledge Center overview.
+- [x] Display total indexed sources.
+- [x] Display total documents.
+- [x] Display total notes.
+- [x] Display saved conversations.
+- [x] Display installed knowledge packs.
+- [x] Display recent knowledge activity.
+- [x] Display indexing failures.
+- [x] Display unavailable or deleted sources appropriately.
+- [x] Implement All Sources screen.
+- [x] Implement Documents section.
+- [x] Implement Conversations section.
+- [x] Implement Notes section where supported.
+- [x] Implement Generated Content section.
+- [x] Implement Knowledge Packs section.
+- [x] Implement Recent Activity section.
+- [x] Implement empty, loading, success, and error states.
+- [x] Implement responsive layouts.
+- [x] Preserve existing OpenField visual consistency.
 
 ### Source management
 
-- [ ] Implement source preview.
-- [ ] Implement source details.
-- [ ] Implement source metadata display.
-- [ ] Implement source opening.
-- [ ] Implement source-specific actions.
-- [ ] Implement source search.
-- [ ] Implement source re-indexing.
-- [ ] Implement include/exclude from AI retrieval.
-- [ ] Implement index-only deletion where applicable.
-- [ ] Implement original-file deletion as a separate explicit action where supported.
-- [ ] Implement deletion confirmation.
-- [ ] Implement unavailable-source recovery states.
-- [ ] Ensure all actions reflect actual database state.
+- [x] Implement source preview.
+- [x] Implement source details.
+- [x] Implement source metadata display.
+- [x] Implement source opening.
+- [x] Implement source-specific actions.
+- [x] Implement source search.
+- [x] Implement source re-indexing.
+- [x] Implement include/exclude from AI retrieval.
+- [x] Implement index-only deletion where applicable.
+- [x] Implement original-file deletion as a separate explicit action where supported.
+- [x] Implement deletion confirmation.
+- [x] Implement unavailable-source recovery states.
+- [x] Ensure all actions reflect actual database state.
 
 ### Knowledge collections
 
-- [ ] Design local collection data model.
-- [ ] Implement collection creation.
-- [ ] Implement collection renaming.
-- [ ] Implement collection deletion.
-- [ ] Implement collection listing.
-- [ ] Implement adding sources to collections.
-- [ ] Implement removing sources from collections.
-- [ ] Implement collection detail screen.
-- [ ] Implement collection search.
-- [ ] Implement collection-specific retrieval scope.
-- [ ] Support multiple collections where appropriate.
-- [ ] Prevent duplicate source membership.
-- [ ] Preserve collection membership after restart.
+- [x] Design local collection data model (`CollectionEntities.kt`).
+- [x] Implement collection creation (`CreateCollectionDialog.kt`).
+- [x] Implement collection renaming.
+- [x] Implement collection deletion.
+- [x] Implement collection listing.
+- [x] Implement adding sources to collections.
+- [x] Implement removing sources from collections.
+- [x] Implement collection detail screen.
+- [x] Implement collection search.
+- [x] Implement collection-specific retrieval scope.
+- [x] Support multiple collections where appropriate.
+- [x] Prevent duplicate source membership.
+- [x] Preserve collection membership after restart.
 - [ ] Implement collection empty states.
 - [ ] Add collection unit tests.
 - [ ] Add collection persistence tests.

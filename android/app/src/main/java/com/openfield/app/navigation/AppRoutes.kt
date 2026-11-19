@@ -16,6 +16,7 @@ object AppRoutes {
     const val CHAT_SESSION = "chat_session"
     const val IMAGE_ANALYSIS = "image_analysis"
     const val DOCUMENT_QA = "document_qa"
+    const val CROSS_SOURCE_QA = "cross_source_qa"
     const val DOCUMENT_DETAIL = "document_detail"
     const val PROBLEM_SOLVER = "problem_solver"
     const val LEARN_EXPLAIN = "learn_explain"

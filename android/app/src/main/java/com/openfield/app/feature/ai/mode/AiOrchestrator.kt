@@ -104,6 +104,14 @@ class AiOrchestrator(
         return aiEngine.generateStream(prompt, config)
     }
 
+    fun streamCrossSourceQa(
+        prompt: String,
+        customConfig: AiGenerationConfig? = null
+    ): Flow<String> {
+        val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.ASK_DOCUMENT).defaultGenConfig
+        return aiEngine.generateStream(prompt, config)
+    }
+
     // -------------------------------------------------------------
     // Mode D: Solve a Problem (Interactive Diagnostics)
     // -------------------------------------------------------------

@@ -74,7 +74,7 @@ fun AboutScreen(
             )
 
             Text(
-                text = "Version 0.2.1 (Phase 2.1)",
+                text = "Version 0.3.0 (Phase 3)",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = OpenFieldSecondaryText
                 )

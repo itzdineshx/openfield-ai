@@ -176,6 +176,40 @@ EXECUTIVE SUMMARY:
 """.trimIndent()
     }
 
+    fun buildCrossSourceQaPrompt(
+        query: String,
+        evidenceList: List<com.openfield.app.core.model.KnowledgeEvidence>,
+        scopeName: String = "Selected Sources"
+    ): String {
+        val evidenceBuilder = StringBuilder()
+        for (item in evidenceList) {
+            val pageTag = if (item.pageNumber != null) " (Page ${item.pageNumber})" else if (item.section != null) " (${item.section})" else ""
+            evidenceBuilder.append("[Source: ${item.sourceTitle}$pageTag]:\n")
+            evidenceBuilder.append(item.text.trim())
+            evidenceBuilder.append("\n\n")
+        }
+
+        val sourceNames = evidenceList.map { it.sourceTitle }.distinct().joinToString(", ")
+
+        return """
+Answer the following question about '$scopeName' ($sourceNames) using ONLY the provided multi-source evidence.
+
+RULES:
+1. Ground your answer strictly on the facts in the provided evidence.
+2. For EVERY claim, cite the source using: [Source: <Title> (Page <P>)] or [Source: <Title>].
+3. If sources present conflicting information, explicitly point out the discrepancy.
+4. If the provided evidence is insufficient to answer the question, state: "The selected sources do not contain sufficient information to answer this question."
+5. Never invent sources, page numbers, or external facts.
+
+MULTI-SOURCE EVIDENCE:
+$evidenceBuilder
+QUESTION:
+$query
+
+GROUNDED ANSWER:
+""".trimIndent()
+    }
+
     fun buildTroubleshootIntakePrompt(problemDescription: String, hasImage: Boolean = false): String {
         val imageNotice = if (hasImage) {
             "\nNote: A contextual photo of the physical equipment/part is provided. Inspect the image for visible symptoms, burnt components, leakage, error codes, or damage, and integrate visual findings directly into your diagnostic check.\n"
