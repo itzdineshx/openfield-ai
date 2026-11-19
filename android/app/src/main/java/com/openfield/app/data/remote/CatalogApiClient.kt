@@ -20,8 +20,9 @@ sealed interface CatalogResult {
  * Never transmits personal prompts, documents, or private device data.
  */
 class CatalogApiClient(
-    private val baseUrl: String = "http://10.0.2.2:8000" // Default Android emulator host / configurable endpoint
+    private val candidateUrls: List<String> = listOf("http://127.0.0.1:8000", "http://10.0.2.2:8000")
 ) {
+    constructor(baseUrl: String) : this(listOf(baseUrl))
 
     suspend fun fetchCatalog(
         query: String? = null,
@@ -29,72 +30,76 @@ class CatalogApiClient(
         cursor: Int = 0,
         limit: Int = 20
     ): CatalogResult = withContext(Dispatchers.IO) {
-        var connection: HttpURLConnection? = null
-        try {
-            val queryParams = mutableListOf<String>()
-            if (!query.isNullOrBlank()) queryParams.add("query=${query.trim()}")
-            if (!category.isNullOrBlank()) queryParams.add("category=${category.trim()}")
-            queryParams.add("cursor=$cursor")
-            queryParams.add("limit=$limit")
+        var lastError: CatalogResult.Error? = null
+        for (baseUrl in candidateUrls) {
+            var connection: HttpURLConnection? = null
+            try {
+                val queryParams = mutableListOf<String>()
+                if (!query.isNullOrBlank()) queryParams.add("query=${query.trim()}")
+                if (!category.isNullOrBlank()) queryParams.add("category=${category.trim()}")
+                queryParams.add("cursor=$cursor")
+                queryParams.add("limit=$limit")
 
-            val urlString = "$baseUrl/api/v1/packs?${queryParams.joinToString("&")}"
-            val url = URL(urlString)
+                val urlString = "$baseUrl/api/v1/packs?${queryParams.joinToString("&")}"
+                val url = URL(urlString)
 
-            connection = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 5000
-                readTimeout = 8000
-                setRequestProperty("Accept", "application/json")
-            }
-
-            val responseCode = connection.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val responseText = connection.inputStream.bufferedReader().use(BufferedReader::readText)
-                val json = JSONObject(responseText)
-                val itemsArray = json.getJSONArray("items")
-                val total = json.optInt("total", itemsArray.length())
-                val manifests = mutableListOf<KnowledgePackManifest>()
-
-                for (i in 0 until itemsArray.length()) {
-                    val obj = itemsArray.getJSONObject(i)
-                    val topicsArray = obj.optJSONArray("topics")
-                    val topics = mutableListOf<String>()
-                    if (topicsArray != null) {
-                        for (t in 0 until topicsArray.length()) {
-                            topics.add(topicsArray.getString(t))
-                        }
-                    }
-
-                    manifests.add(
-                        KnowledgePackManifest(
-                            packId = obj.getString("pack_id"),
-                            title = obj.getString("title"),
-                            description = obj.getString("description"),
-                            category = obj.getString("category"),
-                            version = obj.getString("version"),
-                            size = obj.getString("size"),
-                            iconColorHex = obj.optLong("icon_color_hex", 0xFF1E88E5),
-                            checksumSha256 = obj.getString("checksum_sha256"),
-                            provenance = obj.optString("provenance", "Remote Catalog"),
-                            topics = topics
-                        )
-                    )
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 3000
+                    readTimeout = 5000
+                    setRequestProperty("Accept", "application/json")
                 }
 
-                CatalogResult.Success(items = manifests, total = total)
-            } else {
-                CatalogResult.Error("Catalog service returned HTTP $responseCode")
+                val responseCode = connection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val responseText = connection.inputStream.bufferedReader().use(BufferedReader::readText)
+                    val json = JSONObject(responseText)
+                    val itemsArray = json.getJSONArray("items")
+                    val total = json.optInt("total", itemsArray.length())
+                    val manifests = mutableListOf<KnowledgePackManifest>()
+
+                    for (i in 0 until itemsArray.length()) {
+                        val obj = itemsArray.getJSONObject(i)
+                        val topicsArray = obj.optJSONArray("topics")
+                        val topics = mutableListOf<String>()
+                        if (topicsArray != null) {
+                            for (t in 0 until topicsArray.length()) {
+                                topics.add(topicsArray.getString(t))
+                            }
+                        }
+
+                        manifests.add(
+                            KnowledgePackManifest(
+                                packId = obj.getString("pack_id"),
+                                title = obj.getString("title"),
+                                description = obj.getString("description"),
+                                category = obj.getString("category"),
+                                version = obj.getString("version"),
+                                size = obj.getString("size"),
+                                iconColorHex = obj.optLong("icon_color_hex", 0xFF1E88E5),
+                                checksumSha256 = obj.getString("checksum_sha256"),
+                                provenance = obj.optString("provenance", "Remote Catalog"),
+                                topics = topics
+                            )
+                        )
+                    }
+
+                    return@withContext CatalogResult.Success(items = manifests, total = total)
+                } else {
+                    lastError = CatalogResult.Error("Catalog service returned HTTP $responseCode")
+                }
+            } catch (e: java.net.ConnectException) {
+                lastError = CatalogResult.Error("Catalog service is offline or unreachable.", isOffline = true)
+            } catch (e: java.net.UnknownHostException) {
+                lastError = CatalogResult.Error("Unable to resolve catalog service host.", isOffline = true)
+            } catch (e: java.net.SocketTimeoutException) {
+                lastError = CatalogResult.Error("Catalog request timed out. Please check your connection.", isOffline = true)
+            } catch (e: Exception) {
+                lastError = CatalogResult.Error(e.message ?: "Failed to refresh knowledge pack catalog.")
+            } finally {
+                connection?.disconnect()
             }
-        } catch (e: java.net.ConnectException) {
-            CatalogResult.Error("Catalog service is offline or unreachable.", isOffline = true)
-        } catch (e: java.net.UnknownHostException) {
-            CatalogResult.Error("Unable to resolve catalog service host.", isOffline = true)
-        } catch (e: java.net.SocketTimeoutException) {
-            CatalogResult.Error("Catalog request timed out. Please check your connection.", isOffline = true)
-        } catch (e: Exception) {
-            CatalogResult.Error(e.message ?: "Failed to refresh knowledge pack catalog.")
-        } finally {
-            connection?.disconnect()
         }
+        return@withContext lastError ?: CatalogResult.Error("Catalog service is unreachable.", isOffline = true)
     }
 }

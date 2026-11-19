@@ -613,7 +613,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 - [x] Verify backend failure does not break local AI
 - [x] Verify all existing workspaces on physical hardware
 - [x] Generate the final release APK (114.79 MB)
-- [x] Calculate the final APK SHA-256 checksum (`7AB56552E3078B83DEB93FBFDA57F67200D9384377BCEB9318519FA00D37A190`)
+- [x] Calculate the final APK SHA-256 checksum (`7f2df3bae1ed1cbec7084add57a60ddc70510fc03b03b760a43614dce5a39979`)
 - [x] Verify the checksum against the release artifact
 - [x] Archive the test report and device verification evidence
 - [x] Tag the release as v0.2.1

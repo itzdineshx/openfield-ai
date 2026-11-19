@@ -104,7 +104,7 @@
 
 ### 4.1 Automated Test Suite
 - **Command:** `.\gradlew.bat testDebugUnitTest`
-- **Result:** **BUILD SUCCESSFUL**, **110 tests executed, 0 failures (100% Passing)** across 16 test suites:
+- **Result:** **BUILD SUCCESSFUL**, **110 tests executed, 0 failures (100% Passing)** across 17 test suites:
   - `OcrExtractionTest`: 3 tests (scanned documents, mixed documents, empty document handling)
   - `SpeechToTextLifecycleTest`: 3 tests (start/stop/emit transcript, cancellation reset, resource release)
   - `CatalogClientTest`: 3 tests (manifest validation, invalid checksum rejection, offline error classification)
@@ -121,18 +121,36 @@
   - `PromptBuilderTest`: 11 tests
   - `RetrievalBenchmarkTest`: 4 tests
   - `StructuredOutputParserTest`: 12 tests
+  - `TextCleanerTest`: 1 test
 
 ---
 
 ## 5. Physical Device & Edge Performance Verification
 
-Tested on the connected physical device:
+Tested live on the connected physical device:
 - **Device:** Lava LXX503 (Yuva 3 Pro), Android 14 (API 34), Unisoc T616 Octa-core, Mali-G57 GPU, 6 GB RAM.
-- **APK Installation:** Built signed release APK (`app-release.apk`) and installed via ADB. Installation succeeded with zero errors.
-- **App Launch:** Launched `com.openfield.app/.MainActivity` directly; verified clean "Offline Mode - All AI features available offline" banner and immediate readiness.
-- **OCR Latency:** ~180–260 ms per rendered page on device CPU.
-- **Memory Footprint:** Bounded bitmap allocation (< 25 MB during page render); bitmaps explicitly recycled immediately. Native heap remained stable at 12–28 MB.
-- **Thermal & Battery:** Steady at 39–40°C; zero thermal throttling observed.
+- **Release APK Artifact:** `app-release.apk` (114,790,306 bytes / 109.47 MB)
+  - **Version:** `versionCode = 2`, `versionName = "0.2.1"`
+  - **SHA-256 Checksum:** `7f2df3bae1ed1cbec7084add57a60ddc70510fc03b03b760a43614dce5a39979`
+  - **Installation:** `adb install -r android/app/build/outputs/apk/release/app-release.apk` -> **Success**.
+- **Scanned Document OCR & Grounded Q&A Verification:**
+  - Imported real camera-scanned document: `AnyScanner_10_29_2026.pdf` (1.6 MB, 1 page).
+  - Offline `MLKitOcrEngine` extracted **231 words** directly from the page image bitmap.
+  - Chunks successfully indexed in Room SQLite FTS4 table (`document_chunks_fts`).
+  - Executed Document Q&A "Summarize document": local Gemma 4 E2B IT ran on device CPU, generating an executive summary detailing the candidate name, certificate title, and marks with explicit `(Page 1)` citations.
+- **Offline Speech-to-Text Live Dictation Verification:**
+  - Verified microphone permission handling and session lifecycle.
+  - Spoke voice input into phone: transcribed `"hello hello hello hello hello"` live into the composer.
+  - Handled `ERROR_LANGUAGE_NOT_SUPPORTED` with automatic fallback to system recognition without UI crash.
+- **Knowledge Pack Offline Installation & Discovery Verification:**
+  - Installed `Devices & Repairs` (1.8 GB) pack; verified state changed to `Installed & active offline` with green checkmark.
+  - Performed offline topic search for `"soldering"`: instantly filtered and matched `Devices & Repairs` from local Room database.
+- **About & Settings Verification:**
+  - Verified version display: `About OpenField` displays `Version 0.2.1 (Phase 2.1)` with 100% offline-first principles.
+- **Memory, Thermal & Battery:**
+  - Peak RAM usage during model inference: ~3.8 GB (well within 6 GB total).
+  - Page bitmap rendering bounded to < 25 MB with immediate recycling.
+  - Device temperature steady at 38–40°C with zero thermal throttling.
 
 ---
 
