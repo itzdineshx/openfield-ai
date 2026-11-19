@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import com.openfield.app.core.components.HomePromptComposer
+import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.model.ModelInstallationState
 import com.openfield.app.feature.ai.model.ModelManagementDialog
 import com.openfield.app.core.components.OfflineStatusBanner
@@ -70,6 +71,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val modelState by repository.modelRepository.installationState.collectAsState()
+    val engineState by repository.aiEngine.engineState.collectAsState()
     var promptInput by remember { mutableStateOf("") }
     var showModelDialog by remember { mutableStateOf(false) }
 
@@ -135,15 +137,21 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Offline Status Banner with dynamic on-device AI state
-            val bannerTitle = when (val state = modelState) {
-                is ModelInstallationState.Installed -> "Offline Mode (${state.activeModel.displayName})"
-                is ModelInstallationState.Downloading -> "Downloading AI Model (${state.progressPercent}%)"
-                is ModelInstallationState.Verifying -> "Verifying AI Model..."
+            val bannerTitle = when {
+                modelState is ModelInstallationState.Downloading ->
+                    "Downloading AI Model (${(modelState as ModelInstallationState.Downloading).progressPercent}%)"
+                modelState is ModelInstallationState.Verifying -> "Verifying AI Model..."
+                modelState is ModelInstallationState.Installed && engineState is AiEngineState.Loading ->
+                    "Loading AI Model..."
+                modelState is ModelInstallationState.Installed ->
+                    "Offline Mode (${(modelState as ModelInstallationState.Installed).activeModel.displayName})"
                 else -> "Setup Offline AI Model"
             }
-            val bannerSubtitle = when (modelState) {
-                is ModelInstallationState.Installed -> "All AI features available offline"
-                is ModelInstallationState.Downloading -> "Tap to view background download"
+            val bannerSubtitle = when {
+                modelState is ModelInstallationState.Downloading -> "Tap to view background download"
+                modelState is ModelInstallationState.Installed && engineState is AiEngineState.Loading ->
+                    "Preparing local AI, features will be ready shortly"
+                modelState is ModelInstallationState.Installed -> "All AI features available offline"
                 else -> "Tap to download or import Gemma 4 E2B IT"
             }
             OfflineStatusBanner(

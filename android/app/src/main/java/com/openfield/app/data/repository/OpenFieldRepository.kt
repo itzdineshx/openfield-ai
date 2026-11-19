@@ -16,6 +16,7 @@ import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.data.local.entity.ChatSessionEntity
 import com.openfield.app.data.local.entity.DocumentEntity
+import com.openfield.app.feature.ai.engine.AiEngineState
 import com.openfield.app.feature.ai.engine.LocalAiEngine
 import com.openfield.app.feature.ai.model.ModelRepository
 import com.openfield.app.feature.ai.tools.ExplainConceptUseCase
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -164,6 +166,16 @@ class OpenFieldRepository(
     init {
         initTools()
         monitorActiveChatSession()
+        autoLoadModelIfInstalled()
+    }
+
+    private fun autoLoadModelIfInstalled() {
+        scope.launch {
+            val file = modelRepository.getActiveModelFile() ?: return@launch
+            if (!aiEngine.isReady()) {
+                aiEngine.initialize(file)
+            }
+        }
     }
 
     private fun monitorActiveChatSession() {
@@ -192,23 +204,27 @@ class OpenFieldRepository(
         }
     }
 
-    /**
-     * Returns null if the engine is already loaded and ready for inference, or a user-facing
-     * error message otherwise.
-     *
-     * Important: this function does NOT trigger native engine initialization on its own.
-     * LiteRT-LM's `nativeCreateEngine` can and does abort the process (SIGABRT) on container-
-     * version mismatch or GPU-delegate op failure — not throw an exception — so initializing
-     * silently from inside `sendMessage` would make the first user prompt kill the app without
-     * the user ever seeing which action caused it. The user must explicitly load the model from
-     * AI Model Management before chat is unlocked.
-     */
-    private fun ensureEngineReady(): String? {
-        if (aiEngine.isReady()) return null
-        if (modelRepository.getActiveModelFile() == null) {
-            return "No on-device AI model is installed. Open AI Model Management to download or import the model."
+    private suspend fun ensureEngineReady(): String? {
+        val state = aiEngine.engineState.value
+        if (state is AiEngineState.Ready || state is AiEngineState.Generating) return null
+
+        return when (state) {
+            is AiEngineState.Loading -> {
+                val finalState = aiEngine.engineState.first {
+                    it is AiEngineState.Ready || it is AiEngineState.Error
+                }
+                if (finalState is AiEngineState.Ready) null
+                else "AI model failed to load: ${(finalState as? AiEngineState.Error)?.message ?: "unknown error"}"
+            }
+            is AiEngineState.Error -> "AI model error: ${state.message}. Please restart the app."
+            else -> {
+                if (modelRepository.getActiveModelFile() == null) {
+                    "No on-device AI model is installed. Open AI Model Management to download or import the model."
+                } else {
+                    "AI model not ready. Please restart the app."
+                }
+            }
         }
-        return "The AI model is installed but has not been loaded yet. Open AI Model Management and tap \"Load model\" to initialize it."
     }
 
     /**
