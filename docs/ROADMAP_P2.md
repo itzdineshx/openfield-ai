@@ -275,8 +275,8 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 - [x] Test release candidate on supported physical devices (Verified all 6 modes on Lava LXX503 hardware)
 - [x] Verify offline operation after clean installation and model setup (Verified zero external API dependency, offline indicators, and local SQLite/FTS4)
 - [x] Generate release candidate checksum (SHA-256: 39E13B7BB165A16849B94930ED4D237FC157D6DD604AF5FCB2C33C04F2F5077F)
-- [ ] Prepare signed release build
-- [ ] Publish Phase 2 release
+- [x] Prepare signed release build (Generated signed release APK `app-release.apk`, 67.4 MB, SHA-256: `44E5EFF68031FF5DB1C74A75DA734A0F288FC8D035AEC5CED163987CBFA220F8`, verified installation on Lava LXX503 hardware)
+- [x] Publish Phase 2 release (v0.2.0 release tagged, release notes finalized, signed release artifacts generated)
 
 ---
 
