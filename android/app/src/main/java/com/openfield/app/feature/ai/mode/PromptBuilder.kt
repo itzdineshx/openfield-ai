@@ -210,12 +210,11 @@ OUTPUT JSON FORMAT ONLY:
 ```
 
 RULES:
-- Provide 2 to 4 distinct selectable options.
-- Keep options concise (under 12 words) and mutually exclusive.
-- Keep the question under 25 words and ask about something the user can check right now.
+- Provide 2 to 4 distinct selectable options (under 12 words each).
+- Ask a single targeted check under 25 words.
 - Highlight safety warnings if dangerous components are involved.
-- Set "isEscalationNeeded": true and provide "escalationReason" if the situation involves dangerous mains voltage, explosive gases, toxic chemical exposure, structural collapse risk, or requires certified technician tooling.
-- Respond with valid JSON.
+- Set "isEscalationNeeded": true with "escalationReason" if mains voltage, flammable gas, or toxic hazard is present.
+- Respond with valid JSON only.
 """.trimIndent()
     }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.openfield.app.core.util.PerformanceTracker
+import com.openfield.app.feature.document.ocr.LocalOcrEngine
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
@@ -30,6 +31,8 @@ data class DocumentExtractionResult(
 )
 
 class PdfTextExtractor(private val context: Context) {
+
+    private val ocrEngine by lazy { LocalOcrEngine(context) }
 
     init {
         try {
@@ -103,7 +106,16 @@ class PdfTextExtractor(private val context: Context) {
 
                     stripper.startPage = pageIndex
                     stripper.endPage = pageIndex
-                    val pageText = stripper.getText(pdDocument).trim()
+                    var pageText = stripper.getText(pdDocument).trim()
+
+                    // If page has insufficient digital text, run memory-bounded on-device OCR
+                    if (pageText.length < 30) {
+                        val ocrText = ocrEngine.extractTextFromPdfPage(uri, pageIndex - 1)
+                        if (!ocrText.isNullOrBlank()) {
+                            pageText = ocrText.trim()
+                        }
+                    }
+
                     totalChars += pageText.length
                     val words = pageText.split(Regex("\\s+")).count { it.isNotBlank() }
                     totalWords += words

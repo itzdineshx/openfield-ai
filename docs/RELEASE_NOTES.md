@@ -1,5 +1,43 @@
 # OpenField Release Notes
 
+## Version 0.2.1 — Phase 2.1 Offline Intelligence, Reliable OCR & Real Catalog
+
+**Release Date:** November 2026
+
+OpenField Phase 2.1 hardens the offline-first capabilities of the application by introducing bundled on-device OCR, an extensible local speech recognition abstraction, real knowledge-pack catalog synchronization via FastAPI, and streamlined prompt budgeting:
+
+---
+
+### Highlights & Key Features
+
+#### 1. Fully Offline On-Device OCR (`LocalOcrEngine`)
+- **Bundled ML Kit Latin Recognition:** Integrates `com.google.mlkit:text-recognition:16.0.1` containing bundled recognition models directly inside the APK. Requires zero network access, zero Google Play Services, and zero cloud calls.
+- **Selective Scanned Page Processing:** Digital text pages are extracted instantly via PDFBox. Scanned pages or pages with `< 30` characters are rendered via Android `PdfRenderer` into memory-bounded bitmaps (max 1600px dimension) and processed by `LocalOcrEngine`.
+- **Immediate Resource Cleanup:** Native Bitmaps are explicitly recycled immediately after recognition, preventing heap bloat and Out-Of-Memory errors on 4–6 GB devices.
+- **Knowledge Engine Integration:** OCR extracted text preserves exact 1-based page numbers and is chunked into SQLite FTS4, enabling full grounded Q&A with clickable citation cards (`Page X >`).
+
+#### 2. Guaranteed Local Speech Recognition Architecture (`SpeechToTextEngine`)
+- **Dedicated Engine Abstraction:** Decoupled speech recognition from the generative LLM pipeline (`AiOrchestrator`).
+- **Priority Fallback Chain:** Automatically leverages locally installed acoustic models via `LocalModelSpeechToTextEngine` if present, with seamless fallback to `SystemSpeechToTextEngine` configured with `android.speech.extra.PREFER_OFFLINE = true`.
+- **Strict Privacy Lifecycle:** Recording begins only on explicit user tap; mic permission requested lazily; immediate release of audio buffers upon cancellation or completion; zero background listening.
+
+#### 3. Real Knowledge-Pack Catalog & Remote Synchronization
+- **FastAPI Backend Integration (`backend/app/main.py`):** Fully implemented REST catalog service exposing `GET /health`, `GET /api/v1/packs`, `GET /api/v1/packs/{pack_id}`, and `POST /v1/downloads/{pack_version_id}/url`.
+- **Remote Client (`CatalogApiClient.kt`):** User-initiated catalog refresh with HTTP error handling, connection timeout management, and offline detection.
+- **Offline Cache Preservation:** Downloaded and cached catalog entries in Room are preserved during network outages; a failed refresh never wipes the local database.
+- **Integrity Validation:** Enforces semantic versioning, SHA-256 checksum verification, and provenance checks.
+
+#### 4. Prompt Optimization & Token Budgeting
+- **Streamlined System Directives:** Removed redundant prompt instructions across `PromptBuilder.kt`, reducing template overhead and lowering Time to First Token (TTFT).
+- **Quality & Contract Invariants:** Maintained strict JSON contracts for troubleshooting and interactive tutoring while ensuring Ask AI remains purely conversational.
+
+#### 5. Verification & Test Evidence
+- **Automated Test Suite:** **110/110 unit tests passing (100% green)** across 16 test suites.
+- **Release APK:** `app-release.apk` (114.79 MB, SHA-256: `7AB56552E3078B83DEB93FBFDA57F67200D9384377BCEB9318519FA00D37A190`).
+- **Physical Device:** Installed and verified in offline mode on Lava LXX503 (Android 14, 6 GB RAM).
+
+---
+
 ## Version 0.2.0 — Phase 2 Mode-Based AI Architecture & Deepened Offline Workspaces
 
 **Release Date:** November 2026

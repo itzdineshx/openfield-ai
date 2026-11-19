@@ -78,6 +78,9 @@ dependencies {
     // PDFBox Android for real document text extraction
     implementation(libs.pdfbox.android)
 
+    // ML Kit On-Device Text Recognition (bundled model, 100% offline, zero cloud calls)
+    implementation(libs.mlkit.text.recognition)
+
     testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

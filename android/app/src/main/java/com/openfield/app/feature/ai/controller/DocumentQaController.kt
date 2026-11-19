@@ -53,7 +53,7 @@ class DocumentQaController(
                     summary = entity.summary,
                     keyPoints = listOf(
                         "Pages: ${entity.pageCount}",
-                        if (entity.isScanned) "Scanned document (OCR required)" else "Indexed locally via FTS4"
+                        if (entity.isScanned) "Scanned document (OCR processed)" else "Indexed locally via FTS4"
                     ),
                     sampleQuestions = emptyList(),
                     isCustomImport = true
@@ -271,22 +271,14 @@ class DocumentQaController(
                         return@launch
                     }
 
-                    if (doc.isScanned) {
-                        updateAssistantMessage(
-                            assistantMsgId,
-                            "Notice: '${doc.name}' appears to be a scanned image without selectable text. Text extraction requires an OCR pass.",
-                            isComplete = true
-                        )
-                        return@launch
-                    }
-
                     val chunks = retriever.retrieveRelevantChunks(docId, question, maxChunks = 4)
                     if (chunks.isEmpty()) {
-                        updateAssistantMessage(
-                            assistantMsgId,
-                            "The document '${doc.name}' does not contain enough relevant information to answer this question.",
-                            isComplete = true
-                        )
+                        val message = if (doc.isScanned) {
+                            "Notice: '${doc.name}' is an image-only document and no legible text could be recognized on the queried pages."
+                        } else {
+                            "The document '${doc.name}' does not contain enough relevant information to answer this question."
+                        }
+                        updateAssistantMessage(assistantMsgId, message, isComplete = true)
                         return@launch
                     }
 

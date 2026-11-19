@@ -3,6 +3,8 @@ package com.openfield.app.feature.library
 import com.openfield.app.core.model.KnowledgePack
 import com.openfield.app.data.local.dao.KnowledgePackDao
 import com.openfield.app.data.local.entity.KnowledgePackEntity
+import com.openfield.app.data.remote.CatalogApiClient
+import com.openfield.app.data.remote.CatalogResult
 import java.security.MessageDigest
 
 /**
@@ -28,7 +30,8 @@ data class KnowledgePackManifest(
  * - Local search and discovery by keyword, category, and topic.
  */
 class KnowledgePackManager(
-    private val dao: KnowledgePackDao
+    private val dao: KnowledgePackDao,
+    private val apiClient: CatalogApiClient = CatalogApiClient()
 ) {
 
     companion object {
@@ -136,6 +139,37 @@ class KnowledgePackManager(
             )
         }
         dao.insertAll(entities)
+    }
+
+    /**
+     * Refreshes the pack catalog from the remote FastAPI service if online.
+     * Caches all validated manifests locally in Room database.
+     * If the remote service is unavailable, retains existing local packs without data loss.
+     */
+    suspend fun refreshRemoteCatalog(): CatalogResult {
+        val result = apiClient.fetchCatalog()
+        if (result is CatalogResult.Success) {
+            val existing = dao.getKnowledgePacks()
+            val entities = result.items.mapNotNull { manifest ->
+                if (validateManifest(manifest).isSuccess) {
+                    val existingPack = existing.find { it.id == manifest.packId }
+                    KnowledgePackEntity(
+                        id = manifest.packId,
+                        title = manifest.title,
+                        description = manifest.description,
+                        size = manifest.size,
+                        isInstalled = existingPack?.isInstalled ?: false,
+                        category = manifest.category,
+                        iconColorHex = manifest.iconColorHex,
+                        topicsJson = formatTopics(manifest.topics)
+                    )
+                } else null
+            }
+            if (entities.isNotEmpty()) {
+                dao.insertAll(entities)
+            }
+        }
+        return result
     }
 
     /**
