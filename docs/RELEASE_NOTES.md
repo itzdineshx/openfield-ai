@@ -1,5 +1,54 @@
 # OpenField Release Notes
 
+## Version 0.4.0 — Phase 3 Context-Aware Personal Assistant & Practical Offline Intelligence
+
+**Release Date:** November 2026
+
+OpenField v0.4.0 delivers seamless cross-workspace continuity and deterministic offline utilities, allowing ongoing user tasks to flow naturally between features without manual re-entry, while introducing high-precision offline calculation and unit conversion tools:
+
+---
+
+### Highlights & Key Features
+
+#### 1. Cross-Workspace Shared Context & Task Sessions (`SharedContextManager`)
+- **Seamless Task Handoffs:** Move smoothly across specialized workspaces with pre-loaded context:
+  - **Document Q&A → Create & Write:** One tap on "Draft Note" transfers active document citations and summaries into the writing canvas with source references attached.
+  - **Image Analysis → Problem Solver:** One tap on "Troubleshoot" transfers visual inspection findings and the captured equipment photo directly into guided diagnostics.
+  - **Knowledge Center → Ask AI:** Send multi-source search results and passages into conversational chat.
+- **Task Sessions Persistence (`TaskSessionEntity`):** Tracks ongoing multi-step user engagements with Room SQLite persistence, surviving process termination.
+
+#### 2. Deterministic Offline Math Engine & Expression Evaluator (`DeterministicMathEngine`)
+- **Zero-LLM Fast Arithmetic:** Standard mathematical expression evaluator built using the Shunting-yard algorithm and Reverse Polish Notation (RPN).
+- **Rich Operator & Function Support:** Evaluates addition, subtraction, multiplication, division, exponents (`^`), modulo (`%`), unary negative, parentheses, and functions (`sqrt`, `abs`, `round`).
+- **Zero Hallucination Guarantee:** Guaranteed mathematical precision without relying on LLM guesses, network calls, or external dependencies.
+
+#### 3. Deterministic Offline Unit Converter (`UnitConverter`)
+- **Multi-Category Conversion:** Offline formulas across 5 key categories:
+  - **Length:** Meters, Kilometers, Centimeters, Millimeters, Miles, Yards, Feet, Inches.
+  - **Mass & Weight:** Kilograms, Grams, Milligrams, Pounds, Ounces.
+  - **Temperature:** Celsius, Fahrenheit, Kelvin.
+  - **Digital Storage:** Bytes, KB, MB, GB, TB.
+  - **Speed:** m/s, km/h, mph, knots.
+- **Instant Two-Way Conversion:** Dynamic swap and real-time formatting.
+
+#### 4. Dedicated Offline Calculator & Units Screen (`CalculatorConverterScreen`)
+- **Interactive Keypad & Display:** Clean Material 3 split interface featuring an expression calculator with a physical keypad and a unit converter with category tabs and dropdown pickers.
+- **Direct Access from AI Tools:** Prominently featured in the Tools gallery and accessible directly via `AppRoutes.CALCULATOR`.
+
+#### 5. Room Database v6 Non-Destructive Migration (`MIGRATION_5_6`)
+- **Task Sessions Schema:** Automatically creates `task_sessions` table with indices on `updatedAt` and `status`.
+- **100% Data Integrity:** Non-destructive migration preserving all user documents, collections, conversations, and drafts.
+
+#### 6. Verification & Release Artifacts
+- **Automated Test Suite:** **141/141 unit tests passing (100% green)** including math precedence, unit conversions, task handoffs, and migration DDL.
+- **Signed Release APK:**
+  - File: `android/app/build/outputs/apk/release/app-release.apk`
+  - Size: 114,921,382 bytes (~109.6 MB)
+  - SHA-256: `BE5A5765939EDD8A01F1B708149171EBCCCDCB384DB177284C0E7A8761F47F29`
+  - Target: Android 14+ / ARM64, Unisoc T616 / Snapdragon CPU local execution.
+
+---
+
 ## Version 0.3.0 — Phase 3 Unified Personal Knowledge
 
 **Release Date:** November 2026

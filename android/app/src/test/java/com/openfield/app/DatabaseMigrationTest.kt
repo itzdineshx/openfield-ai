@@ -66,4 +66,31 @@ class DatabaseMigrationTest {
         assertEquals("DOCUMENT", ref.sourceType)
         assertTrue(ref.addedAt > 0)
     }
+
+    @Test
+    fun migration_5_to_6_hasCorrectVersions() {
+        assertEquals(5, OpenFieldDatabase.MIGRATION_5_6.startVersion)
+        assertEquals(6, OpenFieldDatabase.MIGRATION_5_6.endVersion)
+    }
+
+    @Test
+    fun migration_5_to_6_executesExpectedDdlStatements() {
+        val executedSql = mutableListOf<String>()
+        val mockDb = Proxy.newProxyInstance(
+            SupportSQLiteDatabase::class.java.classLoader,
+            arrayOf(SupportSQLiteDatabase::class.java)
+        ) { _, method, args ->
+            if (method.name == "execSQL" && args != null && args.isNotEmpty()) {
+                executedSql.add(args[0] as String)
+            }
+            null
+        } as SupportSQLiteDatabase
+
+        OpenFieldDatabase.MIGRATION_5_6.migrate(mockDb)
+
+        val allSql = executedSql.joinToString("\n")
+        assertTrue(allSql.contains("CREATE TABLE IF NOT EXISTS `task_sessions`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_sessions_updatedAt`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_task_sessions_status`"))
+    }
 }

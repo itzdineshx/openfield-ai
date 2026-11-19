@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Summarize
@@ -89,6 +90,7 @@ private val documentStarterQuestions = listOf(
 fun DocumentQAScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDocumentDetail: (String) -> Unit,
+    onNavigateToCreateWrite: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -278,6 +280,20 @@ fun DocumentQAScreen(
                                     icon = Icons.Default.Summarize,
                                     enabled = !isQuerying,
                                     onClick = { controller.summarizeDocument(activeDoc.id) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                QuickAction(
+                                    label = "Draft Note",
+                                    icon = Icons.Default.EditNote,
+                                    enabled = !isQuerying,
+                                    onClick = {
+                                        repository.sharedContextManager.handoffToWriter(
+                                            title = activeDoc.name,
+                                            initialDraft = activeDoc.summary.ifBlank { "Notes on ${activeDoc.name}" },
+                                            sourceDocIds = listOf(activeDoc.id)
+                                        )
+                                        onNavigateToCreateWrite()
+                                    },
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (documents.size >= 2) {

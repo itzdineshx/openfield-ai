@@ -121,6 +121,22 @@ fun ProblemSolverScreen(
         if (uri != null) controller.setImage(context, uri)
     }
 
+    LaunchedEffect(Unit) {
+        val handoff = repository.sharedContextManager.consumePendingHandoff()
+        if (handoff != null && handoff.targetWorkspace == "PROBLEM_SOLVER") {
+            if (!handoff.textSnippet.isNullOrBlank()) {
+                problemInput = handoff.textSnippet
+            }
+            if (handoff.imagePath != null) {
+                try {
+                    controller.setImage(context, Uri.parse(handoff.imagePath))
+                } catch (e: Exception) {
+                    // Ignore parse error
+                }
+            }
+        }
+    }
+
     LaunchedEffect(uiState::class) { scrollState.animateScrollTo(0) }
 
     Scaffold(

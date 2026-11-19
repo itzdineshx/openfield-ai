@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
@@ -94,6 +95,7 @@ private val imageQuickQuestions = listOf(
 @Composable
 fun ImageAnalysisScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToProblemSolver: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -242,6 +244,19 @@ fun ImageAnalysisScreen(
                                     isSaved = true
                                     Toast.makeText(context, "Analysis saved", Toast.LENGTH_SHORT).show()
                                 }
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ResultAction(
+                            label = "Troubleshoot",
+                            icon = Icons.Default.Build,
+                            onClick = {
+                                val summary = sections?.subject ?: "Inspecting image issue"
+                                repository.sharedContextManager.handoffToTroubleshooter(
+                                    problemSummary = summary,
+                                    imagePath = selectedUri?.toString()
+                                )
+                                onNavigateToProblemSolver()
                             },
                             modifier = Modifier.weight(1f)
                         )

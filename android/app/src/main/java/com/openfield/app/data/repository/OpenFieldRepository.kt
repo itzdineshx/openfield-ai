@@ -141,6 +141,10 @@ class OpenFieldRepository(
         orchestrator,
         scope
     )
+    val sharedContextManager = com.openfield.app.feature.ai.context.SharedContextManager(
+        database.taskSessionDao(),
+        scope
+    )
 
     // Reactive Collections Flow
     val collections: StateFlow<List<KnowledgeCollection>> = database.collectionDao().getCollectionsFlow()
@@ -421,6 +425,16 @@ class OpenFieldRepository(
                 category = ToolFilterCategory.TEXT,
                 iconName = "reframe",
                 inputPlaceholder = "Paste text to improve...",
+                sampleInput = "",
+                sampleOutput = ""
+            ),
+            AiToolItem(
+                id = "calculator",
+                title = "Offline Calculator & Units",
+                description = "Deterministic math expressions and offline unit conversions",
+                category = ToolFilterCategory.TEXT,
+                iconName = "calculate",
+                inputPlaceholder = "Enter calculation or conversion...",
                 sampleInput = "",
                 sampleOutput = ""
             )

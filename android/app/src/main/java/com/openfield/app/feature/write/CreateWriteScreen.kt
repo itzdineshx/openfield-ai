@@ -114,6 +114,18 @@ fun CreateWriteScreen(
     val canGenerate = !isGenerating && (promptInput.isNotBlank() || (usesSource && sourceText.isNotBlank()))
     val wordCount = remember(docContent) { docContent.split(Regex("\\s+")).count { it.isNotBlank() } }
 
+    LaunchedEffect(Unit) {
+        val handoff = repository.sharedContextManager.consumePendingHandoff()
+        if (handoff != null && handoff.targetWorkspace == "CREATE_WRITE") {
+            if (handoff.title.isNotBlank()) controller.updateDocumentTitle(handoff.title)
+            if (!handoff.textSnippet.isNullOrBlank()) {
+                controller.setSourceText(handoff.textSnippet)
+                controller.setIntent(WritingIntent.REPORT)
+                controller.setPrompt("Synthesize and draft a structured document based on the attached context")
+            }
+        }
+    }
+
     LaunchedEffect(isGenerating) {
         if (isGenerating) {
             isEditing = false

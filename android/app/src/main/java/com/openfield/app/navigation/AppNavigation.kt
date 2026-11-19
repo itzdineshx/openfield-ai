@@ -40,6 +40,7 @@ import com.openfield.app.feature.settings.SettingsScreen
 import com.openfield.app.feature.splash.SplashScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
 import com.openfield.app.feature.tools.ToolsScreen
+import com.openfield.app.feature.tools.math.CalculatorConverterScreen
 import com.openfield.app.feature.write.CreateWriteScreen
 import kotlinx.coroutines.launch
 
@@ -172,7 +173,10 @@ fun AppNavigation(
                 // 6. Image Analysis
                 composable(AppRoutes.IMAGE_ANALYSIS) {
                     ImageAnalysisScreen(
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToProblemSolver = {
+                            navController.navigate(AppRoutes.PROBLEM_SOLVER)
+                        }
                     )
                 }
 
@@ -182,6 +186,9 @@ fun AppNavigation(
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToDocumentDetail = { docId ->
                             navController.navigate(AppRoutes.documentDetailRoute(docId))
+                        },
+                        onNavigateToCreateWrite = {
+                            navController.navigate(AppRoutes.CREATE_WRITE)
                         }
                     )
                 }
@@ -229,7 +236,17 @@ fun AppNavigation(
                         },
                         onNavigateToCreateWrite = {
                             navController.navigate(AppRoutes.CREATE_WRITE)
+                        },
+                        onNavigateToCalculator = {
+                            navController.navigate(AppRoutes.CALCULATOR)
                         }
+                    )
+                }
+
+                // 11b. Offline Calculator & Units (Deterministic)
+                composable(AppRoutes.CALCULATOR) {
+                    CalculatorConverterScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
 
