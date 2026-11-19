@@ -1,6 +1,7 @@
 package com.openfield.app.feature.voice
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 class VoiceInputHandle internal constructor(
     private val isListeningState: State<Boolean>,
@@ -61,8 +63,19 @@ fun rememberVoiceInput(onText: (String) -> Unit): VoiceInputHandle {
         VoiceInputHandle(
             isListeningState = listening,
             toggle = {
-                if (state.value is VoiceInputState.Listening) manager.stopListening()
-                else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                if (state.value is VoiceInputState.Listening) {
+                    manager.stopListening()
+                } else {
+                    val hasPerm = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (hasPerm) {
+                        manager.startListening { latestOnText(it) }
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                }
             },
             stop = { manager.stopListening() },
             cancel = { manager.cancelListening() }

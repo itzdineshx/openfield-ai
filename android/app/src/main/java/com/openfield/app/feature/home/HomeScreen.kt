@@ -1,6 +1,7 @@
 package com.openfield.app.feature.home
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import com.openfield.app.core.components.HomePromptComposer
@@ -218,7 +220,17 @@ fun HomeScreen(
                     if (isListening) {
                         voiceInputManager.stopListening()
                     } else {
-                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        val hasPerm = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasPerm) {
+                            voiceInputManager.startListening { recognizedText ->
+                                promptInput = if (promptInput.isBlank()) recognizedText else "$promptInput $recognizedText"
+                            }
+                        } else {
+                            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
                     }
                 },
                 onPickDocument = {
