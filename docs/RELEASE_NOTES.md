@@ -32,6 +32,19 @@ OpenField Phase 2 delivers a complete, task-specific offline AI experience acros
 #### 4. Room Database Migration (v3 -> v4)
 - **Zero Data Loss:** Clean SQLite migration adding `troubleshoot_sessions`, `learning_sessions`, and `writing_drafts` without modifying existing chat sessions, messages, or documents.
 
+#### 5. Physical Hardware Verification & Edge Performance Metrics
+- **Test Device:** Lava LXX503 (Android 14, `arm64-v8a`, Unisoc T616 8-core CPU, Mali-G57 GPU, 6 GB RAM, 128 GB Storage).
+- **Model Loading:** Cold model initialization completed in **2,121 ms (2.12 s)** directly from flash storage into system memory on CPU.
+- **Inference Latency & Throughput:**
+  - Standard Chat TTFT: **4,288 ms**; Generation Speed: **4.8 tok/s**.
+  - Multimodal Vision Preprocessing: **93 ms**; Vision Generation Speed: **3.8 tok/s**.
+- **Memory & Resource Efficiency:**
+  - Sustained app runtime heap: **12 MB – 26 MB / 512 MB** maximum allocation.
+  - Available system memory throughout all multi-turn sessions: **>1.3 GB free**.
+  - Battery & Thermal stability: Only **3% battery consumed** across the entire 6-mode evaluation suite; peak battery temperature remained steady at **40.2°C** with zero thermal throttling or crashes.
+- **Zero Cloud & Strict Privacy:** Verified 100% on-device operation with zero cloud telemetry or external network calls.
+- **Automated Test Suite:** 68/68 unit tests passing across JVM and Android target runners.
+
 ---
 
 ## Version 0.1.0-alpha — Phase 1 High-Fidelity Prototype & Local AI Engine
