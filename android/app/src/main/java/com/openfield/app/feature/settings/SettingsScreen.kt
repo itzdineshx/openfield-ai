@@ -493,7 +493,7 @@ fun SettingsScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Version 0.6.0",
+                                    text = "Version 0.9.0",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = OpenFieldSecondaryText,
                                         fontSize = 11.sp

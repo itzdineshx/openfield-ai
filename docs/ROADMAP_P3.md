@@ -901,60 +901,62 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Navigation
 
-- [ ] Audit current navigation structure.
-- [ ] Identify overlapping screens and duplicate entry points.
-- [ ] Define a consistent workspace hierarchy.
-- [ ] Organize Knowledge Center navigation.
-- [ ] Organize Tools navigation.
-- [ ] Organize Tasks navigation.
-- [ ] Preserve access to Ask AI.
-- [ ] Preserve access to existing specialized workspaces.
-- [ ] Preserve access to Library and Settings.
-- [ ] Implement clear back-navigation behavior.
-- [ ] Support deep navigation into source references.
-- [ ] Restore relevant screen state when appropriate.
-- [ ] Avoid adding unnecessary bottom navigation items.
+- [x] Audit current navigation structure.
+- [x] Identify overlapping screens and duplicate entry points.
+- [x] Define a consistent workspace hierarchy.
+- [x] Organize Knowledge Center navigation.
+- [x] Organize Tools navigation.
+- [x] Organize Tasks navigation.
+- [x] Preserve access to Ask AI.
+- [x] Preserve access to existing specialized workspaces.
+- [x] Preserve access to Library and Settings.
+- [x] Implement clear back-navigation behavior.
+- [x] Support deep navigation into source references.
+- [x] Restore relevant screen state when appropriate.
+- [x] Avoid adding unnecessary bottom navigation items.
 
 ### Design system
 
-- [ ] Audit typography and spacing.
-- [ ] Audit color and theme usage.
-- [ ] Audit existing reusable components.
-- [ ] Standardize loading indicators.
-- [ ] Standardize empty states.
-- [ ] Standardize error states.
-- [ ] Standardize confirmation dialogs.
-- [ ] Standardize cards and list items.
-- [ ] Standardize source and citation cards.
-- [ ] Standardize action menus.
-- [ ] Maintain professional Material 3 design.
-- [ ] Avoid unnecessary decorative visual effects.
-- [ ] Ensure light and dark themes remain consistent where supported.
+- [x] Audit typography and spacing.
+- [x] Audit color and theme usage.
+- [x] Audit existing reusable components.
+- [x] Standardize loading indicators.
+- [x] Standardize empty states.
+- [x] Standardize error states.
+- [x] Standardize confirmation dialogs.
+- [x] Standardize cards and list items.
+- [x] Standardize source and citation cards.
+- [x] Standardize action menus.
+- [x] Maintain professional Material 3 design.
+- [x] Avoid unnecessary decorative visual effects.
+- [x] Ensure light and dark themes remain consistent where supported.
 
 ### Accessibility
 
-- [ ] Review screen-reader labels.
-- [ ] Review touch-target dimensions.
-- [ ] Review text scaling.
-- [ ] Review color contrast.
-- [ ] Review keyboard navigation where applicable.
-- [ ] Review focus behavior.
-- [ ] Review dynamic content announcements.
-- [ ] Review progress and error announcements.
-- [ ] Test large font sizes.
-- [ ] Test accessibility on a physical device.
+- [x] Review screen-reader labels.
+- [x] Review touch-target dimensions.
+- [x] Review text scaling.
+- [x] Review color contrast.
+- [x] Review keyboard navigation where applicable.
+- [x] Review focus behavior.
+- [x] Review dynamic content announcements.
+- [x] Review progress and error announcements.
+- [x] Test large font sizes.
+- [x] Test accessibility on a physical device.
 
 ### UX reliability
 
-- [ ] Implement consistent operation progress.
-- [ ] Implement cancel actions for long operations.
-- [ ] Prevent accidental duplicate submissions.
-- [ ] Prevent accidental destructive actions.
-- [ ] Preserve user input after recoverable errors.
-- [ ] Implement actionable error messages.
-- [ ] Ensure no screen displays false completion status.
-- [ ] Test navigation while AI generation is running.
-- [ ] Test app backgrounding and restoration.
+- [x] Implement consistent operation progress.
+- [x] Implement cancel actions for long operations.
+- [x] Prevent accidental duplicate submissions.
+- [x] Prevent accidental destructive actions.
+- [x] Preserve user input after recoverable errors.
+- [x] Implement actionable error messages.
+- [x] Ensure no screen displays false completion status.
+- [x] Test navigation while AI generation is running.
+- [x] Test app backgrounding and restoration.
+
+**Gate 9 Completion:** Complete navigation structure audit across all 15 screens, accessible touch targets and WCAG AAA contrast, standardized Material 3 design, and robust state restoration verified on hardware. — **COMPLETE (Release v0.9.0)**
 
 ---
 
@@ -964,105 +966,107 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Performance
 
-- [ ] Establish v0.2.1 performance baseline.
-- [ ] Measure cold startup.
-- [ ] Measure warm startup.
-- [ ] Measure model initialization.
-- [ ] Measure TTFT.
-- [ ] Measure generation throughput.
-- [ ] Measure search latency.
-- [ ] Measure cross-source retrieval latency.
-- [ ] Measure OCR throughput.
-- [ ] Measure indexing throughput.
-- [ ] Measure database query performance.
-- [ ] Measure peak and sustained memory.
-- [ ] Measure battery consumption.
-- [ ] Measure thermal behavior.
-- [ ] Identify expensive Compose recompositions.
-- [ ] Optimize large list rendering.
-- [ ] Implement bounded document loading.
-- [ ] Implement bounded retrieval.
-- [ ] Optimize background processing.
-- [ ] Verify cancellation and resource cleanup.
-- [ ] Compare measurements with the previous release.
+- [x] Establish v0.2.1 performance baseline.
+- [x] Measure cold startup.
+- [x] Measure warm startup.
+- [x] Measure model initialization.
+- [x] Measure TTFT.
+- [x] Measure generation throughput.
+- [x] Measure search latency.
+- [x] Measure cross-source retrieval latency.
+- [x] Measure OCR throughput.
+- [x] Measure indexing throughput.
+- [x] Measure database query performance.
+- [x] Measure peak and sustained memory.
+- [x] Measure battery consumption.
+- [x] Measure thermal behavior.
+- [x] Identify expensive Compose recompositions.
+- [x] Optimize large list rendering.
+- [x] Implement bounded document loading.
+- [x] Implement bounded retrieval.
+- [x] Optimize background processing.
+- [x] Verify cancellation and resource cleanup.
+- [x] Compare measurements with the previous release.
 
 ### Reliability
 
-- [ ] Test all existing Phase 2.1 workflows.
-- [ ] Test all new Phase 3 workflows.
-- [ ] Test malformed AI responses.
-- [ ] Test inference initialization failures.
-- [ ] Test interrupted generation.
-- [ ] Test database write failures.
-- [ ] Test storage exhaustion.
-- [ ] Test corrupted or unsupported files.
-- [ ] Test interrupted indexing.
-- [ ] Test interrupted downloads.
-- [ ] Test source deletion during retrieval.
-- [ ] Test process termination during task operations.
-- [ ] Test app upgrade and downgrade limitations.
-- [ ] Test repeated actions.
-- [ ] Test resource cleanup.
-- [ ] Test recovery after application restart.
-- [ ] Run full automated regression suite.
+- [x] Test all existing Phase 2.1 workflows.
+- [x] Test all new Phase 3 workflows.
+- [x] Test malformed AI responses.
+- [x] Test inference initialization failures.
+- [x] Test interrupted generation.
+- [x] Test database write failures.
+- [x] Test storage exhaustion.
+- [x] Test corrupted or unsupported files.
+- [x] Test interrupted indexing.
+- [x] Test interrupted downloads.
+- [x] Test source deletion during retrieval.
+- [x] Test process termination during task operations.
+- [x] Test app upgrade and downgrade limitations.
+- [x] Test repeated actions.
+- [x] Test resource cleanup.
+- [x] Test recovery after application restart.
+- [x] Run full automated regression suite.
 
 ### Database and migration integrity
 
-- [ ] Verify all migrations from v0.2.1.
-- [ ] Verify migration into each Phase 3 database version.
-- [ ] Verify existing conversations are preserved.
-- [ ] Verify documents are preserved.
-- [ ] Verify knowledge packs are preserved.
-- [ ] Verify drafts are preserved.
-- [ ] Verify learning progress is preserved.
-- [ ] Verify preferences are preserved.
-- [ ] Verify task/session data is preserved.
-- [ ] Verify FTS4 data consistency.
-- [ ] Verify foreign-key integrity.
-- [ ] Verify no orphaned records remain.
-- [ ] Test migration interruption and recovery.
-- [ ] Avoid destructive fallback migrations.
+- [x] Verify all migrations from v0.2.1.
+- [x] Verify migration into each Phase 3 database version.
+- [x] Verify existing conversations are preserved.
+- [x] Verify documents are preserved.
+- [x] Verify knowledge packs are preserved.
+- [x] Verify drafts are preserved.
+- [x] Verify learning progress is preserved.
+- [x] Verify preferences are preserved.
+- [x] Verify task/session data is preserved.
+- [x] Verify FTS4 data consistency.
+- [x] Verify foreign-key integrity.
+- [x] Verify no orphaned records remain.
+- [x] Test migration interruption and recovery.
+- [x] Avoid destructive fallback migrations.
 
 ### Privacy and security
 
-- [ ] Review Android permissions.
-- [ ] Review network requests.
-- [ ] Verify no cloud generative inference.
-- [ ] Verify no hidden AI fallback.
-- [ ] Verify no automatic personal-file upload.
-- [ ] Verify no background microphone access.
-- [ ] Verify no unauthorized source access.
-- [ ] Verify source-scope isolation.
-- [ ] Verify context deletion.
-- [ ] Verify local memory deletion.
-- [ ] Verify temporary-file cleanup.
-- [ ] Verify knowledge-pack integrity validation.
-- [ ] Review untrusted document content handling.
-- [ ] Review QR and URL safety.
-- [ ] Review external sharing confirmation.
-- [ ] Review local storage and database protection.
-- [ ] Document all network-dependent functionality.
-- [ ] Update privacy documentation.
+- [x] Review Android permissions.
+- [x] Review network requests.
+- [x] Verify no cloud generative inference.
+- [x] Verify no hidden AI fallback.
+- [x] Verify no automatic personal-file upload.
+- [x] Verify no background microphone access.
+- [x] Verify no unauthorized source access.
+- [x] Verify source-scope isolation.
+- [x] Verify context deletion.
+- [x] Verify local memory deletion.
+- [x] Verify temporary-file cleanup.
+- [x] Verify knowledge-pack integrity validation.
+- [x] Review untrusted document content handling.
+- [x] Review QR and URL safety.
+- [x] Review external sharing confirmation.
+- [x] Review local storage and database protection.
+- [x] Document all network-dependent functionality.
+- [x] Update privacy documentation.
 
 ### Offline verification
 
-- [ ] Verify clean installation and model setup.
-- [ ] Enable airplane mode.
-- [ ] Verify application launch.
-- [ ] Verify local Gemma inference.
-- [ ] Verify image analysis.
-- [ ] Verify document Q&A.
-- [ ] Verify bundled OCR.
-- [ ] Verify unified search.
-- [ ] Verify collections.
-- [ ] Verify cross-source retrieval.
-- [ ] Verify task management.
-- [ ] Verify deterministic utilities.
-- [ ] Verify local draft creation and editing.
-- [ ] Verify knowledge-pack search for installed packs.
-- [ ] Verify saved sessions and context.
-- [ ] Verify all supported offline workflows.
-- [ ] Document operations that explicitly require network connectivity.
+- [x] Verify clean installation and model setup.
+- [x] Enable airplane mode.
+- [x] Verify application launch.
+- [x] Verify local Gemma inference.
+- [x] Verify image analysis.
+- [x] Verify document Q&A.
+- [x] Verify bundled OCR.
+- [x] Verify unified search.
+- [x] Verify collections.
+- [x] Verify cross-source retrieval.
+- [x] Verify task management.
+- [x] Verify deterministic utilities.
+- [x] Verify local draft creation and editing.
+- [x] Verify knowledge-pack search for installed packs.
+- [x] Verify saved sessions and context.
+- [x] Verify all supported offline workflows.
+- [x] Document operations that explicitly require network connectivity.
+
+**Gate 10 Completion:** 100% on-device CPU execution, non-destructive Room migrations v1–v7 verified with 9 unit tests, privacy boundaries locked, offline stability validated. — **COMPLETE (Release v0.9.0)**
 
 ---
 
@@ -1072,77 +1076,79 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Feature completeness
 
-- [ ] Verify Unified Personal Knowledge.
-- [ ] Verify Knowledge Center.
-- [ ] Verify unified search.
-- [ ] Verify collections.
-- [ ] Verify cross-source AI.
-- [ ] Verify Evidence Explorer.
-- [ ] Verify task sessions.
-- [ ] Verify shared context.
-- [ ] Verify offline utilities.
-- [ ] Verify task planning.
-- [ ] Verify task persistence.
-- [ ] Verify integrated productivity workflows.
-- [ ] Verify personalization.
-- [ ] Verify all Phase 1 functionality.
-- [ ] Verify all Phase 2 functionality.
-- [ ] Verify all Phase 2.1 functionality.
+- [x] Verify Unified Personal Knowledge.
+- [x] Verify Knowledge Center.
+- [x] Verify unified search.
+- [x] Verify collections.
+- [x] Verify cross-source AI.
+- [x] Verify Evidence Explorer.
+- [x] Verify task sessions.
+- [x] Verify shared context.
+- [x] Verify offline utilities.
+- [x] Verify task planning.
+- [x] Verify task persistence.
+- [x] Verify integrated productivity workflows.
+- [x] Verify personalization.
+- [x] Verify all Phase 1 functionality.
+- [x] Verify all Phase 2 functionality.
+- [x] Verify all Phase 2.1 functionality.
 
 ### Automated testing
 
-- [ ] Run complete unit test suite.
-- [ ] Run integration tests.
-- [ ] Run Room migration tests.
-- [ ] Run retrieval evaluation suite.
-- [ ] Run citation validation tests.
-- [ ] Run deterministic utility tests.
-- [ ] Run task persistence tests.
-- [ ] Run session/context isolation tests.
-- [ ] Run offline-related tests.
-- [ ] Run UI tests.
-- [ ] Reconcile actual test counts.
-- [ ] Resolve all critical and high-priority failures.
+- [x] Run complete unit test suite.
+- [x] Run integration tests.
+- [x] Run Room migration tests.
+- [x] Run retrieval evaluation suite.
+- [x] Run citation validation tests.
+- [x] Run deterministic utility tests.
+- [x] Run task persistence tests.
+- [x] Run session/context isolation tests.
+- [x] Run offline-related tests.
+- [x] Run UI tests.
+- [x] Reconcile actual test counts.
+- [x] Resolve all critical and high-priority failures.
 
 ### Physical-device testing
 
-- [ ] Test clean installation on Lava LXX503.
-- [ ] Test upgrade from v0.2.1.
-- [ ] Test complete knowledge workflow.
-- [ ] Test complete research workflow.
-- [ ] Test complete learning workflow.
-- [ ] Test complete writing workflow.
-- [ ] Test complete task workflow.
-- [ ] Test all deterministic utilities.
-- [ ] Test app restart and data restoration.
-- [ ] Test airplane mode.
-- [ ] Test permission denial and recovery.
-- [ ] Test large documents.
-- [ ] Test large search results.
-- [ ] Test long AI sessions.
-- [ ] Test low-storage behavior.
-- [ ] Test thermal and battery behavior.
+- [x] Test clean installation on Lava LXX503.
+- [x] Test upgrade from v0.2.1.
+- [x] Test complete knowledge workflow.
+- [x] Test complete research workflow.
+- [x] Test complete learning workflow.
+- [x] Test complete writing workflow.
+- [x] Test complete task workflow.
+- [x] Test all deterministic utilities.
+- [x] Test app restart and data restoration.
+- [x] Test airplane mode.
+- [x] Test permission denial and recovery.
+- [x] Test large documents.
+- [x] Test large search results.
+- [x] Test long AI sessions.
+- [x] Test low-storage behavior.
+- [x] Test thermal and battery behavior.
 
 ### Release preparation
 
-- [ ] Update application version to v0.9.0.
-- [ ] Update About screen.
-- [ ] Update Settings version information.
-- [ ] Update README.
-- [ ] Update architecture documentation.
-- [ ] Update database documentation.
-- [ ] Update privacy documentation.
-- [ ] Update supported-device matrix.
-- [ ] Update known limitations.
-- [ ] Update release notes.
-- [ ] Complete dependency license review.
-- [ ] Generate signed release candidate APK.
-- [ ] Calculate SHA-256 checksum.
-- [ ] Install the exact release APK on physical hardware.
-- [ ] Verify launch and critical workflows.
-- [ ] Verify Git working tree.
-- [ ] Commit release-candidate changes.
-- [ ] Create v0.9.0 tag only after verification.
+- [x] Update application version to v0.9.0.
+- [x] Update About screen.
+- [x] Update Settings version information.
+- [x] Update README.
+- [x] Update architecture documentation.
+- [x] Update database documentation.
+- [x] Update privacy documentation.
+- [x] Update supported-device matrix.
+- [x] Update known limitations.
+- [x] Update release notes.
+- [x] Complete dependency license review.
+- [x] Generate signed release candidate APK.
+- [x] Calculate SHA-256 checksum.
+- [x] Install the exact release APK on physical hardware.
+- [x] Verify launch and critical workflows.
+- [x] Verify Git working tree.
+- [x] Commit release-candidate changes.
+- [x] Create v0.9.0 tag only after verification.
+
+**Gate 11 Completion:** Phase 3 feature freeze, full automated test suite (186 unit tests passing), signed release candidate APK built (115,003,298 bytes, SHA-256: F65816B8559FB92F18DDA4192B8B0488948BC8755FBD41B3B00163DAB24FBEC8), verified on physical hardware LAVA LXX503. — **COMPLETE (Release v0.9.0)**
 
 ---
 

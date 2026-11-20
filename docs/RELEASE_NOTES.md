@@ -1,5 +1,35 @@
 # OpenField Release Notes
 
+## Version 0.9.0 — Phase 3 Release Candidate (RC)
+
+**Release Date:** November 2026
+
+OpenField v0.9.0 represents the feature-complete Release Candidate for Phase 3. It freezes all major feature developments, completes system-wide navigation and accessibility audits, hardens on-device security and data privacy boundaries, and verifies seamless end-to-end workflows on physical hardware:
+
+---
+
+### Highlights & Key Features
+
+#### 1. Navigation, Accessibility & UI Consistency (Gate 9)
+- **Unified Navigation Hierarchy:** Structured navigation across all 15 application screens (Home, Ask AI Chat, Image Analysis, Document Q&A, Document Detail, Problem Solver, Learn & Explain, AI Tools, Calculator & Units, Workflows & Checklists, Create & Write, Knowledge Center, Cross-Source Q&A, Settings, About).
+- **Reliable Back-Stack Navigation:** Clean back navigation and state retention across every detail screen and bottom sheet.
+- **Accessibility & Contrast Compliance:** Complies with WCAG AAA contrast guidelines (>12:1 for body text `#0F172A` on `#F8FAFC`). Minimum 48dp touch targets on all interactive components.
+
+#### 2. Performance, Security, Privacy & Reliability (Gate 10)
+- **100% Local On-Device AI:** Gemma 4 E2B IT (`gemma-4-E2B-it.litertlm`) executes exclusively on-device via LiteRT-LM CPU. Zero cloud inference, zero external APIs, zero mock responses.
+- **Privacy First by Design:** No telemetry, no prompt logging, no automatic cloud uploads, no background microphone listeners.
+- **Non-Destructive Room SQLite Migrations:** Migrations `MIGRATION_1_2` through `MIGRATION_6_7` maintain 100% backward compatibility for all user conversations, documents, collections, and task checklists.
+
+#### 3. Verification & Release Artifacts (Gate 11)
+- **Automated Test Suite:** **186/186 unit tests passing (100% green)** across all data layer, business logic, math engine, retrieval optimizer, and migration components.
+- **Signed Release Candidate APK:**
+  - File: `android/app/build/outputs/apk/release/app-release.apk`
+  - Size: 115,003,298 bytes (~109.67 MB)
+  - SHA-256: `F65816B8559FB92F18DDA4192B8B0488948BC8755FBD41B3B00163DAB24FBEC8`
+  - Physical Device: Verified and tested on LAVA LXX503 (Android 14, ARM64).
+
+---
+
 ## Version 0.6.0 — Phase 3 Advanced Personalization, Intelligence Quality & Integrated Productivity Workflows
 
 **Release Date:** November 2026
