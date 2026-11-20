@@ -65,6 +65,7 @@ import com.openfield.app.core.components.CruxLogo
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
+import com.openfield.app.core.theme.OpenFieldCardBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
@@ -218,7 +219,7 @@ fun ModelSetupScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = OpenFieldCardBackground),
                 border = BorderStroke(1.dp, OpenFieldCardBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {

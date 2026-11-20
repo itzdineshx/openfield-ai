@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -230,15 +232,14 @@ fun KnowledgeCenterScreen(
                 .padding(innerPadding)
                 .background(OpenFieldBackground)
         ) {
-            // Segmented Scrollable Tab Row
-            Row(
+            // Segmented Scrollable Tab Row with native momentum fling
+            LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                tabTitles.forEachIndexed { index, title ->
+                itemsIndexed(tabTitles) { index, title ->
                     val isSelected = selectedTab == index
                     Surface(
                         shape = RoundedCornerShape(20.dp),
@@ -272,6 +273,7 @@ fun KnowledgeCenterScreen(
                         collections = collections,
                         documents = documents,
                         packs = packs,
+                        onNavigateToSources = { selectedTab = 1 },
                         onNavigateToCollection = { selectedTab = 3 },
                         onNavigateToDocuments = { selectedTab = 2 },
                         onNavigateToPacks = { selectedTab = 4 }
@@ -445,6 +447,7 @@ private fun KnowledgeOverviewContent(
     collections: List<KnowledgeCollection>,
     documents: List<Any>,
     packs: List<Any>,
+    onNavigateToSources: () -> Unit = {},
     onNavigateToCollection: () -> Unit,
     onNavigateToDocuments: () -> Unit,
     onNavigateToPacks: () -> Unit
@@ -481,10 +484,10 @@ private fun KnowledgeOverviewContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MetricItem(label = "Sources", value = "${allSources.size}")
-                    MetricItem(label = "Documents", value = "${documents.size}")
-                    MetricItem(label = "Collections", value = "${collections.size}")
-                    MetricItem(label = "Packs", value = "${packs.size}")
+                    MetricItem(label = "Sources", value = "${allSources.size}", onClick = onNavigateToSources)
+                    MetricItem(label = "Documents", value = "${documents.size}", onClick = onNavigateToDocuments)
+                    MetricItem(label = "Collections", value = "${collections.size}", onClick = onNavigateToCollection)
+                    MetricItem(label = "Packs", value = "${packs.size}", onClick = onNavigateToPacks)
                 }
             }
         }
@@ -571,8 +574,11 @@ private fun KnowledgeOverviewContent(
 }
 
 @Composable
-private fun MetricItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun MetricItem(label: String, value: String, onClick: (() -> Unit)? = null) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    ) {
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium.copy(
