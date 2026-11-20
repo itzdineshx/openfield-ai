@@ -11,6 +11,7 @@ import com.openfield.app.data.local.dao.CollectionDao
 import com.openfield.app.data.local.dao.DocumentDao
 import com.openfield.app.data.local.dao.KnowledgePackDao
 import com.openfield.app.data.local.dao.ModeSessionDao
+import com.openfield.app.data.local.dao.SavedAnswerDao
 import com.openfield.app.data.local.dao.SettingsDao
 import com.openfield.app.data.local.dao.TaskDao
 import com.openfield.app.data.local.dao.TaskSessionDao
@@ -21,8 +22,10 @@ import com.openfield.app.data.local.entity.DocumentChunkEntity
 import com.openfield.app.data.local.entity.DocumentChunkFtsEntity
 import com.openfield.app.data.local.entity.DocumentEntity
 import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
+import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
 import com.openfield.app.data.local.entity.KnowledgePackEntity
 import com.openfield.app.data.local.entity.LearningSessionEntity
+import com.openfield.app.data.local.entity.SavedAnswerEntity
 import com.openfield.app.data.local.entity.SettingEntity
 import com.openfield.app.data.local.entity.TaskItemEntity
 import com.openfield.app.data.local.entity.TaskSessionEntity
@@ -37,6 +40,8 @@ import com.openfield.app.data.local.entity.WritingDraftEntity
         DocumentChunkEntity::class,
         DocumentChunkFtsEntity::class,
         KnowledgePackEntity::class,
+        KnowledgePackArticleEntity::class,
+        SavedAnswerEntity::class,
         SettingEntity::class,
         TroubleshootSessionEntity::class,
         LearningSessionEntity::class,
@@ -46,7 +51,7 @@ import com.openfield.app.data.local.entity.WritingDraftEntity
         TaskSessionEntity::class,
         TaskItemEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class OpenFieldDatabase : RoomDatabase() {
@@ -54,6 +59,7 @@ abstract class OpenFieldDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
     abstract fun documentDao(): DocumentDao
     abstract fun knowledgePackDao(): KnowledgePackDao
+    abstract fun savedAnswerDao(): SavedAnswerDao
     abstract fun settingsDao(): SettingsDao
     abstract fun modeSessionDao(): ModeSessionDao
     abstract fun collectionDao(): CollectionDao
@@ -185,6 +191,38 @@ abstract class OpenFieldDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `knowledge_pack_articles` (
+                        `id` TEXT NOT NULL,
+                        `packId` TEXT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `section` TEXT NOT NULL,
+                        `content` TEXT NOT NULL,
+                        `tagsJson` TEXT NOT NULL,
+                        `orderIndex` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_knowledge_pack_articles_packId` ON `knowledge_pack_articles` (`packId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_knowledge_pack_articles_section` ON `knowledge_pack_articles` (`section`)")
+
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `saved_answers` (
+                        `id` TEXT NOT NULL,
+                        `question` TEXT NOT NULL,
+                        `answer` TEXT NOT NULL,
+                        `sourceTitle` TEXT NOT NULL,
+                        `sourceType` TEXT NOT NULL,
+                        `savedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_saved_answers_savedAt` ON `saved_answers` (`savedAt`)")
+            }
+        }
+
         fun getInstance(context: Context): OpenFieldDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -192,7 +230,7 @@ abstract class OpenFieldDatabase : RoomDatabase() {
                     OpenFieldDatabase::class.java,
                     "openfield.db"
                 )
-                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration(dropAllTables = false)
                     .build()
                     .also { INSTANCE = it }

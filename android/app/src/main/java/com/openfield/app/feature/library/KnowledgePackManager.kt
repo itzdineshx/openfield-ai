@@ -127,12 +127,20 @@ class KnowledgePackManager(
         val entities = CURATED_CATALOG.map { manifest ->
             validateManifest(manifest).getOrThrow()
             val existingPack = existing.find { it.id == manifest.packId }
+            val isInstalled = existingPack?.isInstalled ?: false
+            if (isInstalled) {
+                // Ensure articles are seeded for installed packs
+                val articles = KnowledgePackContent.CURATED_ARTICLES.filter { it.packId == manifest.packId }
+                if (articles.isNotEmpty()) {
+                    dao.insertArticles(articles)
+                }
+            }
             KnowledgePackEntity(
                 id = manifest.packId,
                 title = manifest.title,
                 description = manifest.description,
                 size = manifest.size,
-                isInstalled = existingPack?.isInstalled ?: false,
+                isInstalled = isInstalled,
                 category = manifest.category,
                 iconColorHex = manifest.iconColorHex,
                 topicsJson = formatTopics(manifest.topics)
@@ -174,6 +182,8 @@ class KnowledgePackManager(
 
     /**
      * Atomically toggles installation state with manifest verification.
+     * Real-time activation: when installed, indexes authentic curated domain articles into Room;
+     * when uninstalled, cleans derived index entries per PRD LIB-006.
      */
     suspend fun togglePackInstallation(packId: String): Result<Boolean> {
         val manifest = CURATED_CATALOG.find { it.packId == packId }
@@ -187,6 +197,18 @@ class KnowledgePackManager(
 
         val newInstalled = !existing.isInstalled
         dao.updateInstallation(packId, newInstalled)
+
+        if (newInstalled) {
+            // Activate real content articles
+            val articles = KnowledgePackContent.CURATED_ARTICLES.filter { it.packId == packId }
+            if (articles.isNotEmpty()) {
+                dao.insertArticles(articles)
+            }
+        } else {
+            // Clean index entries
+            dao.deleteArticlesForPack(packId)
+        }
+
         return Result.success(newInstalled)
     }
 
@@ -214,8 +236,21 @@ class KnowledgePackManager(
         )
 
         dao.insertAll(listOf(updatedEntity))
+
+        if (isCurrentlyInstalled) {
+            val articles = KnowledgePackContent.CURATED_ARTICLES.filter { it.packId == packId }
+            if (articles.isNotEmpty()) {
+                dao.insertArticles(articles)
+            }
+        }
         return Result.success(Unit)
     }
+
+    fun getArticlesForPackFlow(packId: String) = dao.getArticlesForPackFlow(packId)
+    suspend fun getArticlesForPack(packId: String) = dao.getArticlesForPack(packId)
+    suspend fun getArticleById(id: String) = dao.getArticleById(id)
+    suspend fun searchArticles(query: String) = dao.searchArticles(query)
+    suspend fun getAllInstalledArticles() = dao.getAllInstalledArticles()
 
     /**
      * Search and discover packs across title, description, category, and topics.

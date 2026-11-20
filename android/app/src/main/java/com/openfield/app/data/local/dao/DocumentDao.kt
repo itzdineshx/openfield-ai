@@ -58,5 +58,11 @@ interface DocumentDao {
         LIMIT :limit
     """)
     suspend fun searchChunksGlobal(query: String, limit: Int = 5): List<DocumentChunkEntity>
+
+    @Query("DELETE FROM documents")
+    suspend fun clearAllDocuments()
+
+    @Query("DELETE FROM document_chunks")
+    suspend fun clearAllChunks()
 }
 

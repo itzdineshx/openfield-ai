@@ -70,22 +70,54 @@ class CrossSourceRetriever(
             }
         }
 
-        // 2. Retrieve from Knowledge Packs
+        // 2. Retrieve from Knowledge Packs (Real Curated Domain Articles & Passages)
         val packs = sourceIds.mapNotNull { knowledgePackDao.getPackById(it) }.filter { it.isInstalled }
         for (pack in packs) {
-            val packText = "${pack.description}\nTopics: ${pack.topicsJson}"
-            val score = RetrievalOptimizer.scoreChunk(packText, cleanTerms).coerceAtLeast(0.8f)
-            val packEvidence = mutableListOf(
-                KnowledgeEvidence(
-                    evidenceId = "pack_${pack.id}",
-                    sourceId = pack.id,
-                    sourceTitle = pack.title,
-                    sourceType = KnowledgeSourceType.KNOWLEDGE_PACK,
-                    section = pack.category,
-                    text = packText,
-                    relevanceScore = score
+            val articles = knowledgePackDao.getArticlesForPack(pack.id)
+            val scoredArticles = articles.map { article ->
+                val score = RetrievalOptimizer.scoreChunk(article.title + " " + article.content, cleanTerms)
+                article to score
+            }.sortedByDescending { it.second }
+
+            val packEvidence = mutableListOf<KnowledgeEvidence>()
+            val topArticles = if (scoredArticles.any { it.second > 0f }) {
+                scoredArticles.filter { it.second > 0f }.take(maxPerSource)
+            } else {
+                scoredArticles.take(1)
+            }
+
+            for ((article, score) in topArticles) {
+                // Extract bounded excerpt around matching terms or beginning of article
+                val cleanContent = article.content.replace(Regex("#+\\s*"), "").trim()
+                val excerpt = if (cleanContent.length > 500) cleanContent.take(500) + "…" else cleanContent
+
+                packEvidence.add(
+                    KnowledgeEvidence(
+                        evidenceId = "pack_${pack.id}_${article.id}",
+                        sourceId = pack.id,
+                        sourceTitle = pack.title,
+                        sourceType = KnowledgeSourceType.KNOWLEDGE_PACK,
+                        section = "${article.section} • ${article.title}",
+                        text = "### ${article.title} (${article.section})\n$excerpt",
+                        relevanceScore = score.coerceAtLeast(0.6f)
+                    )
                 )
-            )
+            }
+
+            if (packEvidence.isEmpty()) {
+                val packText = "${pack.title}: ${pack.description}\nKey Topics: ${pack.topicsJson}"
+                packEvidence.add(
+                    KnowledgeEvidence(
+                        evidenceId = "pack_${pack.id}",
+                        sourceId = pack.id,
+                        sourceTitle = pack.title,
+                        sourceType = KnowledgeSourceType.KNOWLEDGE_PACK,
+                        section = pack.category,
+                        text = packText,
+                        relevanceScore = 0.5f
+                    )
+                )
+            }
             evidenceBySource[pack.id] = packEvidence
         }
 

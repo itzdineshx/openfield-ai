@@ -2,6 +2,8 @@ package com.openfield.app.feature.library
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,28 +19,42 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import com.openfield.app.core.components.MarkdownContent
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.components.SecondaryButton
@@ -46,9 +62,11 @@ import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.core.theme.OpenFieldSuccess
+import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
 import com.openfield.app.data.repository.OpenFieldRepository
 
 @Composable
@@ -63,6 +81,10 @@ fun KnowledgePackDetailScreen(
     val manifest = remember(packId) {
         KnowledgePackManager.CURATED_CATALOG.find { it.packId == packId }
     }
+    val articles by repository.getArticlesForPackFlow(packId).collectAsState(initial = emptyList())
+    var selectedArticle by remember { mutableStateOf<KnowledgePackArticleEntity?>(null) }
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     if (pack == null) {
         Scaffold(
@@ -292,6 +314,135 @@ fun KnowledgePackDetailScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
+            // Curated Offline Articles & Guides (Real Content)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Curated Guides & Articles",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OpenFieldNavyText
+                    )
+                )
+                if (pack.isInstalled && articles.isNotEmpty()) {
+                    Surface(
+                        color = OpenFieldPrimaryBlue.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "${articles.size} Active",
+                            color = OpenFieldPrimaryBlue,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (!pack.isInstalled) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CardShape,
+                    colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
+                    border = BorderStroke(1.dp, OpenFieldCardBorder)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = "Install this pack to unlock ${pack.title} authoritative articles, diagnostic references, and enable cross-source grounded Q&A.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = OpenFieldSecondaryText,
+                                fontSize = 12.sp,
+                                lineHeight = 18.sp
+                            )
+                        )
+                    }
+                }
+            } else if (articles.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CardShape,
+                    colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
+                    border = BorderStroke(1.dp, OpenFieldCardBorder)
+                ) {
+                    Text(
+                        text = "Articles are syncing into local database…",
+                        style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText),
+                        modifier = Modifier.padding(14.dp)
+                    )
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    articles.forEach { article ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedArticle = article },
+                            shape = CardShape,
+                            colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+                            border = BorderStroke(1.dp, OpenFieldCardBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(OpenFieldPrimaryBlue.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Article,
+                                        contentDescription = null,
+                                        tint = OpenFieldPrimaryBlue,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = article.title,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = OpenFieldNavyText,
+                                            fontSize = 13.5.sp
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = article.section,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = OpenFieldSecondaryText,
+                                            fontSize = 11.sp
+                                        )
+                                    )
+                                }
+
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Read",
+                                    tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
             // Manifest & Provenance Verification
             Text(
                 text = "Manifest & Integrity Verification",
@@ -348,6 +499,82 @@ fun KnowledgePackDetailScreen(
             }
 
             Spacer(modifier = Modifier.height(80.dp))
+        }
+
+        // Fullscreen Article Reader Dialog
+        selectedArticle?.let { article ->
+            AlertDialog(
+                onDismissRequest = { selectedArticle = null },
+                title = {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                color = OpenFieldPrimaryBlue.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    text = article.section,
+                                    color = OpenFieldPrimaryBlue,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                            IconButton(onClick = { selectedArticle = null }) {
+                                Icon(Icons.Default.Close, contentDescription = "Close", tint = OpenFieldSecondaryText)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = article.title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OpenFieldNavyText
+                            )
+                        )
+                    }
+                },
+                text = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        MarkdownContent(
+                            text = article.content,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 13.5.sp,
+                                lineHeight = 21.sp,
+                                color = OpenFieldNavyText
+                            )
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(article.content))
+                            Toast.makeText(context, "Article copied to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Copy Article")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { selectedArticle = null }) {
+                        Text("Close")
+                    }
+                },
+                shape = RoundedCornerShape(20.dp),
+                containerColor = OpenFieldBackground
+            )
         }
     }
 }

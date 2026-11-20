@@ -4,6 +4,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.openfield.app.data.local.OpenFieldDatabase
 import com.openfield.app.data.local.entity.CollectionSourceCrossRefEntity
 import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
+import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
+import com.openfield.app.data.local.entity.SavedAnswerEntity
 import com.openfield.app.data.local.entity.TaskItemEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -137,5 +139,68 @@ class DatabaseMigrationTest {
         assertEquals("PENDING", task.status)
         assertEquals("HIGH", task.priority)
         assertTrue(task.createdAt > 0)
+    }
+
+    @Test
+    fun migration_7_to_8_hasCorrectVersions() {
+        assertEquals(7, OpenFieldDatabase.MIGRATION_7_8.startVersion)
+        assertEquals(8, OpenFieldDatabase.MIGRATION_7_8.endVersion)
+    }
+
+    @Test
+    fun migration_7_to_8_executesExpectedDdlStatements() {
+        val executedSql = mutableListOf<String>()
+        val mockDb = Proxy.newProxyInstance(
+            SupportSQLiteDatabase::class.java.classLoader,
+            arrayOf(SupportSQLiteDatabase::class.java)
+        ) { _, method, args ->
+            if (method.name == "execSQL" && args != null && args.isNotEmpty()) {
+                executedSql.add(args[0] as String)
+            }
+            null
+        } as SupportSQLiteDatabase
+
+        OpenFieldDatabase.MIGRATION_7_8.migrate(mockDb)
+
+        val allSql = executedSql.joinToString("\n")
+        assertTrue(allSql.contains("CREATE TABLE IF NOT EXISTS `knowledge_pack_articles`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_knowledge_pack_articles_packId`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_knowledge_pack_articles_section`"))
+        assertTrue(allSql.contains("CREATE TABLE IF NOT EXISTS `saved_answers`"))
+        assertTrue(allSql.contains("CREATE INDEX IF NOT EXISTS `index_saved_answers_savedAt`"))
+    }
+
+    @Test
+    fun knowledgePackArticleEntity_instantiatesWithValidDefaults() {
+        val article = KnowledgePackArticleEntity(
+            id = "art_1",
+            packId = "comp_tech",
+            title = "Linux Essentials",
+            section = "Operating Systems",
+            content = "Linux terminal usage and commands.",
+            tagsJson = "[\"Linux\"]",
+            orderIndex = 1
+        )
+        assertEquals("art_1", article.id)
+        assertEquals("comp_tech", article.packId)
+        assertEquals("Linux Essentials", article.title)
+        assertEquals("Operating Systems", article.section)
+        assertEquals(1, article.orderIndex)
+    }
+
+    @Test
+    fun savedAnswerEntity_instantiatesWithValidDefaults() {
+        val saved = SavedAnswerEntity(
+            id = "saved_1",
+            question = "How to test voltage?",
+            answer = "Use a multimeter in DC mode.",
+            sourceTitle = "Multimeter Reference",
+            sourceType = "KNOWLEDGE_PACK"
+        )
+        assertEquals("saved_1", saved.id)
+        assertEquals("How to test voltage?", saved.question)
+        assertEquals("Use a multimeter in DC mode.", saved.answer)
+        assertEquals("KNOWLEDGE_PACK", saved.sourceType)
+        assertTrue(saved.savedAt > 0)
     }
 }

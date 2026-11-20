@@ -45,6 +45,8 @@ class CatalogClientTest {
 
     private class FakeKnowledgePackDao : com.openfield.app.data.local.dao.KnowledgePackDao {
         private val list = mutableListOf<com.openfield.app.data.local.entity.KnowledgePackEntity>()
+        private val articles = mutableListOf<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>()
+
         override suspend fun getKnowledgePacks(): List<com.openfield.app.data.local.entity.KnowledgePackEntity> = list
         override fun getKnowledgePacksFlow() = kotlinx.coroutines.flow.flowOf(list)
         override suspend fun getPackById(id: String) = list.find { it.id == id }
@@ -62,5 +64,18 @@ class CatalogClientTest {
         override suspend fun deletePack(id: String) {
             list.removeAll { it.id == id }
         }
+
+        override fun getArticlesForPackFlow(packId: String) = kotlinx.coroutines.flow.flowOf(articles.filter { it.packId == packId })
+        override suspend fun getArticlesForPack(packId: String) = articles.filter { it.packId == packId }
+        override suspend fun getArticleById(id: String) = articles.find { it.id == id }
+        override suspend fun insertArticles(articlesToInsert: List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>) {
+            articles.removeAll { a -> articlesToInsert.any { it.id == a.id } }
+            articles.addAll(articlesToInsert)
+        }
+        override suspend fun deleteArticlesForPack(packId: String) {
+            articles.removeAll { it.packId == packId }
+        }
+        override suspend fun searchArticles(query: String) = articles.filter { it.title.contains(query, true) || it.content.contains(query, true) }
+        override suspend fun getAllInstalledArticles() = articles.toList()
     }
 }

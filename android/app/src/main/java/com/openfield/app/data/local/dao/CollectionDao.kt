@@ -54,4 +54,10 @@ interface CollectionDao {
 
     @Query("DELETE FROM collection_source_cross_ref WHERE sourceId = :sourceId")
     suspend fun removeSourceFromAllCollections(sourceId: String)
+
+    @Query("DELETE FROM knowledge_collections")
+    suspend fun clearAllCollections()
+
+    @Query("DELETE FROM collection_source_cross_ref")
+    suspend fun clearAllCrossRefs()
 }

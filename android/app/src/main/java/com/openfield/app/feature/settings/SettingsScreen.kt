@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
@@ -98,6 +99,7 @@ fun SettingsScreen(
 
     var showModelDialog by remember { mutableStateOf(false) }
     var showMemoryDialog by remember { mutableStateOf(false) }
+    var showClearAllDataDialog by remember { mutableStateOf(false) }
     var editedMemory by remember(settings.userCustomMemory) { mutableStateOf(settings.userCustomMemory) }
 
     val scope = rememberCoroutineScope()
@@ -634,6 +636,58 @@ fun SettingsScreen(
                             modifier = Modifier.size(13.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // PRD Section 44: Clear All OpenField Data (Factory Reset)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showClearAllDataDialog = true }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Color(0xFFD32F2F).copy(alpha = 0.12f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteForever,
+                                    contentDescription = null,
+                                    tint = Color(0xFFD32F2F),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Clear All OpenField Data",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFD32F2F)
+                                    )
+                                )
+                                Text(
+                                    text = "Reset all chats, documents, drafts, and local indexes",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = Color(0xFFD32F2F).copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
                 }
             }
 
@@ -903,6 +957,50 @@ fun SettingsScreen(
                         Text("Clear All", color = Color(0xFFD32F2F))
                     }
                 }
+            )
+        }
+
+        // PRD Section 44: Clear All OpenField Data Confirmation Dialog
+        if (showClearAllDataDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearAllDataDialog = false },
+                title = {
+                    Text(
+                        text = "Clear All OpenField Data?",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFD32F2F)
+                    )
+                },
+                text = {
+                    Text(
+                        text = "This will permanently delete all local conversations, imported documents, extracted search indexes, saved answers, drafts, and custom memories.\n\nYour installed Gemma 4 AI model (~2.58 GB) will remain preserved in storage so you will not need to download it again.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            scope.launch {
+                                repository.clearAllUserData()
+                                showClearAllDataDialog = false
+                                Toast.makeText(context, "All OpenField user data has been reset", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    ) {
+                        Text("Reset Everything", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearAllDataDialog = false }) {
+                        Text("Cancel", color = OpenFieldSecondaryText)
+                    }
+                },
+                shape = RoundedCornerShape(16.dp),
+                containerColor = OpenFieldBackground
             )
         }
     }

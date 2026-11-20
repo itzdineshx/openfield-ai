@@ -18,6 +18,7 @@ class KnowledgePackManagerTest {
 
     private class FakeKnowledgePackDao : KnowledgePackDao {
         val storage = mutableListOf<KnowledgePackEntity>()
+        val articles = mutableListOf<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>()
 
         override fun getKnowledgePacksFlow(): Flow<List<KnowledgePackEntity>> = flowOf(storage)
         override suspend fun getKnowledgePacks(): List<KnowledgePackEntity> = storage.toList()
@@ -38,6 +39,30 @@ class KnowledgePackManagerTest {
         override suspend fun deletePack(id: String) {
             storage.removeAll { it.id == id }
         }
+
+        override fun getArticlesForPackFlow(packId: String): Flow<List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>> =
+            flowOf(articles.filter { it.packId == packId })
+
+        override suspend fun getArticlesForPack(packId: String): List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity> =
+            articles.filter { it.packId == packId }
+
+        override suspend fun getArticleById(id: String): com.openfield.app.data.local.entity.KnowledgePackArticleEntity? =
+            articles.find { it.id == id }
+
+        override suspend fun insertArticles(articlesToInsert: List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>) {
+            articles.removeAll { a -> articlesToInsert.any { it.id == a.id } }
+            articles.addAll(articlesToInsert)
+        }
+
+        override suspend fun deleteArticlesForPack(packId: String) {
+            articles.removeAll { it.packId == packId }
+        }
+
+        override suspend fun searchArticles(query: String): List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity> =
+            articles.filter { it.title.contains(query, true) || it.content.contains(query, true) }
+
+        override suspend fun getAllInstalledArticles(): List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity> =
+            articles.toList()
     }
 
     private lateinit var dao: FakeKnowledgePackDao
@@ -149,5 +174,49 @@ class KnowledgePackManagerTest {
         val updateResult = manager.updatePackToLatest("comp_tech")
         assertTrue(updateResult.isSuccess)
         assertTrue(dao.getPackById("comp_tech")!!.isInstalled)
+    }
+
+    @Test
+    fun togglePackInstallation_installsRealArticlesAndCleansOnUninstall() = runBlocking {
+        manager.seedDefaultPacksIfEmpty()
+        val packId = "comp_tech"
+
+        // 1. Install pack
+        val installResult = manager.togglePackInstallation(packId)
+        assertTrue(installResult.isSuccess)
+        assertTrue(installResult.getOrThrow())
+
+        // Verify real domain articles are populated
+        val installedArticles = dao.getArticlesForPack(packId)
+        assertTrue("Installed pack should contain real articles", installedArticles.isNotEmpty())
+        assertTrue("Articles should contain Linux guide", installedArticles.any { it.title.contains("Linux") })
+        assertTrue("Articles should contain Network guide", installedArticles.any { it.title.contains("Network") })
+
+        // 2. Uninstall pack per PRD LIB-006
+        val uninstallResult = manager.togglePackInstallation(packId)
+        assertTrue(uninstallResult.isSuccess)
+        assertFalse(uninstallResult.getOrThrow())
+
+        val remainingArticles = dao.getArticlesForPack(packId)
+        assertTrue("Uninstalling pack must clean derived index entries and articles", remainingArticles.isEmpty())
+    }
+
+    @Test
+    fun curatedArticles_containsSubstantialRealContentAcrossDomains() {
+        val articles = com.openfield.app.feature.library.KnowledgePackContent.CURATED_ARTICLES
+        assertTrue("Should contain multiple curated articles", articles.size >= 10)
+
+        val packIds = articles.map { it.packId }.distinct()
+        assertTrue("Should cover computer & tech", packIds.contains("comp_tech"))
+        assertTrue("Should cover devices & repairs", packIds.contains("devices_repairs"))
+        assertTrue("Should cover learning & science", packIds.contains("learning"))
+        assertTrue("Should cover programming", packIds.contains("programming"))
+        assertTrue("Should cover languages", packIds.contains("languages"))
+
+        for (art in articles) {
+            assertTrue("Article ${art.id} must have title", art.title.isNotBlank())
+            assertTrue("Article ${art.id} must have section", art.section.isNotBlank())
+            assertTrue("Article ${art.id} must have substantial real content (>200 chars)", art.content.length > 200)
+        }
     }
 }

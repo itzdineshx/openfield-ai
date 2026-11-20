@@ -21,6 +21,8 @@ import com.openfield.app.data.local.entity.ChatSessionEntity
 import com.openfield.app.data.local.entity.CollectionSourceCrossRefEntity
 import com.openfield.app.data.local.entity.DocumentEntity
 import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
+import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
+import com.openfield.app.data.local.entity.SavedAnswerEntity
 import com.openfield.app.feature.ai.controller.ChatController
 import com.openfield.app.feature.ai.controller.DocumentQaController
 import com.openfield.app.feature.ai.controller.ImageAnalysisController
@@ -337,6 +339,9 @@ class OpenFieldRepository(
                 )
             }
         }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    val savedAnswers: StateFlow<List<SavedAnswerEntity>> = database.savedAnswerDao().getSavedAnswersFlow()
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     private val _settings = MutableStateFlow(AppSettings())
@@ -814,6 +819,58 @@ class OpenFieldRepository(
         scope.launch(Dispatchers.IO) {
             knowledgePackManager.updatePackToLatest(packId)
         }
+    }
+
+    fun getArticlesForPackFlow(packId: String): Flow<List<KnowledgePackArticleEntity>> {
+        return knowledgePackManager.getArticlesForPackFlow(packId)
+    }
+
+    suspend fun getArticle(id: String): KnowledgePackArticleEntity? {
+        return knowledgePackManager.getArticleById(id)
+    }
+
+    // -------------------------------------------------------------
+    // SAVED ANSWERS (PRD Screen S-14)
+    // -------------------------------------------------------------
+
+    fun saveAnswer(question: String, answer: String, sourceTitle: String, sourceType: String = "CHAT") {
+        scope.launch(Dispatchers.IO) {
+            val entity = SavedAnswerEntity(
+                id = "saved_${UUID.randomUUID()}",
+                question = question.trim(),
+                answer = answer.trim(),
+                sourceTitle = sourceTitle.trim(),
+                sourceType = sourceType
+            )
+            database.savedAnswerDao().insertSavedAnswer(entity)
+        }
+    }
+
+    fun deleteSavedAnswer(id: String) {
+        scope.launch(Dispatchers.IO) {
+            database.savedAnswerDao().deleteSavedAnswer(id)
+        }
+    }
+
+    // -------------------------------------------------------------
+    // CLEAR ALL OPENFIELD DATA (PRD Section 44 & Screen S-15)
+    // -------------------------------------------------------------
+
+    suspend fun clearAllUserData() = withContext(Dispatchers.IO) {
+        // Factory reset across Room SQLite tables
+        database.chatDao().clearAllMessages()
+        database.chatDao().clearAllSessions()
+        database.documentDao().clearAllChunks()
+        database.documentDao().clearAllDocuments()
+        database.modeSessionDao().clearAllWritingDrafts()
+        database.modeSessionDao().clearAllTroubleshootSessions()
+        database.modeSessionDao().clearAllLearningSessions()
+        database.taskDao().clearAll()
+        database.taskSessionDao().clearAll()
+        database.collectionDao().clearAllCrossRefs()
+        database.collectionDao().clearAllCollections()
+        database.savedAnswerDao().clearAllSavedAnswers()
+        clearUserCustomMemory()
     }
 
     // -------------------------------------------------------------

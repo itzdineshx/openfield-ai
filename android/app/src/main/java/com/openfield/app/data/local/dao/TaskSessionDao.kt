@@ -28,4 +28,7 @@ interface TaskSessionDao {
 
     @Query("SELECT * FROM task_sessions WHERE id = :id LIMIT 1")
     suspend fun getSession(id: String): TaskSessionEntity?
+
+    @Query("DELETE FROM task_sessions")
+    suspend fun clearAll()
 }

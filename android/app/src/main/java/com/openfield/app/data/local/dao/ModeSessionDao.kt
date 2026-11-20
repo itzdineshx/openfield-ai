@@ -78,4 +78,13 @@ interface ModeSessionDao {
 
     @Query("DELETE FROM writing_drafts WHERE id = :id")
     suspend fun deleteWritingDraft(id: String)
+
+    @Query("DELETE FROM troubleshoot_sessions")
+    suspend fun clearAllTroubleshootSessions()
+
+    @Query("DELETE FROM learning_sessions")
+    suspend fun clearAllLearningSessions()
+
+    @Query("DELETE FROM writing_drafts")
+    suspend fun clearAllWritingDrafts()
 }

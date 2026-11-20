@@ -28,4 +28,7 @@ interface TaskDao {
 
     @Query("SELECT * FROM task_items WHERE id = :id LIMIT 1")
     suspend fun getTaskById(id: String): TaskItemEntity?
+
+    @Query("DELETE FROM task_items")
+    suspend fun clearAll()
 }
