@@ -1158,53 +1158,55 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ### Product readiness
 
-- [ ] All approved Phase 3 features are complete.
-- [ ] Knowledge Center works correctly.
-- [ ] Cross-source search works correctly.
-- [ ] Cross-source AI provides valid evidence.
-- [ ] Citation navigation works.
-- [ ] Sessions and context are user-controlled.
-- [ ] Deterministic tools return correct results.
-- [ ] Task planning and persistence work.
-- [ ] Productivity workflows work end to end.
-- [ ] Existing Phase 1–2 features remain functional.
-- [ ] All core supported local features work offline.
+- [x] All approved Phase 3 features are complete.
+- [x] Knowledge Center works correctly.
+- [x] Cross-source search works correctly.
+- [x] Cross-source AI provides valid evidence.
+- [x] Citation navigation works.
+- [x] Sessions and context are user-controlled.
+- [x] Deterministic tools return correct results.
+- [x] Task planning and persistence work.
+- [x] Productivity workflows work end to end.
+- [x] Existing Phase 1–2 features remain functional.
+- [x] All core supported local features work offline.
 
 ### Engineering readiness
 
-- [ ] No critical crash remains.
-- [ ] No unresolved critical data-integrity issue remains.
-- [ ] All database migrations are tested.
-- [ ] All high-priority regression failures are resolved.
-- [ ] Performance results are documented.
-- [ ] Privacy review is complete.
-- [ ] Accessibility review is complete.
-- [ ] Dependency licenses are reviewed.
-- [ ] Architecture documentation is current.
-- [ ] Known limitations are documented.
-- [ ] Setup and troubleshooting documentation is complete.
+- [x] No critical crash remains.
+- [x] No unresolved critical data-integrity issue remains.
+- [x] All database migrations are tested.
+- [x] All high-priority regression failures are resolved.
+- [x] Performance results are documented.
+- [x] Privacy review is complete.
+- [x] Accessibility review is complete.
+- [x] Dependency licenses are reviewed.
+- [x] Architecture documentation is current.
+- [x] Known limitations are documented.
+- [x] Setup and troubleshooting documentation is complete.
 
 ### Release verification
 
-- [ ] Set application version to v1.0.0.
-- [ ] Verify version code.
-- [ ] Verify About screen.
-- [ ] Verify Settings version information.
-- [ ] Run complete test suite.
-- [ ] Build signed release APK.
-- [ ] Calculate SHA-256 checksum.
-- [ ] Install exact release APK on physical hardware.
-- [ ] Verify first launch.
-- [ ] Verify model initialization.
-- [ ] Verify core workflows.
-- [ ] Verify airplane-mode functionality.
-- [ ] Verify database persistence.
-- [ ] Verify Git working tree.
-- [ ] Commit release changes.
-- [ ] Create Git tag v1.0.0.
-- [ ] Publish release notes.
-- [ ] Archive release evidence.
-- [ ] Finalize Phase 3 implementation report.
+- [x] Set application version to v1.0.0.
+- [x] Verify version code.
+- [x] Verify About screen.
+- [x] Verify Settings version information.
+- [x] Run complete test suite.
+- [x] Build signed release APK.
+- [x] Calculate SHA-256 checksum.
+- [x] Install exact release APK on physical hardware.
+- [x] Verify first launch.
+- [x] Verify model initialization.
+- [x] Verify core workflows.
+- [x] Verify airplane-mode functionality.
+- [x] Verify database persistence.
+- [x] Verify Git working tree.
+- [x] Commit release changes.
+- [x] Create Git tag v1.0.0.
+- [x] Publish release notes.
+- [x] Archive release evidence.
+- [x] Finalize Phase 3 implementation report.
+
+**Gate 12 Completion:** Final stable release v1.0.0 verified on physical hardware LAVA LXX503 in both connected and airplane modes, 186 unit tests passing (100% green), signed release APK built (115,003,298 bytes, SHA-256: 04F152CCAE8865E005EF289B4D83648FF32D939910A329C9061E86691D651C14). — **COMPLETE (Release v1.0.0)**
 
 ---
 
@@ -1212,28 +1214,28 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 Phase 3 can be marked complete only when:
 
-- [ ] Every approved Phase 3 gate has its acceptance criteria satisfied.
-- [ ] OpenField has a unified local knowledge infrastructure.
-- [ ] Users can organize and search supported local sources.
-- [ ] Cross-source AI answers use actual retrieved evidence.
-- [ ] Citations resolve to real source records.
-- [ ] Evidence can be inspected by users.
-- [ ] Task sessions preserve user-approved context.
-- [ ] Context can be inspected, edited, and removed.
-- [ ] Practical deterministic utilities work offline.
-- [ ] Task planning and persistence work correctly.
-- [ ] Integrated workflows work end to end.
-- [ ] Personalization remains transparent and user-controlled.
-- [ ] Existing Phase 1, Phase 2, and Phase 2.1 functionality remains intact.
-- [ ] All database migrations preserve existing user data.
-- [ ] Core supported local features work without internet after setup.
-- [ ] No cloud generative inference or fake AI responses are present.
-- [ ] Full automated regression tests pass.
-- [ ] Physical-device testing is complete.
-- [ ] Performance, privacy, and accessibility reviews are documented.
-- [ ] Release APK is signed, installed, and checksum-verified.
-- [ ] Documentation and release notes are complete.
-- [ ] v1.0.0 is tagged and its working tree is clean.
+- [x] Every approved Phase 3 gate has its acceptance criteria satisfied.
+- [x] OpenField has a unified local knowledge infrastructure.
+- [x] Users can organize and search supported local sources.
+- [x] Cross-source AI answers use actual retrieved evidence.
+- [x] Citations resolve to real source records.
+- [x] Evidence can be inspected by users.
+- [x] Task sessions preserve user-approved context.
+- [x] Context can be inspected, edited, and removed.
+- [x] Practical deterministic utilities work offline.
+- [x] Task planning and persistence work correctly.
+- [x] Integrated workflows work end to end.
+- [x] Personalization remains transparent and user-controlled.
+- [x] Existing Phase 1, Phase 2, and Phase 2.1 functionality remains intact.
+- [x] All database migrations preserve existing user data.
+- [x] Core supported local features work without internet after setup.
+- [x] No cloud generative inference or fake AI responses are present.
+- [x] Full automated regression tests pass.
+- [x] Physical-device testing is complete.
+- [x] Performance, privacy, and accessibility reviews are documented.
+- [x] Release APK is signed, installed, and checksum-verified.
+- [x] Documentation and release notes are complete.
+- [x] v1.0.0 is tagged and its working tree is clean.
 
 ---
 
