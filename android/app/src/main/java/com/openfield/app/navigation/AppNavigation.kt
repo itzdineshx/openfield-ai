@@ -1,10 +1,46 @@
 package com.openfield.app.navigation
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,8 +49,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,6 +64,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.openfield.app.core.components.OpenFieldLogo
+import com.openfield.app.core.theme.OpenFieldBackground
+import com.openfield.app.core.theme.OpenFieldCardBorder
+import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueBorder
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryBackground
+import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.chat.ChatScreen
 import com.openfield.app.feature.document.CrossSourceQaScreen
@@ -75,6 +126,9 @@ fun AppNavigation(
     }
 
     var showProfileSheet by remember { mutableStateOf(false) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val repository = remember { OpenFieldRepository.getInstance() }
 
     val isTopLevelRoute = currentRoute in listOf(
         AppRoutes.HOME,
@@ -83,12 +137,15 @@ fun AppNavigation(
         AppRoutes.LIBRARY
     )
 
-    Scaffold(
-        bottomBar = {
-            if (isTopLevelRoute) {
-                OpenFieldBottomBar(
-                    currentRoute = currentRoute,
-                    onNavigateToRoute = { route ->
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = isTopLevelRoute,
+        drawerContent = {
+            AppDrawerContent(
+                currentRoute = currentRoute,
+                onNavigateToRoute = { route ->
+                    scope.launch {
+                        drawerState.close()
                         navController.navigate(route) {
                             popUpTo(AppRoutes.HOME) {
                                 saveState = true
@@ -97,11 +154,26 @@ fun AppNavigation(
                             restoreState = true
                         }
                     }
-                )
-            }
+                },
+                onNavigateToChat = { sessionId ->
+                    scope.launch {
+                        drawerState.close()
+                        navController.navigate(AppRoutes.chatSessionRoute(sessionId))
+                    }
+                },
+                onNewChat = {
+                    scope.launch {
+                        drawerState.close()
+                        val newId = repository.createNewSessionNow("New Chat")
+                        navController.navigate(AppRoutes.chatSessionRoute(newId))
+                    }
+                },
+                repository = repository
+            )
         }
-    ) { innerPadding ->
-        Box(
+    ) {
+        Scaffold { innerPadding ->
+            Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -185,6 +257,9 @@ fun AppNavigation(
                         },
                         onNavigateToModelSetup = {
                             navController.navigate(AppRoutes.MODEL_SETUP)
+                        },
+                        onOpenDrawer = {
+                            scope.launch { drawerState.open() }
                         }
                     )
                 }
@@ -206,7 +281,9 @@ fun AppNavigation(
                     val sessionId = backStackEntry.arguments?.getString("sessionId").orEmpty()
                     ChatScreen(
                         sessionId = sessionId,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToStudio = { navController.navigate(AppRoutes.CREATE_WRITE) },
+                        onNavigateToTasks = { navController.navigate(AppRoutes.TASKS) }
                     )
                 }
 
@@ -383,6 +460,7 @@ fun AppNavigation(
             }
         }
     }
+    }
 
     // Profile Menu Bottom Sheet
     ProfileMenuSheet(
@@ -395,5 +473,265 @@ fun AppNavigation(
             navController.navigate(AppRoutes.ABOUT)
         }
     )
+}
+
+@Composable
+private fun AppDrawerContent(
+    currentRoute: String?,
+    onNavigateToRoute: (String) -> Unit,
+    onNavigateToChat: (String) -> Unit,
+    onNewChat: () -> Unit,
+    repository: OpenFieldRepository = OpenFieldRepository.getInstance()
+) {
+    val sessions by repository.sessions.collectAsState()
+    var searchFilter by remember { mutableStateOf("") }
+    val filteredSessions = remember(sessions, searchFilter) {
+        if (searchFilter.isBlank()) sessions.take(8)
+        else sessions.filter { it.title.contains(searchFilter, ignoreCase = true) }.take(20)
+    }
+
+    ModalDrawerSheet(
+        modifier = Modifier.width(310.dp),
+        drawerContainerColor = OpenFieldBackground
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 16.dp, horizontal = 12.dp)
+        ) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                OpenFieldLogo(size = 32.dp, showText = true, textFontSize = 18)
+            }
+            Text(
+                text = "Offline AI Companion • Gemma 4",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = OpenFieldSecondaryText,
+                    fontSize = 11.sp
+                ),
+                modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
+            )
+
+            // + New Conversation Button
+            Surface(
+                onClick = onNewChat,
+                shape = RoundedCornerShape(12.dp),
+                color = OpenFieldPrimaryBlueLight,
+                border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = OpenFieldPrimaryBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "New Conversation",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = OpenFieldPrimaryBlue,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Search Filter
+            OutlinedTextField(
+                value = searchFilter,
+                onValueChange = { searchFilter = it },
+                placeholder = { Text("Search chats…", fontSize = 12.5.sp, color = OpenFieldSecondaryText) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = OpenFieldSecondaryText, modifier = Modifier.size(16.dp)) },
+                trailingIcon = if (searchFilter.isNotBlank()) {
+                    {
+                        IconButton(onClick = { searchFilter = "" }, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = OpenFieldSecondaryText, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                } else null,
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = OpenFieldPrimaryBlue,
+                    unfocusedBorderColor = OpenFieldCardBorder,
+                    focusedContainerColor = OpenFieldSecondaryBackground,
+                    unfocusedContainerColor = OpenFieldSecondaryBackground
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .padding(horizontal = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Recent Chats section
+            if (filteredSessions.isNotEmpty()) {
+                Text(
+                    text = if (searchFilter.isBlank()) "RECENT CHATS" else "MATCHING CHATS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = OpenFieldSecondaryText,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                        fontSize = 10.5.sp
+                    ),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+
+                filteredSessions.forEach { session ->
+                    val isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id)
+                    Surface(
+                        onClick = { onNavigateToChat(session.id) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) OpenFieldSecondaryBackground else Color.Transparent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 1.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChatBubble,
+                                contentDescription = null,
+                                tint = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryText.copy(alpha = 0.7f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = session.title.ifBlank { "Untitled chat" },
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = if (isSelected) OpenFieldNavyText else OpenFieldNavyText.copy(alpha = 0.85f),
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    fontSize = 13.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = { repository.deleteSession(session.id) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Delete chat",
+                                    tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            HorizontalDivider(
+                color = OpenFieldCardBorder,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+            )
+
+            // Workspaces & Tools
+            Text(
+                text = "WORKSPACES",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = OpenFieldSecondaryText,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp,
+                    fontSize = 10.5.sp
+                ),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+
+            NavigationDrawerItem(
+                label = { Text("All Chats") },
+                selected = currentRoute == AppRoutes.CHATS,
+                onClick = { onNavigateToRoute(AppRoutes.CHATS) },
+                icon = { Icon(Icons.Default.ChatBubble, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+            NavigationDrawerItem(
+                label = { Text("Knowledge Library") },
+                selected = currentRoute == AppRoutes.LIBRARY,
+                onClick = { onNavigateToRoute(AppRoutes.LIBRARY) },
+                icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+            NavigationDrawerItem(
+                label = { Text("Create & Write Studio") },
+                selected = currentRoute == AppRoutes.CREATE_WRITE,
+                onClick = { onNavigateToRoute(AppRoutes.CREATE_WRITE) },
+                icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+            NavigationDrawerItem(
+                label = { Text("Workflows & Tasks") },
+                selected = currentRoute == AppRoutes.TASKS,
+                onClick = { onNavigateToRoute(AppRoutes.TASKS) },
+                icon = { Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+            NavigationDrawerItem(
+                label = { Text("AI Tools") },
+                selected = currentRoute == AppRoutes.TOOLS,
+                onClick = { onNavigateToRoute(AppRoutes.TOOLS) },
+                icon = { Icon(Icons.Default.Build, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+            NavigationDrawerItem(
+                label = { Text("Settings") },
+                selected = currentRoute == AppRoutes.SETTINGS,
+                onClick = { onNavigateToRoute(AppRoutes.SETTINGS) },
+                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Footer
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = OpenFieldSecondaryBackground,
+                border = BorderStroke(1.dp, OpenFieldCardBorder),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = OpenFieldSecondaryText,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = "100% Offline • Private on Device",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldSecondaryText,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+            }
+        }
+    }
 }
 

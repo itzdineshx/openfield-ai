@@ -110,7 +110,11 @@ class OpenFieldRepository(
 
     // Shared AI Orchestration & Mode Controllers
     val orchestrator = AiOrchestrator(aiEngine)
-    val chatController = ChatController(database.chatDao(), orchestrator, scope)
+    val crossSourceRetriever = CrossSourceRetriever(
+        database.documentDao(),
+        database.knowledgePackDao()
+    )
+    val chatController = ChatController(database.chatDao(), orchestrator, scope, crossSourceRetriever)
     val imageAnalysisController = ImageAnalysisController(orchestrator, scope)
     val documentQaController = DocumentQaController(
         database.documentDao(),
@@ -138,10 +142,6 @@ class OpenFieldRepository(
         database.documentDao(),
         database.chatDao(),
         database.modeSessionDao(),
-        database.knowledgePackDao()
-    )
-    val crossSourceRetriever = CrossSourceRetriever(
-        database.documentDao(),
         database.knowledgePackDao()
     )
     val crossSourceQaController = com.openfield.app.feature.ai.controller.CrossSourceQaController(
@@ -538,7 +538,14 @@ class OpenFieldRepository(
         }
     }
 
-    fun sendMessage(sessionId: String, userPrompt: String) {
+    fun sendMessage(
+        sessionId: String,
+        userPrompt: String,
+        imageUri: String? = null,
+        knowledgeScopeId: String? = null,
+        knowledgeScopeTitle: String? = null,
+        mode: String? = null
+    ) {
         val s = _settings.value
         val memoryContext = localMemoryManager.buildContextForPrompt()
         val combined = listOf(s.userCustomMemory, memoryContext).filter { it.isNotBlank() }.joinToString("\n").ifBlank { null }
@@ -549,7 +556,11 @@ class OpenFieldRepository(
             responseLength = s.preferredResponseLength,
             explanationLevel = s.preferredExplanationLevel,
             measurementUnits = s.preferredMeasurementUnits,
-            customMemory = combined
+            customMemory = combined,
+            imageUri = imageUri,
+            knowledgeScopeId = knowledgeScopeId,
+            knowledgeScopeTitle = knowledgeScopeTitle,
+            mode = mode
         )
     }
 

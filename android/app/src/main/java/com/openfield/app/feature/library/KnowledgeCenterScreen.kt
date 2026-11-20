@@ -447,7 +447,7 @@ private fun KnowledgeOverviewContent(
     collections: List<KnowledgeCollection>,
     documents: List<Any>,
     packs: List<Any>,
-    onNavigateToSources: () -> Unit = {},
+    onNavigateToSources: () -> Unit,
     onNavigateToCollection: () -> Unit,
     onNavigateToDocuments: () -> Unit,
     onNavigateToPacks: () -> Unit

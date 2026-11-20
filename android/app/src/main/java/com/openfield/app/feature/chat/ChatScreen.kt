@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -67,6 +68,7 @@ import com.openfield.app.core.components.ChatMessageBubble
 import com.openfield.app.core.components.ConfirmationDialog
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.ScreenTopBar
+import com.openfield.app.core.components.UnifiedOmnibar
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
@@ -96,6 +98,8 @@ private val chatStarters = listOf(
 fun ChatScreen(
     sessionId: String,
     onNavigateBack: () -> Unit,
+    onNavigateToStudio: (() -> Unit)? = null,
+    onNavigateToTasks: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -169,6 +173,12 @@ fun ChatScreen(
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {
+                    IconButton(onClick = {
+                        repository.chatController.stopGeneration()
+                        onNavigateBack()
+                    }) {
+                        Icon(imageVector = Icons.Default.EditNote, contentDescription = "New conversation")
+                    }
                     IconButton(onClick = { showMenu = !showMenu }) {
                         Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Chat options")
                     }
@@ -206,17 +216,42 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            ChatBottomComposer(
+            UnifiedOmnibar(
                 value = inputMessage,
                 onValueChange = { inputMessage = it },
-                onSend = ::send,
+                onSend = { prompt, imageUri, scopeId, scopeTitle, mode ->
+                    if ((prompt.isNotBlank() || imageUri != null) && !isGenerating) {
+                        val currentSettings = repository.settings.value
+                        val structuredMemory = repository.localMemoryManager.buildContextForPrompt()
+                        val combinedMemory = listOf(currentSettings.userCustomMemory, structuredMemory)
+                            .filter { it.isNotBlank() }
+                            .joinToString("\n")
+                            .ifBlank { null }
+
+                        repository.chatController.sendMessage(
+                            sessionId = sessionId,
+                            userPrompt = prompt,
+                            language = currentSettings.language,
+                            responseLength = currentSettings.preferredResponseLength,
+                            explanationLevel = currentSettings.preferredExplanationLevel,
+                            measurementUnits = currentSettings.preferredMeasurementUnits,
+                            customMemory = combinedMemory,
+                            imageUri = imageUri,
+                            knowledgeScopeId = scopeId,
+                            knowledgeScopeTitle = scopeTitle,
+                            mode = mode
+                        )
+                        inputMessage = ""
+                    }
+                },
                 onVoiceClick = voice.toggle,
                 isListening = voice.isListening,
                 onStopListening = voice.stop,
                 onCancelListening = voice.cancel,
                 isGenerating = isGenerating,
                 onStopGenerating = { repository.chatController.stopGeneration() },
-                placeholder = "Ask a follow-up…",
+                placeholder = "Ask a follow-up, attach photo or pack…",
+                onNavigateToStudio = onNavigateToStudio,
                 modifier = Modifier.imePadding()
             )
         },
@@ -283,6 +318,45 @@ fun ChatScreen(
                                         putExtra(android.content.Intent.EXTRA_TEXT, msg.text)
                                     }
                                     context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Answer"))
+                                }
+                            } else null,
+                            onOpenInStudio = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                { text ->
+                                    repository.sharedContextManager.handoffToWriter(
+                                        title = "Draft from Chat",
+                                        initialDraft = text
+                                    )
+                                    onNavigateToStudio?.invoke()
+                                }
+                            } else null,
+                            onCreateChecklist = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                { text ->
+                                    scope.launch {
+                                        val lines = text.lines()
+                                            .map { it.trim() }
+                                            .filter { it.matches(Regex("^(?:\\d+\\.|[-*•])\\s+.+")) }
+                                            .map { it.replaceFirst(Regex("^(?:\\d+\\.|[-*•])\\s+"), "") }
+                                        val subtasks = if (lines.isNotEmpty()) lines.take(10) else listOf("Review generated response", "Follow up on action items")
+                                        val firstLine = text.lines().firstOrNull { it.isNotBlank() }?.take(40) ?: "Chat Action Plan"
+                                        repository.createTask(
+                                            title = firstLine.replace(Regex("^#+\\s*"), ""),
+                                            description = text.take(150),
+                                            priority = "MEDIUM",
+                                            subtaskTitles = subtasks
+                                        )
+                                        android.widget.Toast.makeText(context, "Checklist created in Workflows & Tasks!", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else null,
+                            onAskQuiz = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                { text ->
+                                    val topic = text.lines().firstOrNull { it.isNotBlank() }?.take(50)?.replace(Regex("^#+\\s*"), "") ?: "the topic above"
+                                    send("Give me a quick 3-question interactive quiz to test my understanding of: $topic")
+                                }
+                            } else null,
+                            onTranslate = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                { text ->
+                                    send("Translate your previous response clearly into Spanish (or natural everyday phrasing):\n\n${text.take(300)}")
                                 }
                             } else null
                         )

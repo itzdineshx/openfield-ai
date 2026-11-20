@@ -6,7 +6,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,14 +21,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -51,6 +60,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.openfield.app.core.text.Markdown
 import com.openfield.app.core.theme.BubbleShapeUser
+import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldMutedText
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
@@ -79,7 +89,11 @@ fun ChatMessageBubble(
     isSpeaking: Boolean = false,
     onSaveClick: (() -> Unit)? = null,
     isSaved: Boolean = false,
-    onShareClick: (() -> Unit)? = null
+    onShareClick: (() -> Unit)? = null,
+    onOpenInStudio: ((String) -> Unit)? = null,
+    onCreateChecklist: ((String) -> Unit)? = null,
+    onAskQuiz: ((String) -> Unit)? = null,
+    onTranslate: ((String) -> Unit)? = null
 ) {
     if (isUser) {
         UserMessage(message, imageUri, timestamp, modifier)
@@ -98,7 +112,11 @@ fun ChatMessageBubble(
             isSpeaking = isSpeaking,
             onSaveClick = onSaveClick,
             isSaved = isSaved,
-            onShareClick = onShareClick
+            onShareClick = onShareClick,
+            onOpenInStudio = onOpenInStudio,
+            onCreateChecklist = onCreateChecklist,
+            onAskQuiz = onAskQuiz,
+            onTranslate = onTranslate
         )
     }
 }
@@ -158,7 +176,11 @@ private fun AssistantMessage(
     isSpeaking: Boolean,
     onSaveClick: (() -> Unit)?,
     isSaved: Boolean,
-    onShareClick: (() -> Unit)?
+    onShareClick: (() -> Unit)?,
+    onOpenInStudio: ((String) -> Unit)? = null,
+    onCreateChecklist: ((String) -> Unit)? = null,
+    onAskQuiz: ((String) -> Unit)? = null,
+    onTranslate: ((String) -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -171,7 +193,7 @@ private fun AssistantMessage(
 
         Column(modifier = Modifier.weight(1f)) {
             if (imageUri != null) {
-                AttachmentImage(imageUri)
+                AttachmentImage(imageUri, isVisionAnalysis = true)
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
@@ -210,12 +232,20 @@ private fun AssistantMessage(
                 )
             }
 
-            if (sourcePage != null && onSourceClick != null && isComplete) {
+            if (sourcePage != null && isComplete) {
                 Spacer(modifier = Modifier.height(12.dp))
-                SourceReferenceCard(pageLabel = sourcePage, onClick = onSourceClick)
+                SourceReferenceCard(pageLabel = sourcePage, onClick = onSourceClick ?: {})
             }
 
             if (isComplete && message.isNotBlank()) {
+                InStreamHandoffChips(
+                    message = message,
+                    onOpenInStudio = onOpenInStudio,
+                    onCreateChecklist = onCreateChecklist,
+                    onAskQuiz = onAskQuiz,
+                    onTranslate = onTranslate
+                )
+
                 MessageActions(
                     message = message,
                     timestamp = timestamp,
@@ -226,6 +256,89 @@ private fun AssistantMessage(
                     onShareClick = onShareClick
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun InStreamHandoffChips(
+    message: String,
+    onOpenInStudio: ((String) -> Unit)?,
+    onCreateChecklist: ((String) -> Unit)?,
+    onAskQuiz: ((String) -> Unit)?,
+    onTranslate: ((String) -> Unit)?
+) {
+    if (onOpenInStudio == null && onCreateChecklist == null && onAskQuiz == null && onTranslate == null) return
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(top = 8.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (onOpenInStudio != null) {
+            HandoffChip(
+                icon = Icons.Default.EditNote,
+                label = "Open in Studio",
+                onClick = { onOpenInStudio(message) }
+            )
+        }
+        if (onCreateChecklist != null) {
+            HandoffChip(
+                icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                label = "Create Checklist",
+                onClick = { onCreateChecklist(message) }
+            )
+        }
+        if (onAskQuiz != null) {
+            HandoffChip(
+                icon = Icons.Default.Lightbulb,
+                label = "Test Knowledge",
+                onClick = { onAskQuiz(message) }
+            )
+        }
+        if (onTranslate != null) {
+            HandoffChip(
+                icon = Icons.Default.Translate,
+                label = "Translate",
+                onClick = { onTranslate(message) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun HandoffChip(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = OpenFieldSecondaryBackground,
+        border = BorderStroke(1.dp, OpenFieldCardBorder)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = OpenFieldPrimaryBlue,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = OpenFieldNavyText,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
         }
     }
 }
@@ -301,12 +414,12 @@ private fun ActionIcon(icon: ImageVector, description: String, onClick: () -> Un
 }
 
 @Composable
-private fun AttachmentImage(imageUri: Any) {
+private fun AttachmentImage(imageUri: Any, isVisionAnalysis: Boolean = false) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 200.dp)
-            .height(170.dp)
+            .heightIn(max = 220.dp)
+            .height(180.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(OpenFieldSecondaryBackground)
     ) {
@@ -319,6 +432,36 @@ private fun AttachmentImage(imageUri: Any) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.matchParentSize()
         )
+        if (isVisionAnalysis) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = OpenFieldPrimaryBlue.copy(alpha = 0.88f),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "Vision Grounded",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+        }
     }
 }
 

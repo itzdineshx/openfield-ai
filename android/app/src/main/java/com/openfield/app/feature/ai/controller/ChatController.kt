@@ -5,6 +5,10 @@ import com.openfield.app.core.text.Markdown
 import com.openfield.app.data.local.dao.ChatDao
 import com.openfield.app.data.local.entity.ChatMessageEntity
 import com.openfield.app.feature.ai.mode.AiOrchestrator
+import com.openfield.app.feature.ai.mode.LearningLevel
+import com.openfield.app.feature.ai.mode.ModeConfigRegistry
+import com.openfield.app.feature.ai.mode.OpenFieldMode
+import com.openfield.app.feature.document.rag.CrossSourceRetriever
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +30,8 @@ import java.util.UUID
 class ChatController(
     private val chatDao: ChatDao,
     private val orchestrator: AiOrchestrator,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val crossSourceRetriever: CrossSourceRetriever? = null
 ) {
     private val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
     private val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
@@ -60,9 +65,13 @@ class ChatController(
         responseLength: String? = null,
         explanationLevel: String? = null,
         measurementUnits: String? = null,
-        customMemory: String? = null
+        customMemory: String? = null,
+        imageUri: String? = null,
+        knowledgeScopeId: String? = null,
+        knowledgeScopeTitle: String? = null,
+        mode: String? = null
     ) {
-        if (userPrompt.isBlank()) return
+        if (userPrompt.isBlank() && imageUri.isNullOrBlank()) return
         startGeneration(
             sessionId = sessionId,
             userPrompt = userPrompt.trim(),
@@ -71,7 +80,11 @@ class ChatController(
             responseLength = responseLength,
             explanationLevel = explanationLevel,
             measurementUnits = measurementUnits,
-            customMemory = customMemory
+            customMemory = customMemory,
+            imageUri = imageUri,
+            knowledgeScopeId = knowledgeScopeId,
+            knowledgeScopeTitle = knowledgeScopeTitle,
+            mode = mode
         )
     }
 
@@ -83,7 +96,11 @@ class ChatController(
         responseLength: String? = null,
         explanationLevel: String? = null,
         measurementUnits: String? = null,
-        customMemory: String? = null
+        customMemory: String? = null,
+        imageUri: String? = null,
+        knowledgeScopeId: String? = null,
+        knowledgeScopeTitle: String? = null,
+        mode: String? = null
     ) {
         val assistantMsgId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
@@ -100,6 +117,7 @@ class ChatController(
                         isUser = true,
                         text = userPrompt,
                         timestamp = now,
+                        imageUri = imageUri,
                         isComplete = true
                     )
                 )
@@ -118,12 +136,13 @@ class ChatController(
 
             chatDao.getSession(sessionId)?.let { session ->
                 val isFirstMessage = session.messageCount == 0
+                val displayTitle = if (userPrompt.isNotBlank()) userPrompt else "Image Analysis"
                 chatDao.updateSession(
                     session.copy(
                         title = if (isFirstMessage && session.title.equals("New chat", ignoreCase = true)) {
-                            Markdown.preview(userPrompt, 40)
+                            Markdown.preview(displayTitle, 40)
                         } else session.title,
-                        preview = Markdown.preview(userPrompt, 60),
+                        preview = Markdown.preview(displayTitle, 60),
                         lastUpdated = now,
                         messageCount = session.messageCount + if (insertUserMessage) 2 else 1
                     )
@@ -143,15 +162,71 @@ class ChatController(
             val accumulated = StringBuilder()
             var lastWrite = 0L
             try {
-                orchestrator.streamAskAi(
-                    sessionId = sessionId,
-                    userPrompt = userPrompt,
-                    language = language,
-                    responseLength = responseLength,
-                    explanationLevel = explanationLevel,
-                    measurementUnits = measurementUnits,
-                    customMemory = customMemory
-                ).collect { token ->
+                val flow: Flow<String> = when {
+                    !imageUri.isNullOrBlank() -> {
+                        orchestrator.streamImageAnalysis(
+                            imagePath = imageUri,
+                            userQuestion = userPrompt.ifBlank { "Describe and analyze this image in detail." }
+                        )
+                    }
+                    !knowledgeScopeId.isNullOrBlank() && crossSourceRetriever != null -> {
+                        val evidence = crossSourceRetriever.retrieveEvidence(userPrompt, listOf(knowledgeScopeId), maxTotalChunks = 5)
+                        if (evidence.isNotEmpty()) {
+                            val excerpts = evidence.map { Pair(it.pageNumber ?: 1, it.text) }
+                            val pages = evidence.mapNotNull { it.pageNumber }.distinct().sorted().joinToString(", ") { "p. $it" }
+                            val citation = if (pages.isNotBlank()) {
+                                "${knowledgeScopeTitle ?: evidence.first().sourceTitle} • $pages"
+                            } else {
+                                knowledgeScopeTitle ?: evidence.first().sourceTitle
+                            }
+                            chatDao.updateMessageSourcePage(assistantMsgId, citation)
+                            orchestrator.streamDocumentQa(
+                                documentName = knowledgeScopeTitle ?: evidence.first().sourceTitle,
+                                excerptsWithPages = excerpts,
+                                question = userPrompt
+                            )
+                        } else {
+                            orchestrator.streamAskAi(
+                                sessionId = sessionId,
+                                userPrompt = userPrompt,
+                                language = language,
+                                responseLength = responseLength,
+                                explanationLevel = explanationLevel,
+                                measurementUnits = measurementUnits,
+                                customMemory = customMemory
+                            )
+                        }
+                    }
+                    mode.equals("SUMMARIZE", ignoreCase = true) -> {
+                        val prompt = "Provide a structured executive summary and key takeaways of the following content:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ASK_AI).defaultGenConfig)
+                    }
+                    mode.equals("EXPLAIN", ignoreCase = true) -> {
+                        orchestrator.streamLessonGeneration(userPrompt, LearningLevel.BEGINNER)
+                    }
+                    mode.equals("TRANSLATE", ignoreCase = true) -> {
+                        val targetLang = language ?: "Spanish"
+                        val prompt = "Translate the following text accurately into $targetLang. Output only the clear translation without chat filler:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ASK_AI).defaultGenConfig)
+                    }
+                    mode.equals("SOLVE", ignoreCase = true) -> {
+                        val prompt = "You are a stateful diagnostic assistant. Analyze the user's issue and propose the first safe diagnostic step. Include Step Action, Rationale, Expected Observation, and Hazard Warning:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.SOLVE_PROBLEM).defaultGenConfig)
+                    }
+                    else -> {
+                        orchestrator.streamAskAi(
+                            sessionId = sessionId,
+                            userPrompt = userPrompt,
+                            language = language,
+                            responseLength = responseLength,
+                            explanationLevel = explanationLevel,
+                            measurementUnits = measurementUnits,
+                            customMemory = customMemory
+                        )
+                    }
+                }
+
+                flow.collect { token ->
                     accumulated.append(token)
                     val nowMs = System.currentTimeMillis()
                     if (nowMs - lastWrite >= STREAM_WRITE_INTERVAL_MS) {
