@@ -7,7 +7,7 @@
     "version": "1.2.0",
     "size": "6.7 KB",
     "icon_color_hex": 4282622023,
-    "checksum_sha256": "683195130542e286cd5541ae991b0ca640a18602d83fa7b4ee591c4d08f9c08f",
+    "checksum_sha256": "1c7860f89bb47da892b077056be434a11f2339344081c37aac2ab452c745d142",
     "provenance": "OpenField Official Curated Corpus",
     "topics": [
       "Networking",
@@ -17,7 +17,7 @@
       "Operating Systems",
       "Linux"
     ],
-    "download_url": "https://github.com/openfield-ai/openfield/releases/download/v1.0.0/comp_tech-1.2.0.zip"
+    "download_url": "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0/comp_tech-1.2.0.zip"
   },
   {
     "id": "devices_repairs",
@@ -27,7 +27,7 @@
     "version": "1.3.0",
     "size": "6.7 KB",
     "icon_color_hex": 4282622023,
-    "checksum_sha256": "fac30cf059de66753188ea203de0b6770e712c235a490d15a4edc714e1355200",
+    "checksum_sha256": "b14c5e9b5655982d7ebb9ddd14cf333b0d402edb0154fb7bb12092c9404e5215",
     "provenance": "OpenField Official Curated Corpus",
     "topics": [
       "Soldering",
@@ -37,7 +37,7 @@
       "Power Supplies",
       "Multimeter"
     ],
-    "download_url": "https://github.com/openfield-ai/openfield/releases/download/v1.0.0/devices_repairs-1.3.0.zip"
+    "download_url": "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0/devices_repairs-1.3.0.zip"
   },
   {
     "id": "learning",
@@ -47,7 +47,7 @@
     "version": "1.0.0",
     "size": "4.3 KB",
     "icon_color_hex": 4286470082,
-    "checksum_sha256": "d6a9d4531477bf0480328f40fb7c525c03e040d1b14aefcf8482f7c283d2c50e",
+    "checksum_sha256": "d967d53653da346540a7ec3d29e0320d47e359f2455bf2d623c00730de5e6047",
     "provenance": "OpenField Official Curated Corpus",
     "topics": [
       "Physics Formulas",
@@ -56,7 +56,7 @@
       "Cellular Biology",
       "Mechanics"
     ],
-    "download_url": "https://github.com/openfield-ai/openfield/releases/download/v1.0.0/learning-1.0.0.zip"
+    "download_url": "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0/learning-1.0.0.zip"
   },
   {
     "id": "programming",
@@ -66,7 +66,7 @@
     "version": "1.1.0",
     "size": "4.4 KB",
     "icon_color_hex": 4280191205,
-    "checksum_sha256": "66e7590c06c9ba723e5287ad7ef0a7d661fe995e1039d3655145487ec7676b98",
+    "checksum_sha256": "a1975937eec6bc5d5aa4ae4ea3bc097f1d100d685177f19a9110909acb2ff488",
     "provenance": "OpenField Official Curated Corpus",
     "topics": [
       "Kotlin Coroutines",
@@ -75,7 +75,7 @@
       "Data Structures",
       "Algorithms"
     ],
-    "download_url": "https://github.com/openfield-ai/openfield/releases/download/v1.0.0/programming-1.1.0.zip"
+    "download_url": "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0/programming-1.1.0.zip"
   },
   {
     "id": "languages",
@@ -85,7 +85,7 @@
     "version": "1.0.0",
     "size": "2.5 KB",
     "icon_color_hex": 4278234305,
-    "checksum_sha256": "7de854e537b1e71debdbdee08847676eb991f8c524a00955a90a1a2a476f3ed2",
+    "checksum_sha256": "9d5664dd40f95afc11229e1fcf11a29a5a52e0e3bf906f375ac73ee8e899afba",
     "provenance": "OpenField Official Curated Corpus",
     "topics": [
       "Vocabulary",
@@ -94,6 +94,6 @@
       "Phrases",
       "Translations"
     ],
-    "download_url": "https://github.com/openfield-ai/openfield/releases/download/v1.0.0/languages-1.0.0.zip"
+    "download_url": "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0/languages-1.0.0.zip"
   }
 ]

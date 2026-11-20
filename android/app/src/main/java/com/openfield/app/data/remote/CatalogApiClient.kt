@@ -28,6 +28,8 @@ sealed interface CatalogResult {
  */
 class CatalogApiClient(
     private val candidateUrls: List<String> = listOf(
+        "https://raw.githubusercontent.com/itzdineshx/openfield-ai/master/catalog/packs.json",
+        "https://raw.githubusercontent.com/itzdineshx/openfield-ai/main/catalog/packs.json",
         "https://raw.githubusercontent.com/openfield-ai/openfield/master/catalog/packs.json",
         "https://raw.githubusercontent.com/openfield-ai/openfield/main/catalog/packs.json",
         "http://127.0.0.1:8000",

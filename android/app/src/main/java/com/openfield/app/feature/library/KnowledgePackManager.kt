@@ -43,7 +43,7 @@ class KnowledgePackManager(
 
     companion object {
         const val OFFICIAL_PROVENANCE = "OpenField Official Curated Corpus"
-        const val GITHUB_RELEASES_BASE = "https://github.com/openfield-ai/openfield/releases/download/v1.0.0"
+        const val GITHUB_RELEASES_BASE = "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0"
 
         val CURATED_CATALOG: List<KnowledgePackManifest> = listOf(
             KnowledgePackManifest(
@@ -54,7 +54,7 @@ class KnowledgePackManager(
                 version = "1.2.0",
                 size = "6.7 KB",
                 iconColorHex = 0xFF43A047,
-                checksumSha256 = "683195130542e286cd5541ae991b0ca640a18602d83fa7b4ee591c4d08f9c08f",
+                checksumSha256 = "1c7860f89bb47da892b077056be434a11f2339344081c37aac2ab452c745d142",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Networking", "Linux Commands", "Hardware Architecture", "Troubleshooting", "Operating Systems", "Linux"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/comp_tech-1.2.0.zip"
@@ -67,7 +67,7 @@ class KnowledgePackManager(
                 version = "1.3.0",
                 size = "6.7 KB",
                 iconColorHex = 0xFF43A047,
-                checksumSha256 = "fac30cf059de66753188ea203de0b6770e712c235a490d15a4edc714e1355200",
+                checksumSha256 = "b14c5e9b5655982d7ebb9ddd14cf333b0d402edb0154fb7bb12092c9404e5215",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Soldering", "Circuit Boards", "Multimeter Tests", "Component Replacement", "Power Supplies", "Multimeter"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/devices_repairs-1.3.0.zip"
@@ -80,7 +80,7 @@ class KnowledgePackManager(
                 version = "1.0.0",
                 size = "4.3 KB",
                 iconColorHex = 0xFF7E57C2,
-                checksumSha256 = "d6a9d4531477bf0480328f40fb7c525c03e040d1b14aefcf8482f7c283d2c50e",
+                checksumSha256 = "d967d53653da346540a7ec3d29e0320d47e359f2455bf2d623c00730de5e6047",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Physics Formulas", "Periodic Table", "Calculus Essentials", "Cellular Biology", "Mechanics"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/learning-1.0.0.zip"
@@ -93,7 +93,7 @@ class KnowledgePackManager(
                 version = "1.1.0",
                 size = "4.4 KB",
                 iconColorHex = 0xFF1E88E5,
-                checksumSha256 = "66e7590c06c9ba723e5287ad7ef0a7d661fe995e1039d3655145487ec7676b98",
+                checksumSha256 = "a1975937eec6bc5d5aa4ae4ea3bc097f1d100d685177f19a9110909acb2ff488",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Kotlin Coroutines", "Room Database", "Clean Architecture", "Data Structures", "Algorithms"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/programming-1.1.0.zip"
@@ -106,7 +106,7 @@ class KnowledgePackManager(
                 version = "1.0.0",
                 size = "2.5 KB",
                 iconColorHex = 0xFF00ACC1,
-                checksumSha256 = "7de854e537b1e71debdbdee08847676eb991f8c524a00955a90a1a2a476f3ed2",
+                checksumSha256 = "9d5664dd40f95afc11229e1fcf11a29a5a52e0e3bf906f375ac73ee8e899afba",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Vocabulary", "Technical Terms", "Grammar Rules", "Phrases", "Translations"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/languages-1.0.0.zip"

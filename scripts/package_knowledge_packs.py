@@ -16,8 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CATALOG_DIR = BASE_DIR / "catalog"
 PACKS_DIR = CATALOG_DIR / "packs"
 
-GITHUB_REPO = "openfield-ai/openfield"
-RELEASE_TAG = "v1.0.0"
+GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "itzdineshx/openfield-ai")
+RELEASE_TAG = os.environ.get("RELEASE_TAG", "v1.0.0")
 DOWNLOAD_BASE = f"https://github.com/{GITHUB_REPO}/releases/download/{RELEASE_TAG}"
 
 # Complete authentic pack specifications
