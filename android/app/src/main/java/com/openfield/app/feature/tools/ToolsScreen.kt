@@ -1,8 +1,13 @@
 package com.openfield.app.feature.tools
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,18 +29,22 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,14 +86,13 @@ fun ToolsScreen(
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
     var selectedCategory by remember { mutableStateOf(ToolFilterCategory.ALL) }
+    var searchQuery by remember { mutableStateOf("") }
     val tools by repository.tools.collectAsState()
 
-    val filteredTools = remember(selectedCategory, tools) {
-        if (selectedCategory == ToolFilterCategory.ALL) {
-            tools
-        } else {
-            tools.filter { it.category == selectedCategory }
-        }
+    val filteredTools = remember(selectedCategory, tools, searchQuery) {
+        val byCat = if (selectedCategory == ToolFilterCategory.ALL) tools else tools.filter { it.category == selectedCategory }
+        if (searchQuery.isBlank()) byCat
+        else byCat.filter { it.title.contains(searchQuery, ignoreCase = true) || it.description.contains(searchQuery, ignoreCase = true) }
     }
 
     Column(
@@ -102,6 +111,31 @@ fun ToolsScreen(
                     )
                 }
             }
+        )
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Search tools…", color = OpenFieldSecondaryText.copy(alpha = 0.7f), fontSize = 13.5.sp) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = OpenFieldSecondaryText, modifier = Modifier.size(18.dp)) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = OpenFieldSecondaryText, modifier = Modifier.size(16.dp))
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = OpenFieldPrimaryBlue,
+                unfocusedBorderColor = OpenFieldCardBorder,
+                focusedContainerColor = OpenFieldSecondaryBackground,
+                unfocusedContainerColor = OpenFieldSecondaryBackground
+            )
         )
 
         // Filter Pills: All | Text | Image | Document
@@ -180,10 +214,26 @@ fun ToolListItemCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "toolPressScale"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         shape = CardShape,
         colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
         border = BorderStroke(1.dp, OpenFieldCardBorder),
@@ -213,14 +263,34 @@ fun ToolListItemCard(
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = tool.title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        color = OpenFieldNavyText
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = tool.title,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            color = OpenFieldNavyText
+                        )
                     )
-                )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = if (tool.id in listOf("calculator", "tasks")) OpenFieldPrimaryBlue.copy(alpha = 0.09f) else OpenFieldSecondaryBackground
+                    ) {
+                        Text(
+                            text = if (tool.id in listOf("calculator", "tasks")) "OFFLINE ENGINE" else "ON-DEVICE AI",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (tool.id in listOf("calculator", "tasks")) OpenFieldPrimaryBlue else OpenFieldSecondaryText,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 8.5.sp,
+                                letterSpacing = 0.5.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = tool.description,

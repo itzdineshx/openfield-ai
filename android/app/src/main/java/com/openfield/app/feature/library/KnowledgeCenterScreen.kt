@@ -627,14 +627,40 @@ private fun SourceSelectableCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "${source.type.displayName} • ${source.formattedSize}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = OpenFieldSecondaryText,
-                        fontSize = 12.sp
-                    )
-                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val (badgeBg, badgeFg) = when (source.type) {
+                        KnowledgeSourceType.DOCUMENT -> Color(0xFFFFE4E6) to Color(0xFFE11D48)
+                        KnowledgeSourceType.CONVERSATION -> Color(0xFFEFF6FF) to Color(0xFF2563EB)
+                        KnowledgeSourceType.NOTE -> Color(0xFFFEF3C7) to Color(0xFFD97706)
+                        KnowledgeSourceType.KNOWLEDGE_PACK -> Color(0xFFCCFBF1) to Color(0xFF0D9488)
+                        else -> Color(0xFFF1F5F9) to Color(0xFF475569)
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = badgeBg
+                    ) {
+                        Text(
+                            text = source.type.displayName.uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = badgeFg,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.5.sp,
+                                letterSpacing = 0.5.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    if (source.formattedSize.isNotBlank()) {
+                        Text(
+                            text = source.formattedSize,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = OpenFieldSecondaryText,
+                                fontSize = 11.5.sp
+                            )
+                        )
+                    }
+                }
             }
         }
     }

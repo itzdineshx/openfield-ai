@@ -5,8 +5,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,16 +22,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -57,6 +63,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -468,30 +475,99 @@ private fun StepContent(
 
 @Composable
 private fun StepProgress(step: Int, total: Int, category: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "Step $step of $total",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText),
-                modifier = Modifier.weight(1f)
-            )
+    val maxSteps = total.coerceIn(1, 6)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = OpenFieldPrimaryBlue.copy(alpha = 0.12f)
+            ) {
+                Text(
+                    text = "STEP $step OF $total",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OpenFieldPrimaryBlue,
+                        letterSpacing = 0.5.sp
+                    ),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
             Text(
                 text = category,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText),
-                modifier = Modifier.weight(1f, fill = false)
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = OpenFieldSecondaryText,
+                    fontWeight = FontWeight.Medium
+                )
             )
         }
-        LinearProgressIndicator(
-            progress = { (step.toFloat() / total.coerceAtLeast(1)).coerceIn(0.05f, 1f) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = OpenFieldPrimaryBlue,
-            trackColor = OpenFieldSecondaryBackground
-        )
+
+        // Stepper dots & connecting segments
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (i in 1..maxSteps) {
+                val isCompleted = i < step
+                val isCurrent = i == step
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isCompleted -> OpenFieldSuccess
+                                isCurrent -> OpenFieldPrimaryBlue
+                                else -> OpenFieldSecondaryBackground
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            when {
+                                isCompleted -> OpenFieldSuccess
+                                isCurrent -> OpenFieldPrimaryBlue
+                                else -> OpenFieldCardBorder
+                            },
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCompleted) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(13.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "$i",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCurrent) Color.White else OpenFieldSecondaryText,
+                                fontSize = 10.sp
+                            )
+                        )
+                    }
+                }
+
+                if (i < maxSteps) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(2.5.dp)
+                            .background(
+                                if (i < step) OpenFieldSuccess else OpenFieldCardBorder
+                            )
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -519,44 +595,85 @@ private fun Notice(title: String, text: String) {
 
 @Composable
 private fun HistoryList(history: List<DiagnosticStepHistory>) {
+    var isExpanded by remember { mutableStateOf(false) }
     Surface(
         shape = CardShape,
         color = OpenFieldSecondaryBackground,
+        border = BorderStroke(1.dp, OpenFieldCardBorder),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = "Your answers so far",
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldSecondaryText)
-            )
-            history.forEach { item ->
-                Row(verticalAlignment = Alignment.Top) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(
-                        Icons.Default.CheckCircle,
+                        imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = OpenFieldPrimaryBlue,
-                        modifier = Modifier
-                            .padding(top = 2.dp)
-                            .size(15.dp)
+                        tint = OpenFieldSuccess,
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        if (item.question.isNotBlank()) {
-                            Text(
-                                text = Markdown.stripInline(item.question),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.sp)
-                            )
-                        }
-                        Text(
-                            text = Markdown.stripInline(item.selectedOptionText),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = OpenFieldNavyText,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 13.sp
-                            )
+                    Text(
+                        text = "Your answers so far (${history.size})",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = OpenFieldNavyText
                         )
+                    )
+                }
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = OpenFieldSecondaryText,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    history.forEachIndexed { idx, item ->
+                        Row(verticalAlignment = Alignment.Top) {
+                            Surface(
+                                shape = CircleShape,
+                                color = OpenFieldPrimaryBlueLight,
+                                modifier = Modifier.size(18.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = "${idx + 1}",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = OpenFieldPrimaryBlue
+                                        )
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                if (item.question.isNotBlank()) {
+                                    Text(
+                                        text = Markdown.stripInline(item.question),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.sp)
+                                    )
+                                }
+                                Text(
+                                    text = Markdown.stripInline(item.selectedOptionText),
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldNavyText,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }

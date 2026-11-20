@@ -159,13 +159,37 @@ fun DocumentCard(
     modifier: Modifier = Modifier,
     onDeleteClick: (() -> Unit)? = null
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "documentCardScale"
+    )
+
+    val isPdf = fileName.endsWith(".pdf", ignoreCase = true) || !fileName.contains(".")
+    val iconBg = if (isPdf) Color(0xFFFFEAEA) else Color(0xFFF1F5F9)
+    val iconTint = if (isPdf) Color(0xFFE53935) else Color(0xFF475569)
+    val iconVector = if (isPdf) Icons.Default.PictureAsPdf else Icons.Default.Description
+    val badgeText = if (isPdf) "PDF" else "TXT"
+    val badgeBg = if (isPdf) Color(0xFFFEE2E2) else Color(0xFFE2E8F0)
+    val badgeTextCol = if (isPdf) Color(0xFF991B1B) else Color(0xFF334155)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         shape = CardShape,
         color = OpenFieldBackground,
-        border = BorderStroke(1.dp, OpenFieldCardBorder)
+        border = BorderStroke(1.dp, if (isPressed) OpenFieldPrimaryBlue.copy(alpha = 0.5f) else OpenFieldCardBorder)
     ) {
         Row(
             modifier = Modifier
@@ -177,31 +201,50 @@ fun DocumentCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFFEAEA)),
+                    .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.PictureAsPdf,
-                    contentDescription = "PDF Document",
-                    tint = Color(0xFFE53935),
-                    modifier = Modifier.size(26.dp)
+                    imageVector = iconVector,
+                    contentDescription = "$badgeText Document",
+                    tint = iconTint,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = fileName,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        color = OpenFieldNavyText
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = fileName,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            color = OpenFieldNavyText
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(badgeBg)
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = badgeTextCol,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = "$fileSize • $pageCount pages",
                     style = MaterialTheme.typography.bodySmall.copy(

@@ -1,10 +1,18 @@
 package com.openfield.app.feature.chat
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,33 +20,43 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,19 +67,29 @@ import com.openfield.app.core.components.ChatMessageBubble
 import com.openfield.app.core.components.ConfirmationDialog
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.ScreenTopBar
-import com.openfield.app.core.components.SuggestionChips
 import com.openfield.app.core.theme.OpenFieldBackground
+import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.voice.SpeechSynthesisManager
 import com.openfield.app.feature.voice.rememberVoiceInput
+import kotlinx.coroutines.launch
 
-private val chatSuggestions = listOf(
-    "Explain how a battery works",
-    "My phone battery drains fast — why?",
-    "Tips to study more effectively",
-    "What is a good daily stretching routine?"
+private data class ChatStarterCategory(
+    val icon: String,
+    val title: String,
+    val prompt: String
+)
+
+private val chatStarters = listOf(
+    ChatStarterCategory("💡", "Explain Simply", "Explain how a battery works in simple terms"),
+    ChatStarterCategory("⚡", "Troubleshoot", "My phone battery drains very quickly — why?"),
+    ChatStarterCategory("📚", "Study & Learn", "What are the most effective techniques to study for exams?"),
+    ChatStarterCategory("✍️", "Draft & Outline", "Help me structure an outline for an introductory essay")
 )
 
 @Composable
@@ -75,6 +103,15 @@ fun ChatScreen(
     val messages = remember(allMessages, sessionId) { allMessages[sessionId] ?: emptyList() }
     val isGenerating by repository.chatController.isGenerating.collectAsState()
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    val showScrollToBottom by remember {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+            messages.isNotEmpty() && lastVisible < messages.lastIndex
+        }
+    }
 
     var inputMessage by remember { mutableStateOf("") }
     var showMenu by remember { mutableStateOf(false) }
@@ -219,6 +256,45 @@ fun ChatScreen(
                         )
                     }
                 }
+
+                AnimatedVisibility(
+                    visible = showScrollToBottom,
+                    enter = fadeIn() + slideInVertically { it / 2 },
+                    exit = fadeOut() + slideOutVertically { it / 2 },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 12.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = OpenFieldPrimaryBlue,
+                        shadowElevation = 4.dp,
+                        modifier = Modifier.clickable {
+                            scope.launch { listState.animateScrollToItem(messages.lastIndex) }
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDownward,
+                                contentDescription = "Scroll to latest",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (isGenerating) "New response" else "Latest",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    fontSize = 12.sp
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -244,27 +320,80 @@ private fun ChatEmptyState(onSuggestion: (String) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(modifier = Modifier.height(8.dp))
         OpenFieldLogo(size = 56.dp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Ask me anything",
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "Answers are generated on your device and work without internet.",
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium.copy(color = OpenFieldSecondaryText, fontSize = 14.sp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        SuggestionChips(
-            suggestions = chatSuggestions,
-            onClick = onSuggestion,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Ask me anything",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = OpenFieldNavyText
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "On-Device Gemma 4 • Complete Privacy • 100% Offline",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = OpenFieldPrimaryBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            chatStarters.forEach { item ->
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = OpenFieldSecondaryBackground,
+                    border = BorderStroke(1.dp, OpenFieldCardBorder),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSuggestion(item.prompt) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = OpenFieldPrimaryBlueLight,
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(item.icon, fontSize = 18.sp)
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = item.title,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OpenFieldNavyText,
+                                    fontSize = 13.5.sp
+                                )
+                            )
+                            Text(
+                                text = item.prompt,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = OpenFieldSecondaryText,
+                                    fontSize = 12.sp
+                                ),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

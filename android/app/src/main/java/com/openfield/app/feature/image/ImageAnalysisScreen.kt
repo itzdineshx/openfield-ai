@@ -81,6 +81,7 @@ import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.core.theme.OpenFieldSuccess
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.ai.mode.ImageAnalysisSections
 import com.openfield.app.feature.voice.rememberVoiceInput
@@ -315,6 +316,32 @@ private fun ImagePreview(uri: Uri?, isBusy: Boolean, onPick: () -> Unit, onRemov
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
+            // On-device Gemma vision pill
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.65f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(OpenFieldSuccess)
+                )
+                Text(
+                    text = "Gemma 4 Vision • On-Device",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp
+                    )
+                )
+            }
             if (!isBusy) {
                 Row(
                     modifier = Modifier
@@ -383,47 +410,61 @@ private fun StreamingCard(rawText: String, onStop: () -> Unit) {
 
 @Composable
 private fun AnalysisResult(s: ImageAnalysisSections) {
-    Row(verticalAlignment = Alignment.Top) {
-        OpenFieldLogo(size = 28.dp, modifier = Modifier.padding(top = 2.dp))
-        Spacer(modifier = Modifier.width(10.dp))
-        MarkdownContent(
-            text = "This appears to be **${Markdown.stripInline(s.subject)}**.",
-            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 23.sp, color = OpenFieldNavyText),
-            modifier = Modifier.weight(1f)
-        )
-    }
-
     Surface(
         shape = CardShape,
         color = OpenFieldBackground,
-        border = BorderStroke(1.dp, OpenFieldCardBorder),
+        border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.3f)),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OpenFieldLogo(size = 32.dp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "IDENTIFIED SUBJECT",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldPrimaryBlue,
+                            fontSize = 10.5.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                    Text(
+                        text = Markdown.stripInline(s.subject),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OpenFieldNavyText,
+                            fontSize = 17.sp
+                        )
+                    )
+                }
+            }
+
             if (!s.possibleIdentification.isNullOrBlank()) {
                 ResultSection("Identification", s.possibleIdentification)
             }
             if (s.whatISee.isNotBlank()) {
-                ResultSection("What I see", s.whatISee)
+                ResultSection("Visual Observations", s.whatISee)
             }
             if (s.importantDetails.isNotEmpty()) {
-                ResultSection("Key details", s.importantDetails.joinToString("\n") { "- $it" })
+                ResultSection("Key Details", s.importantDetails.joinToString("\n") { "• $it" })
             }
             if (s.explanation.isNotBlank()) {
-                ResultSection("Explanation", s.explanation)
+                ResultSection("Explanation & Context", s.explanation)
             }
             if (s.suggestedNextSteps.isNotEmpty()) {
-                ResultSection("What you can do", s.suggestedNextSteps.mapIndexed { i, step -> "${i + 1}. $step" }.joinToString("\n"))
+                ResultSection("Recommended Next Steps", s.suggestedNextSteps.mapIndexed { i, step -> "${i + 1}. $step" }.joinToString("\n"))
             }
         }
     }
 
     val advisory = s.uncertaintyAndLimitations
-        ?: "Note: Some similar plants or objects can be harmful or misleading. Use this for general identification only."
+        ?: "Note: Some similar plants, objects or components can be hazardous or misleading. Use this for general identification only."
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFFE3F2FD),
-        border = BorderStroke(1.dp, Color(0xFF90CAF9)),
+        color = Color(0xFFFEF7ED),
+        border = BorderStroke(1.dp, Color(0xFFFDE68A)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -433,14 +474,14 @@ private fun AnalysisResult(s: ImageAnalysisSections) {
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
-                tint = OpenFieldPrimaryBlue,
+                tint = Color(0xFFD97706),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = Markdown.toPlainText(advisory).replace("\n", " "),
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = OpenFieldNavyText,
+                    color = Color(0xFF92400E),
                     fontSize = 12.sp,
                     lineHeight = 16.sp
                 )

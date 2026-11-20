@@ -95,6 +95,15 @@ fun TaskAutomationScreen(
     val tasks by repository.tasks.collectAsState()
     val scope = rememberCoroutineScope()
     var showCreateDialog by remember { mutableStateOf(false) }
+    var filterMode by remember { mutableStateOf("ALL") }
+
+    val filteredTasks = remember(tasks, filterMode) {
+        when (filterMode) {
+            "PENDING" -> tasks.filter { it.status != "COMPLETED" }
+            "COMPLETED" -> tasks.filter { it.status == "COMPLETED" }
+            else -> tasks
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -133,15 +142,49 @@ fun TaskAutomationScreen(
                 )
             }
 
-            if (tasks.isEmpty()) {
+            if (tasks.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val pendingCount = tasks.count { it.status != "COMPLETED" }
+                        val doneCount = tasks.count { it.status == "COMPLETED" }
+                        listOf(
+                            "ALL" to "All (${tasks.size})",
+                            "PENDING" to "In Progress ($pendingCount)",
+                            "COMPLETED" to "Done ($doneCount)"
+                        ).forEach { (mode, label) ->
+                            val isSelected = filterMode == mode
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                                modifier = Modifier.clickable { filterMode = mode }
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) Color.White else OpenFieldSecondaryText
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (filteredTasks.isEmpty()) {
                 item {
                     EmptyState(
-                        title = "No Active Tasks",
-                        message = "Create a task or generate an automated workflow template."
+                        title = if (tasks.isEmpty()) "No Active Tasks" else "No matching tasks",
+                        message = if (tasks.isEmpty()) "Create a task or generate an automated workflow template." else "Try switching the filter above."
                     )
                 }
             } else {
-                items(tasks, key = { it.id }) { task ->
+                items(filteredTasks, key = { it.id }) { task ->
                     TaskCard(
                         task = task,
                         onToggleSubtask = { subtaskId ->
@@ -191,12 +234,18 @@ private fun TaskCard(
 
     val completedCount = subtasks.count { it.isCompleted }
     val progress = if (subtasks.isNotEmpty()) completedCount.toFloat() / subtasks.size.toFloat() else 0f
+    val isAllDone = subtasks.isNotEmpty() && progress >= 1f
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
-        border = BorderStroke(1.dp, OpenFieldCardBorder)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isAllDone) Color(0xFFF0FDF4) else OpenFieldSecondaryBackground
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (isAllDone) OpenFieldSuccess.copy(alpha = 0.5f) else OpenFieldCardBorder
+        )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -345,15 +394,16 @@ private fun TaskCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(8.dp))
+                                    .background(if (st.isCompleted) OpenFieldSuccess.copy(alpha = 0.08f) else Color.Transparent)
                                     .clickable { onToggleSubtask(st.id) }
-                                    .padding(vertical = 4.dp),
+                                    .padding(horizontal = 6.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Checkbox(
                                     checked = st.isCompleted,
                                     onCheckedChange = { onToggleSubtask(st.id) },
                                     colors = CheckboxDefaults.colors(
-                                        checkedColor = OpenFieldPrimaryBlue,
+                                        checkedColor = OpenFieldSuccess,
                                         uncheckedColor = OpenFieldCardBorder
                                     ),
                                     modifier = Modifier.size(24.dp)
@@ -363,6 +413,7 @@ private fun TaskCard(
                                     text = st.title,
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = if (st.isCompleted) OpenFieldSecondaryText else OpenFieldNavyText,
+                                        fontWeight = if (st.isCompleted) FontWeight.Normal else FontWeight.Medium,
                                         textDecoration = if (st.isCompleted) TextDecoration.LineThrough else null
                                     )
                                 )

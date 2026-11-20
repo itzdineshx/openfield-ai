@@ -67,6 +67,7 @@ import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.core.theme.OpenFieldSuccess
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.ai.model.ModelManagementDialog
 
@@ -417,6 +418,55 @@ fun SettingsScreen(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Storage visual breakdown bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(0.78f)
+                                .fillMaxSize()
+                                .background(OpenFieldPrimaryBlue)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(0.14f)
+                                .fillMaxSize()
+                                .background(Color(0xFF0D9488))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(0.08f)
+                                .fillMaxSize()
+                                .background(Color(0xFF94A3B8))
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(OpenFieldPrimaryBlue))
+                            Text(text = "Model: ~2.59 GB", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.5.sp))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF0D9488)))
+                            Text(text = "Packs & Docs", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.5.sp))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF94A3B8)))
+                            Text(text = "Cache", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.5.sp))
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Row(
@@ -560,22 +610,52 @@ fun SettingsScreen(
                 border = BorderStroke(1.dp, OpenFieldCardBorder)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        SettingsIconBadge(icon = Icons.Default.Speed)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "Live Edge Inference Metrics",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OpenFieldNavyText
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Speed)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Live Edge Inference Metrics",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
                                 )
+                                Text(
+                                    text = "Measured directly on this hardware",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (metrics.lastTokensPerSec > 0.0) Color(0xFFEAF7ED) else OpenFieldSecondaryBackground)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else Color(0xFF94A3B8))
                             )
                             Text(
-                                text = "Measured directly on this hardware",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontSize = 11.sp
+                                text = if (metrics.lastTokensPerSec > 0.0) "Active" else "Ready",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else OpenFieldSecondaryText,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.5.sp
                                 )
                             )
                         }

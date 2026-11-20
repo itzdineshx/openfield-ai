@@ -24,10 +24,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FindInPage
-import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -194,6 +195,13 @@ fun CrossSourceQaScreen(
                                 )
                             )
                             selectedSources.forEach { source ->
+                                val (icon, tintColor, bgColor) = when (source.type) {
+                                    KnowledgeSourceType.DOCUMENT -> Triple(Icons.Default.Description, Color(0xFFE11D48), Color(0xFFFFF1F2))
+                                    KnowledgeSourceType.KNOWLEDGE_PACK -> Triple(Icons.AutoMirrored.Filled.MenuBook, Color(0xFF0D9488), Color(0xFFF0FDFA))
+                                    KnowledgeSourceType.NOTE -> Triple(Icons.AutoMirrored.Filled.Note, Color(0xFFD97706), Color(0xFFFEF3C7))
+                                    KnowledgeSourceType.CONVERSATION -> Triple(Icons.Default.SmartToy, Color(0xFF2563EB), Color(0xFFEFF6FF))
+                                    KnowledgeSourceType.LEARNING_TOPIC -> Triple(Icons.Default.AutoAwesome, Color(0xFF9333EA), Color(0xFFFAF5FF))
+                                }
                                 AssistChip(
                                     onClick = {},
                                     label = {
@@ -201,29 +209,23 @@ fun CrossSourceQaScreen(
                                             text = source.title,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
-                                            fontSize = 11.sp
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Medium
                                         )
                                     },
                                     leadingIcon = {
-                                        val icon = when (source.type) {
-                                            KnowledgeSourceType.DOCUMENT -> Icons.Default.Description
-                                            KnowledgeSourceType.KNOWLEDGE_PACK -> Icons.AutoMirrored.Filled.MenuBook
-                                            KnowledgeSourceType.NOTE -> Icons.Default.Note
-                                            KnowledgeSourceType.CONVERSATION -> Icons.Default.SmartToy
-                                            KnowledgeSourceType.LEARNING_TOPIC -> Icons.Default.AutoAwesome
-                                        }
                                         Icon(
                                             imageVector = icon,
                                             contentDescription = null,
                                             modifier = Modifier.size(14.dp),
-                                            tint = OpenFieldPrimaryBlue
+                                            tint = tintColor
                                         )
                                     },
                                     colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = OpenFieldSecondaryBackground,
+                                        containerColor = bgColor,
                                         labelColor = OpenFieldNavyText
                                     ),
-                                    border = BorderStroke(1.dp, OpenFieldCardBorder)
+                                    border = BorderStroke(1.dp, tintColor.copy(alpha = 0.35f))
                                 )
                             }
                         }
