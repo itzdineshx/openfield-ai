@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,17 +18,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -56,10 +65,15 @@ import com.openfield.app.feature.voice.VoiceInputManager
 import com.openfield.app.feature.voice.VoiceInputState
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.RoundedFeatureCard
+import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
+import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueBorder
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryBackground
+import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
 
 @Composable
@@ -71,6 +85,7 @@ fun HomeScreen(
     onNavigateToLearnExplain: () -> Unit,
     onNavigateToCreateWrite: () -> Unit,
     onOpenProfileMenu: () -> Unit,
+    onNavigateToTasks: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -78,6 +93,8 @@ fun HomeScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val modelState by repository.modelRepository.installationState.collectAsState()
     val engineState by repository.aiEngine.engineState.collectAsState()
+    val tasks by repository.tasks.collectAsState()
+    val activeTask = remember(tasks) { tasks.firstOrNull { it.status != "COMPLETED" && it.status != "CANCELLED" } }
     var promptInput by remember { mutableStateOf("") }
     var showModelDialog by remember { mutableStateOf(false) }
 
@@ -237,6 +254,112 @@ fun HomeScreen(
                     documentPickerLauncher.launch(arrayOf("application/pdf", "text/plain"))
                 }
             )
+
+            // Dynamic "Continue Where You Left Off" Hero Card
+            if (activeTask != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToTasks() },
+                    shape = CardShape,
+                    colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
+                    border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = OpenFieldPrimaryBlueLight,
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                                    contentDescription = null,
+                                    tint = OpenFieldPrimaryBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            val rawSubtasks = remember(activeTask.subtasksJson) {
+                                (com.openfield.app.feature.ai.mode.LenientJson.parse(activeTask.subtasksJson) as? List<*>) ?: emptyList<Any>()
+                            }
+                            val subtaskCount = rawSubtasks.size
+                            val completedCount = rawSubtasks.count { (it as? Map<*, *>)?.get("isCompleted") == true }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "CONTINUE YOUR WORK",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = OpenFieldPrimaryBlue,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                )
+                                if (subtaskCount > 0) {
+                                    Text(
+                                        text = "$completedCount/$subtaskCount steps",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = OpenFieldSecondaryText,
+                                            fontSize = 11.sp
+                                        )
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = activeTask.title,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = OpenFieldNavyText,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.5.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            if (rawSubtasks.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                val progress = if (subtaskCount == 0) 0f else completedCount.toFloat() / subtaskCount.toFloat()
+                                LinearProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(4.dp)
+                                        .clip(RoundedCornerShape(2.dp)),
+                                    color = OpenFieldPrimaryBlue,
+                                    trackColor = OpenFieldCardBorder
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = "Resume task",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 

@@ -1,10 +1,13 @@
 package com.openfield.app.feature.learn
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +30,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.IconButton
@@ -49,7 +54,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,6 +83,7 @@ import com.openfield.app.core.theme.OpenFieldErrorBg
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.core.theme.OpenFieldSuccess
 import com.openfield.app.core.theme.OpenFieldSuccessBg
@@ -360,13 +370,81 @@ private fun LessonContent(state: LearningUiState.ActiveLesson, controller: Learn
     )
     if (lesson.overview.isNotBlank()) MarkdownContent(text = lesson.overview)
 
-    // Generative UI: each block appears only if the model produced that kind of content for this topic.
-    if (lesson.keyPoints.isNotEmpty()) KeyPointsBlock(lesson.keyPoints)
-    if (lesson.flowSteps.size >= 2) FlowDiagramBlock(lesson.flowSteps)
-    if (lesson.parts.isNotEmpty()) PartsDiagramBlock(lesson.topic, lesson.parts)
-    lesson.sections.forEachIndexed { index, section -> ConceptBlock(index, section) }
-    if (lesson.practicalExample.isNotBlank()) ExampleBlock(lesson.practicalExample)
-    if (lesson.terms.isNotEmpty()) TermsBlock(lesson.terms)
+    var viewMode by remember { mutableStateOf("outline") }
+    val flashcards = remember(lesson) {
+        val list = mutableListOf<Pair<String, String>>()
+        lesson.terms.forEach { list.add(it.term to it.meaning) }
+        lesson.keyPoints.forEachIndexed { i, pt -> list.add("Key Point ${i + 1}" to pt) }
+        if (list.isEmpty()) {
+            lesson.sections.forEach { s -> list.add(s.heading to s.content) }
+        }
+        list
+    }
+
+    if (flashcards.isNotEmpty()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(OpenFieldSecondaryBackground)
+                .padding(4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (viewMode == "outline") OpenFieldBackground else Color.Transparent)
+                    .clickable { viewMode = "outline" }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Lesson Outline",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = if (viewMode == "outline") FontWeight.Bold else FontWeight.Medium,
+                        color = if (viewMode == "outline") OpenFieldPrimaryBlue else OpenFieldSecondaryText
+                    )
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (viewMode == "flashcards") OpenFieldBackground else Color.Transparent)
+                    .clickable { viewMode = "flashcards" }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Flashcards (${flashcards.size})",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = if (viewMode == "flashcards") FontWeight.Bold else FontWeight.Medium,
+                        color = if (viewMode == "flashcards") OpenFieldPrimaryBlue else OpenFieldSecondaryText
+                    )
+                )
+            }
+        }
+    }
+
+    if (viewMode == "flashcards" && flashcards.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            flashcards.forEachIndexed { index, card ->
+                InteractiveFlipCard(
+                    frontText = card.first,
+                    backText = card.second,
+                    category = "Card ${index + 1} of ${flashcards.size}"
+                )
+            }
+        }
+    } else {
+        // Generative UI: each block appears only if the model produced that kind of content for this topic.
+        if (lesson.keyPoints.isNotEmpty()) KeyPointsBlock(lesson.keyPoints)
+        if (lesson.flowSteps.size >= 2) FlowDiagramBlock(lesson.flowSteps)
+        if (lesson.parts.isNotEmpty()) PartsDiagramBlock(lesson.topic, lesson.parts)
+        lesson.sections.forEachIndexed { index, section -> ConceptBlock(index, section) }
+        if (lesson.practicalExample.isNotBlank()) ExampleBlock(lesson.practicalExample)
+        if (lesson.terms.isNotEmpty()) TermsBlock(lesson.terms)
+    }
 
     if (isComplete) {
         SectionTitle("Go deeper")
@@ -660,6 +738,137 @@ private fun ExplainBackCard(question: String, enabled: Boolean, onSubmit: (Strin
                 enabled = enabled && answer.isNotBlank(),
                 height = 48.dp
             )
+        }
+    }
+}
+
+@Composable
+private fun InteractiveFlipCard(
+    frontText: String,
+    backText: String,
+    category: String,
+    modifier: Modifier = Modifier
+) {
+    var isFlipped by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(
+        targetValue = if (isFlipped) 180f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "flipAnimation"
+    )
+    val density = LocalDensity.current.density
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .graphicsLayer {
+                rotationY = rotation
+                cameraDistance = 14f * density
+            }
+            .clickable { isFlipped = !isFlipped },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (rotation <= 90f) Color.White else Color(0xFFF0F4FF)
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (rotation <= 90f) OpenFieldCardBorder else OpenFieldPrimaryBlue.copy(alpha = 0.4f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        if (rotation <= 90f) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = category.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = OpenFieldPrimaryBlue,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Tap to flip",
+                            modifier = Modifier.size(14.dp),
+                            tint = OpenFieldSecondaryText
+                        )
+                        Text(
+                            text = "Tap to flip",
+                            style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText)
+                        )
+                    }
+                }
+                Text(
+                    text = frontText,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = OpenFieldNavyText
+                    ),
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Question / Concept",
+                    style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText.copy(alpha = 0.7f))
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationY = 180f }
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = OpenFieldPrimaryBlue.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = "ANSWER / EXPLANATION",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = OpenFieldPrimaryBlue,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                        )
+                    }
+                    Text(
+                        text = "Tap to flip back",
+                        style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText)
+                    )
+                }
+                Text(
+                    text = backText,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color(0xFF1E293B),
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Box(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }

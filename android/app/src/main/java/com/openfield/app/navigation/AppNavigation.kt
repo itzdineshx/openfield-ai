@@ -146,6 +146,9 @@ fun AppNavigation(
                         },
                         onOpenProfileMenu = {
                             showProfileSheet = true
+                        },
+                        onNavigateToTasks = {
+                            navController.navigate(AppRoutes.TASKS)
                         }
                     )
                 }

@@ -1,7 +1,13 @@
 package com.openfield.app.feature.tools.math
 
+import android.widget.Toast
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,12 +48,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -134,6 +146,7 @@ private fun ExpressionCalculatorView() {
     var exprInput by remember { mutableStateOf("") }
     var resultText by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val calculationHistory = remember { mutableStateListOf<Pair<String, String>>() }
 
     fun calculate() {
         if (exprInput.isBlank()) return
@@ -141,6 +154,10 @@ private fun ExpressionCalculatorView() {
             is MathResult.Success -> {
                 resultText = "= ${res.formatted}"
                 errorMessage = null
+                if (calculationHistory.none { it.first == exprInput }) {
+                    calculationHistory.add(0, exprInput to res.formatted)
+                    if (calculationHistory.size > 8) calculationHistory.removeLast()
+                }
             }
             is MathResult.Error -> {
                 errorMessage = res.message
@@ -174,6 +191,45 @@ private fun ExpressionCalculatorView() {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (calculationHistory.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "History:",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = OpenFieldSecondaryText,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+                calculationHistory.forEach { item ->
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = OpenFieldSecondaryBackground,
+                        border = BorderStroke(1.dp, OpenFieldCardBorder),
+                        modifier = Modifier.clickable {
+                            exprInput = item.second
+                            resultText = ""
+                            errorMessage = null
+                        }
+                    ) {
+                        Text(
+                            text = "${item.first} = ${item.second}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                                color = OpenFieldNavyText
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // Display Screen
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -307,6 +363,8 @@ private fun ExpressionCalculatorView() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UnitConverterView() {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var selectedCategory by remember { mutableStateOf(UnitCategory.LENGTH) }
     var inputValue by remember { mutableStateOf("1") }
 
@@ -316,6 +374,16 @@ private fun UnitConverterView() {
 
     var fromExpanded by remember { mutableStateOf(false) }
     var toExpanded by remember { mutableStateOf(false) }
+
+    var swapRotated by remember { mutableStateOf(false) }
+    val swapAngle by animateFloatAsState(
+        targetValue = if (swapRotated) 180f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "swapRotation"
+    )
 
     val convertedResult = remember(inputValue, fromUnit, toUnit, selectedCategory) {
         val num = inputValue.toDoubleOrNull()
@@ -413,20 +481,23 @@ private fun UnitConverterView() {
             }
         }
 
-        // Swap button
+        // Swap button with spring rotation
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             IconButton(
                 onClick = {
                     val temp = fromUnit
                     fromUnit = toUnit
                     toUnit = temp
+                    swapRotated = !swapRotated
                 }
             ) {
                 Icon(
                     imageVector = Icons.Default.SwapHoriz,
                     contentDescription = "Swap units",
                     tint = OpenFieldPrimaryBlue,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .graphicsLayer { rotationZ = swapAngle }
+                        .size(32.dp)
                 )
             }
         }
@@ -475,10 +546,32 @@ private fun UnitConverterView() {
                 modifier = Modifier.padding(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Converted Result",
-                    style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Converted Result",
+                        style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText)
+                    )
+                    if (convertedResult.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(convertedResult))
+                                Toast.makeText(context, "Copied result", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy result",
+                                tint = OpenFieldPrimaryBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = convertedResult.ifBlank { "0" },

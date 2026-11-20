@@ -1,6 +1,11 @@
 package com.openfield.app.core.components
 
 import android.widget.Toast
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,8 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -34,6 +41,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -158,12 +166,29 @@ private fun AssistantMessage(
             if (message.isBlank() && !isComplete) {
                 TypingIndicator(label = pendingLabel)
             } else if (message.isNotBlank()) {
-                MarkdownContent(
-                    text = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 3.dp)
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    MarkdownContent(
+                        text = message,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 3.dp)
+                    )
+                    if (!isComplete) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            StreamingCursor()
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Generating...",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 11.sp,
+                                    color = OpenFieldPrimaryBlue,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
+                    }
+                }
             }
 
             if (steps.isNotEmpty()) {
@@ -272,4 +297,25 @@ fun MarkdownText(
     modifier: Modifier = Modifier
 ) {
     MarkdownContent(text = text, style = style, modifier = modifier)
+}
+
+@Composable
+fun StreamingCursor(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "cursor")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "cursorAlpha"
+    )
+    Box(
+        modifier = modifier
+            .size(width = 8.dp, height = 15.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .alpha(alpha)
+            .background(OpenFieldPrimaryBlue)
+    )
 }

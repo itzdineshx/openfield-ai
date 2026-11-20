@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.Icon
@@ -277,7 +278,11 @@ fun CreateWriteScreen(
                     .bringIntoViewRequester(documentRequester)
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         OutlinedTextField(
                             value = docTitle,
                             onValueChange = controller::updateDocumentTitle,
@@ -291,10 +296,89 @@ fun CreateWriteScreen(
                             ),
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            "$wordCount words",
-                            style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.sp)
-                        )
+                        val readingTimeMin = (wordCount / 200).coerceAtLeast(1)
+                        Surface(
+                            color = OpenFieldPrimaryBlue.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(13.dp),
+                                    tint = OpenFieldPrimaryBlue
+                                )
+                                Text(
+                                    text = "$wordCount words • ~$readingTimeMin min read",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = OpenFieldPrimaryBlue,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    if (sourceText.isNotBlank()) {
+                        var showSourceContext by remember { mutableStateOf(false) }
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, OpenFieldCardBorder),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showSourceContext = !showSourceContext },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp),
+                                            tint = OpenFieldPrimaryBlue
+                                        )
+                                        Text(
+                                            text = "Reference Context Attached",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = OpenFieldNavyText
+                                            )
+                                        )
+                                    }
+                                    Text(
+                                        text = if (showSourceContext) "Hide" else "Show snippet",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = OpenFieldPrimaryBlue
+                                        )
+                                    )
+                                }
+                                if (showSourceContext) {
+                                    Text(
+                                        text = sourceText,
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = OpenFieldSecondaryText,
+                                            lineHeight = 17.sp,
+                                            fontSize = 12.sp
+                                        ),
+                                        maxLines = 6,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     ModeToggle(isEditing = isEditing, enabled = !isGenerating, onChange = { isEditing = it })
