@@ -70,3 +70,22 @@ $instruction
     }
 }
 
+class TaskPlannerUseCase(private val aiEngine: LocalAiEngine) {
+    fun execute(goal: String): Flow<String> {
+        val prompt = """
+You are an offline task planner. Create a practical, actionable checklist for the following goal or workflow.
+
+GOAL / WORKFLOW:
+$goal
+
+Provide:
+1. A short one-sentence summary of the goal.
+2. A numbered step-by-step checklist (each step starts with a checkbox: [ ]).
+3. Any important notes or cautions at the end.
+
+Keep each step concise and actionable.
+""".trimIndent()
+        return aiEngine.generateStream(prompt, AiGenerationConfig(temperature = 0.4, topP = 0.9))
+    }
+}
+

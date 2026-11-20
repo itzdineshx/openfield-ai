@@ -124,7 +124,7 @@ fun GlobalSearchDialog(
                 onDismiss()
                 onNavigateToCreateWrite()
             },
-            ToolQuickMatch("Calculator & Converter", "Offline math evaluator and unit converter", Icons.Default.Calculate) {
+            ToolQuickMatch("Workflows & Tasks", "Automated checklists and action planning", Icons.Default.Speed) {
                 onDismiss()
                 onNavigateToCalculator()
             }

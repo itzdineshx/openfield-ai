@@ -38,6 +38,7 @@ import com.openfield.app.feature.ai.model.ModelRepository
 import com.openfield.app.feature.ai.tools.ExplainConceptUseCase
 import com.openfield.app.feature.ai.tools.ReframeUseCase
 import com.openfield.app.feature.ai.tools.SummarizeUseCase
+import com.openfield.app.feature.ai.tools.TaskPlannerUseCase
 import com.openfield.app.feature.ai.tools.TranslateUseCase
 import com.openfield.app.feature.ai.tools.WriteContentUseCase
 import com.openfield.app.feature.document.rag.CrossSourceRetriever
@@ -104,6 +105,7 @@ class OpenFieldRepository(
     val translateUseCase = TranslateUseCase(aiEngine)
     val reframeUseCase = ReframeUseCase(aiEngine)
     val writeContentUseCase = WriteContentUseCase(aiEngine)
+    val taskPlannerUseCase = TaskPlannerUseCase(aiEngine)
     val problemSolverUseCase = ProblemSolverUseCase(aiEngine)
 
     // Shared AI Orchestration & Mode Controllers
@@ -503,16 +505,6 @@ class OpenFieldRepository(
                 sampleOutput = ""
             ),
             AiToolItem(
-                id = "calculator",
-                title = "Offline Calculator & Units",
-                description = "Deterministic math expressions and offline unit conversions",
-                category = ToolFilterCategory.TEXT,
-                iconName = "calculate",
-                inputPlaceholder = "Enter calculation or conversion...",
-                sampleInput = "",
-                sampleOutput = ""
-            ),
-            AiToolItem(
                 id = "tasks",
                 title = "Workflows & Checklists",
                 description = "Automated checklists and action-oriented task planning",
@@ -799,13 +791,18 @@ class OpenFieldRepository(
     // AI TOOLS — streaming inference only, no mock output
     // -------------------------------------------------------------
 
-    fun executeToolActionStream(toolId: String, input: String): Flow<String> {
+    fun executeToolActionStream(
+        toolId: String,
+        input: String,
+        targetLanguage: String = "Spanish"
+    ): Flow<String> {
         return when (toolId) {
             "summarize" -> summarizeUseCase.execute(input)
             "explain" -> explainUseCase.execute(input)
-            "translate" -> translateUseCase.execute(input)
+            "translate" -> translateUseCase.execute(input, targetLanguage)
             "reframe" -> reframeUseCase.execute(input)
             "write_create" -> writeContentUseCase.execute(input)
+            "tasks" -> taskPlannerUseCase.execute(input)
             else -> aiEngine.generateStream(input)
         }
     }

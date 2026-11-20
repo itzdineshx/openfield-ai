@@ -4,425 +4,11 @@ import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
 
 /**
  * Authentic, curated domain knowledge content for offline Knowledge Packs.
- * No mock data — real practical guides, technical procedures, formulas, and references.
+ * Comprehensive field protocols, engineering standards, medical BLS/ACLS, and survival guidelines.
  */
 object KnowledgePackContent {
 
     val CURATED_ARTICLES: List<KnowledgePackArticleEntity> = listOf(
-        // =================================================================
-        // 1. COMPUTER & TECH (comp_tech)
-        // =================================================================
-        KnowledgePackArticleEntity(
-            id = "comp_tech_linux_perms",
-            packId = "comp_tech",
-            title = "Linux File Permissions & Ownership Guide",
-            section = "Linux & Systems",
-            content = """
-# Linux File Permissions & Ownership
-
-In Linux and Unix-like operating systems, file permissions and ownership protect system integrity and user privacy. Every file and directory is governed by three permission scopes: User (owner), Group, and Others.
-
-## 1. Permission Representation
-When inspecting files via `ls -l`, permissions appear as a 10-character string (e.g., `-rwxr-xr--`):
-- Char 1: File type (`-` regular file, `d` directory, `l` symbolic link).
-- Chars 2-4: Owner permissions (Read `r`, Write `w`, Execute `x`).
-- Chars 5-7: Group permissions.
-- Chars 8-10: Others (world) permissions.
-
-## 2. Octal Mode Representation
-Permissions are commonly represented in octal notation where:
-- Read (`r`) = 4
-- Write (`w`) = 2
-- Execute (`x`) = 1
-- None (`-`) = 0
-
-Summing values produces single digits (0 through 7):
-- `7` = `4+2+1` (rwx: full access)
-- `6` = `4+2+0` (rw-: read and write, typical for data files)
-- `5` = `4+0+1` (r-x: read and execute, typical for scripts/folders)
-- `4` = `4+0+0` (r--: read only)
-
-Common permission configurations:
-- `chmod 755 script.sh` -> Owner: read/write/execute (7), Group: read/execute (5), Others: read/execute (5). Standard for executable binaries and scripts.
-- `chmod 644 config.conf` -> Owner: read/write (6), Group: read (4), Others: read (4). Standard for system configuration files.
-- `chmod 600 id_rsa` -> Owner: read/write (6), Group: none (0), Others: none (0). Required for SSH private keys to prevent unauthorized reading.
-
-## 3. Modifying Ownership with chown
-- Change owner: `chown user filename`
-- Change owner and group: `chown user:group filename`
-- Recursive modification: `chown -R user:group /opt/myapp/`
-
-## 4. Special Directory Permissions
-For directories, execute (`x`) permission is required to enter or traverse the directory (`cd` command). Without `x`, files inside cannot be accessed even if they have individual read permissions.
-            """.trimIndent(),
-            tagsJson = "[\"Linux\", \"chmod\", \"chown\", \"Permissions\", \"Security\"]",
-            orderIndex = 1
-        ),
-        KnowledgePackArticleEntity(
-            id = "comp_tech_network_diag",
-            packId = "comp_tech",
-            title = "Network Diagnostics & Connectivity Troubleshooting",
-            section = "Networking",
-            content = """
-# Network Diagnostics & Connectivity Troubleshooting
-
-When diagnosing local area network (LAN) and wide area network (WAN) outages, apply a systematic bottom-up troubleshooting methodology based on the OSI model.
-
-## Phase 1: Physical and Link Layer Verification
-1. Check interface status: `ip link show` or `ifconfig`. Confirm the state is `UP` and carrier is detected.
-2. Verify local IP assignment: `ip addr show`. Verify that an IPv4 address has been assigned by DHCP (e.g., `192.168.1.50/24`) and not an APIPA fallback address (`169.254.x.x`).
-
-## Phase 2: Gateway and Local Subnet Routing
-1. Check routing table: `ip route show`. Identify the default gateway (e.g., `default via 192.168.1.1 dev eth0`).
-2. Ping local gateway: `ping -c 4 192.168.1.1`.
-   - If ping fails: The issue is local to the device, Ethernet cable, or Wi-Fi router.
-   - If ping succeeds: Local link is operational; proceed to public routing.
-
-## Phase 3: External IP Reachability (WAN)
-1. Ping a reliable public IP address directly to bypass DNS: `ping -c 4 8.8.8.8` or `1.1.1.1`.
-   - If ping succeeds: Internet connectivity is alive; failures are due to DNS name resolution.
-   - If ping fails with "Destination Host Unreachable": Default gateway cannot route upstream; check ISP modem or WAN interface.
-
-## Phase 4: DNS Name Resolution
-1. Test domain resolution: `dig google.com +short` or `nslookup google.com`.
-2. Inspect resolver configuration in `/etc/resolv.conf`.
-3. If DNS fails, test querying public resolvers directly: `dig @1.1.1.1 google.com`. If direct query succeeds, replace local DNS servers in network configuration.
-
-## Phase 5: Port and Service Inspection
-1. Inspect active listening ports: `ss -tulpn` (or `netstat -tulpn`).
-2. Verify target remote port connectivity: `nc -zv target-host 443` or `curl -Iv https://target-host`.
-            """.trimIndent(),
-            tagsJson = "[\"Networking\", \"ping\", \"traceroute\", \"DNS\", \"Troubleshooting\"]",
-            orderIndex = 2
-        ),
-        KnowledgePackArticleEntity(
-            id = "comp_tech_boot_diag",
-            packId = "comp_tech",
-            title = "PC Boot Sequence & Hardware Fault Isolation",
-            section = "Hardware & OS",
-            content = """
-# PC Boot Sequence & Hardware Fault Isolation
-
-Understanding the standard boot sequence allows technicians to isolate hardware failures, firmware corruption, and operating system loader errors.
-
-## 1. Boot Stages
-1. **Power Supply On (PS-ON):** Power supply asserts Power Good (+5V on grey wire) once all DC voltage rails (+12V, +5V, +3.3V) stabilize within tolerance.
-2. **Firmware POST (Power-On Self Test):** The motherboard UEFI/BIOS initializes the CPU, detects memory (RAM), scans PCIe buses, and initializes the GPU.
-3. **Bootloader Hand-off:** UEFI locates the EFI System Partition (ESP formatted in FAT32) and executes the bootloader (e.g., Windows Boot Manager `bootmgfw.efi` or GRUB `grubx64.efi`).
-4. **Kernel Initialization:** The OS kernel loads device drivers and starts initialization daemons (`systemd` in Linux, `smss.exe` in Windows).
-
-## 2. POST Diagnostic Codes & Symptoms
-- **No Fans, No LEDs:** Dead PSU, tripped overcurrent protection (short-to-ground on 12V CPU or GPU rail), or disconnected front panel header.
-- **Fans Spin, No Display (Black Screen):**
-  - Continuous long beeps or cycling debug LEDs: RAM initialization failure. Reseat memory modules in dual-channel slots (typically A2 and B2).
-  - 1 long beep, 2 or 3 short beeps: GPU failure or PCIe power cable unseated.
-  - POST debug display codes (e.g., `00` or `FF`: CPU unseated or dead BIOS; `55` or `53`: Memory not detected).
-- **"No Bootable Device Found":**
-  - SATA/NVMe drive disconnected or failed.
-  - UEFI boot mode mismatch (CSM/Legacy vs UEFI native).
-  - Corrupt partition table or EFI partition.
-
-## 3. Storage Drive Health (SMART)
-- Use `smartctl -a /dev/nvme0n1` or CrystalDiskInfo.
-- Critical SMART attributes to monitor:
-  - `05 Reallocated Sectors Count`: Non-zero indicates physical platter degradation.
-  - `B8 End-to-End Error`: Data path hardware integrity issue.
-  - `0A Spin Retry Count`: Mechanical spindle motor failure.
-            """.trimIndent(),
-            tagsJson = "[\"Hardware\", \"POST\", \"UEFI\", \"BIOS\", \"Boot\"]",
-            orderIndex = 3
-        ),
-
-        // =================================================================
-        // 2. DEVICES & REPAIRS (devices_repairs)
-        // =================================================================
-        KnowledgePackArticleEntity(
-            id = "devices_multimeter_ref",
-            packId = "devices_repairs",
-            title = "Digital Multimeter Master Operating Reference",
-            section = "Test Equipment",
-            content = """
-# Digital Multimeter (DMM) Master Operating Reference
-
-A digital multimeter is the primary diagnostic instrument in electronics and electrical repair. Using the correct measurement mode and probe placement prevents device damage and ensures accurate readings.
-
-## 1. Test Leads and Jacks
-- **Black Probe:** Always plugged into the **COM** (Common/Ground) jack.
-- **Red Probe:**
-  - Plug into **V/Ω/Hz/Diode** jack for voltage, resistance, frequency, and continuity.
-  - Plug into **10A / 20A** unfused/heavy-duty jack only when measuring high current.
-  - *Caution:* Never measure voltage while the red lead is plugged into a Current (A/mA) jack, as this creates a direct dead short through the meter's internal shunt resistor!
-
-## 2. Measurement Modes
-### A. DC Voltage (V⎓)
-- Used for batteries, DC power adapters, logic board power rails (1.8V, 3.3V, 5V, 12V, 19V).
-- Black probe to ground (shielding or ground pad); red probe to test point.
-- Reading should match expected rail voltage within ±5%.
-
-### B. Continuity Test (Buzzer Mode 🔊)
-- Verifies physical conductive paths between two points.
-- Meter emits an audible tone when resistance is below ~30 to 50 ohms.
-- Always perform continuity checks on **unpowered** circuits. Residual voltage can produce false triggers or blow the meter fuse.
-- Used for finding broken traces, damaged ribbon cables, and detecting short-circuits between power rails and ground.
-
-### C. Resistance Mode (Ω)
-- Measures component resistance (resistors, heater elements, coils).
-- Must be measured with power disconnected. For in-circuit testing, lift one leg of the component if parallel paths distort readings.
-
-### D. Diode Mode (Forward Voltage Drop)
-- Meters pass a small current (~1mA) and measure the voltage drop in volts.
-- Used for testing PN junctions of silicon diodes and BJT/MOSFET transistors.
-  - Normal silicon diode forward drop: `0.55V - 0.70V`. Reverse bias should read `OL` (Open Loop / Over Limit).
-  - Schottky diode forward drop: `0.15V - 0.35V`.
-  - A reading of `0.00V` in both directions indicates a shorted semiconductor.
-            """.trimIndent(),
-            tagsJson = "[\"Multimeter\", \"Voltage\", \"Continuity\", \"Resistance\", \"Diode\"]",
-            orderIndex = 1
-        ),
-        KnowledgePackArticleEntity(
-            id = "devices_soldering_guide",
-            packId = "devices_repairs",
-            title = "Precision Electronics Soldering & Desoldering Procedures",
-            section = "Workshop Practice",
-            content = """
-# Precision Electronics Soldering & Desoldering Procedures
-
-Reliable soldered joints require precise thermal transfer, appropriate flux chemistry, and clean copper surfaces.
-
-## 1. Soldering Temperatures
-- **Leaded Solder (Sn63/Pb37):** Eutectic melting point is 183°C. Recommended iron tip temperature: **300°C - 320°C**.
-- **Lead-Free Solder (SAC305 - Sn96.5/Ag3.0/Cu0.5):** Melting point is 217°C. Recommended iron tip temperature: **350°C - 370°C**.
-- Higher temperatures oxidize the copper tip rapidly and risk lifting delicate PCB traces. Use high-mass tips (chisel/bevel) rather than excessive heat for large ground planes.
-
-## 2. Joint Formation Rules
-1. **Clean Surfaces:** Clean oxide and conformal coating with 99% isopropyl alcohol (IPA).
-2. **Apply Rosin/No-Clean Flux:** Flux strips surface oxidation at high temperatures and reduces molten solder surface tension, enabling capillary action.
-3. **Heat Both Pad and Pin:** Touch the tinned iron tip simultaneously to the component lead and the PCB copper pad for 1 to 2 seconds.
-4. **Feed Solder to the Joint, Not the Tip:** Feed solder wire directly onto the heated joint, allowing it to flow around the pin.
-5. **Inspect the Finished Joint:**
-   - A good joint has a bright, smooth, concave fillet (like a miniature volcano).
-   - A **cold joint** appears dull, grainy, or ball-shaped; caused by moving the lead while cooling or insufficient heat transfer.
-
-## 3. Desoldering Techniques
-- **Copper Desoldering Braid (Wick):** Saturate the braid with liquid flux, place it over the solder fillet, press down with a flat chisel iron tip, and lift both together once the solder wicks upward.
-- **Solder Sucker (Vacuum Desoldering Pump):** Heat the joint completely, position the Teflon nozzle directly over the liquid solder, and release the vacuum plunger.
-            """.trimIndent(),
-            tagsJson = "[\"Soldering\", \"Desoldering\", \"Flux\", \"PCB\", \"Repair\"]",
-            orderIndex = 2
-        ),
-        KnowledgePackArticleEntity(
-            id = "devices_power_rail_shorts",
-            packId = "devices_repairs",
-            title = "Power Rail Diagnostics & Short Circuit Isolation",
-            section = "Diagnostics",
-            content = """
-# Power Rail Diagnostics & Short Circuit Isolation
-
-Short-circuits on motherboard power rails typically occur when an SMD ceramic capacitor (MLCC) cracks or a MOSFET bridge suffers punch-through breakdown.
-
-## 1. Initial Resistance to Ground Check
-1. Switch multimeter to Resistance mode (lowest range: 200Ω).
-2. Connect black probe to chassis ground.
-3. Probe the output inductor / coil of each major voltage regulator stage:
-   - Input Rail (12V or 19V): Normal reading is megaohms or kiloohms. Below 5Ω indicates a dead short.
-   - Core Rails (CPU Vcore / GPU Core): Normal reading is naturally low (1Ω - 15Ω) due to high current silicon logic. Do not mistake normal core resistance for a short circuit.
-   - 3.3V and 5V Standby Rails: Normal reading is above 100Ω.
-
-## 2. Voltage Injection Fault Isolation Method
-1. Set a bench DC power supply to **1.0V** and current limit to **1.0A**.
-   - *Crucial Rule:* Never inject voltage higher than the nominal rail rating! For CPU rails, never exceed 1.0V.
-2. Solder ground wire to board ground. Solder positive wire to the shorted inductor pad.
-3. Slowly raise current limit while monitoring current draw.
-4. Locate the defective component:
-   - **Thermal Imaging:** The shorted capacitor or MOSFET will glow white-hot immediately.
-   - **Isopropyl Alcohol (IPA) Evaporation:** Spray 99% IPA across the board. The shorted component dissipates electrical energy as heat (${'$'}P = I^2 \cdot R${'$'}), causing the alcohol on it to evaporate within seconds while surrounding parts remain wet.
-            """.trimIndent(),
-            tagsJson = "[\"Power Supply\", \"Short Circuit\", \"Capacitors\", \"Diagnostics\", \"MOSFET\"]",
-            orderIndex = 3
-        ),
-
-        // =================================================================
-        // 3. LEARNING (learning)
-        // =================================================================
-        KnowledgePackArticleEntity(
-            id = "learning_physics_mechanics",
-            packId = "learning",
-            title = "Classical Mechanics & Laws of Conservation",
-            section = "Physics",
-            content = """
-# Classical Mechanics & Laws of Conservation
-
-Classical mechanics describes the motion of macroscopic objects under the influence of forces. It is grounded in Sir Isaac Newton's three laws of motion and the conservation laws of energy and momentum.
-
-## 1. Newton's Three Laws of Motion
-1. **First Law (Law of Inertia):** An object at rest remains at rest, and an object in motion continues in motion with constant velocity along a straight line, unless acted upon by a net external force (${'$'}\sum \vec{F} = 0 \implies \vec{a} = 0${'$'}).
-2. **Second Law (Fundamental Law of Dynamics):** The acceleration of an object is directly proportional to the net force acting upon it and inversely proportional to its mass:
-   ${'$'}${'$'}\vec{F}_{\text{net}} = m \cdot \vec{a} = \frac{d\vec{p}}{dt}${'$'}${'$'}
-   Units: Force in Newtons (N), where ${'$'}1\,\text{N} = 1\,\text{kg}\cdot\text{m/s}^2${'$'}.
-3. **Third Law (Action and Reaction):** For every action, there is an equal and opposite reaction:
-   ${'$'}${'$'}\vec{F}_{A \to B} = -\vec{F}_{B \to A}${'$'}${'$'}
-
-## 2. Conservation of Mechanical Energy
-In an isolated system subject only to conservative forces (such as gravity and ideal springs), total mechanical energy (${'$'}E${'$'}) remains constant over time:
-${'$'}${'$'}E = E_k + E_p = \text{constant}${'$'}${'$'}
-- **Kinetic Energy:** ${'$'}E_k = \frac{1}{2}m v^2${'$'}
-- **Gravitational Potential Energy:** ${'$'}E_p = m \cdot g \cdot h${'$'} (where ${'$'}g \approx 9.81\,\text{m/s}^2${'$'})
-
-## 3. Conservation of Linear Momentum
-The total linear momentum (${'$'}\vec{p} = m \vec{v}${'$'}) of a closed system without external impulses is strictly conserved:
-${'$'}${'$'}\sum m_i \vec{v}_{i,\text{before}} = \sum m_i \vec{v}_{i,\text{after}}${'$'}${'$'}
-- **Elastic Collision:** Both total kinetic energy and momentum are conserved (${'$'}e = 1${'$'}).
-- **Inelastic Collision:** Momentum is conserved, but kinetic energy is partially converted into internal thermal energy or deformation (${'$'}e < 1${'$'}).
-            """.trimIndent(),
-            tagsJson = "[\"Physics\", \"Mechanics\", \"Newton\", \"Energy\", \"Momentum\"]",
-            orderIndex = 1
-        ),
-        KnowledgePackArticleEntity(
-            id = "learning_chem_periodic_table",
-            packId = "learning",
-            title = "Periodic Table Principles & Chemical Bonding",
-            section = "Chemistry",
-            content = """
-# Periodic Table Principles & Chemical Bonding
-
-The periodic table organizes all known chemical elements in order of increasing atomic number (${'$'}Z${'$'}, the number of protons in the nucleus). Periodic recurrence of chemical properties arises from electron configurations in outer valence shells.
-
-## 1. Table Structure & Periodic Trends
-- **Periods (Horizontal Rows 1 to 7):** Indicate the principal quantum number (${'$'}n${'$'}) of the highest occupied electron shell.
-- **Groups (Vertical Columns 1 to 18):** Elements within the same column have identical numbers of valence electrons, leading to similar bonding behaviors.
-  - Group 1: Alkali Metals (Li, Na, K - highly reactive, oxidation state +1).
-  - Group 2: Alkaline Earth Metals (Be, Mg, Ca - oxidation state +2).
-  - Group 17: Halogens (F, Cl, Br, I - strong oxidizers, valence 7, oxidation state -1).
-  - Group 18: Noble Gases (He, Ne, Ar - complete octet, exceptionally unreactive).
-
-## 2. Fundamental Periodic Trends
-- **Atomic Radius:** Decreases across a period (left to right) due to increasing nuclear charge pulling electrons inward; increases down a group due to additional electron shielding shells.
-- **Electronegativity (Pauling Scale):** The tendency of an atom to attract shared electrons in a bond. Increases left-to-right (Fluorine has highest at 3.98) and decreases down a group.
-
-## 3. Chemical Bonding Types
-- **Ionic Bond:** Formed when the electronegativity difference between two atoms is large (${'$'}\Delta\text{EN} > 1.7${'$'}). Complete transfer of one or more valence electrons forms cations and anions held by electrostatic attraction (e.g., ${'$'}\text{Na}^+ + \text{Cl}^- \to \text{NaCl}${'$'}).
-- **Covalent Bond:** Formed when atoms share electron pairs (${'$'}\Delta\text{EN} < 1.7${'$'}).
-  - Non-polar covalent: Equal sharing (${'$'}\text{O}_2, \text{CH}_4${'$'}).
-  - Polar covalent: Unequal sharing producing partial charges (${'$'}\text{H}_2\text{O}${'$'}).
-            """.trimIndent(),
-            tagsJson = "[\"Chemistry\", \"Periodic Table\", \"Bonds\", \"Electrons\", \"Elements\"]",
-            orderIndex = 2
-        ),
-
-        // =================================================================
-        // 4. PROGRAMMING (programming)
-        // =================================================================
-        KnowledgePackArticleEntity(
-            id = "programming_kotlin_coroutines",
-            packId = "programming",
-            title = "Kotlin Coroutines & Structured Concurrency",
-            section = "Kotlin & Android",
-            content = """
-# Kotlin Coroutines & Structured Concurrency
-
-Kotlin coroutines provide lightweight, suspendable execution primitives that run asynchronous code sequentially without blocking the underlying OS thread.
-
-## 1. Core Primitives
-- **Suspend Functions:** Marked with the `suspend` keyword. Can yield execution at suspension points without locking the thread.
-- **CoroutineScope:** Defines the lifetime and boundaries of coroutines launched within it.
-- **Job:** A handle to a coroutine that tracks lifecycle state (Active, Completing, Completed, Cancelled).
-
-## 2. Dispatchers
-Dispatchers specify which thread or thread pool executes the coroutine:
-- `Dispatchers.Main`: Android main thread. Used strictly for UI updates and small callbacks. Never run disk I/O or heavy computation here.
-- `Dispatchers.IO`: Backed by an elastic thread pool optimized for off-loading blocking I/O (file reading/writing, database queries, network operations).
-- `Dispatchers.Default`: Optimized for CPU-intensive computation (JSON parsing, image resizing, heavy list transformations).
-
-## 3. Structured Concurrency Principles
-Coroutines adhere to hierarchical parent-child relationships:
-1. A parent scope does not complete until all its child coroutines finish.
-2. Cancelling a parent scope immediately cancels all child jobs recursively.
-3. If a child coroutine fails with an uncaught exception, it propagates the failure upward, cancelling sibling coroutines and the parent.
-4. **SupervisorJob:** Use a `SupervisorJob()` when child failures should be isolated and not trigger catastrophic cancellation of other tasks (e.g., handling independent network requests).
-
-## 4. Cooperative Cancellation
-Coroutines must cooperatively check for cancellation:
-- Standard library functions like `delay()`, `yield()`, and `ensureActive()` check `Job.isActive` and throw `CancellationException` when cancelled.
-- In CPU-intensive loops, periodically call `ensureActive()` or check `if (!isActive) break`.
-            """.trimIndent(),
-            tagsJson = "[\"Kotlin\", \"Coroutines\", \"Android\", \"Concurrency\", \"Threads\"]",
-            orderIndex = 1
-        ),
-        KnowledgePackArticleEntity(
-            id = "programming_room_database",
-            packId = "programming",
-            title = "Room Database Architecture & Migration Guidelines",
-            section = "Android Persistence",
-            content = """
-# Room Database Architecture & Migration Guidelines
-
-Android's Room persistence library provides an abstraction layer over SQLite that allows robust database access while harnessing the full power of SQLite.
-
-## 1. Core Architectural Components
-- **Entity:** Represents a table within the database. Annotated with `@Entity(tableName = "name")`. Each persistent property maps to a database column.
-- **DAO (Data Access Object):** Defines database interactions using Kotlin functions annotated with `@Query`, `@Insert`, `@Update`, and `@Delete`.
-- **Database:** Extends `RoomDatabase`. Lists entities and version number; exposes abstract DAO getters.
-
-## 2. Reactive Data Streams with Flow
-DAOs can return `Flow<List<Entity>>`. Room monitors database tables and automatically re-queries and emits fresh snapshots whenever corresponding rows are inserted, updated, or deleted, creating reactive UI pipelines.
-
-## 3. SQLite Migrations
-When changing database schemas (adding tables or altering columns), increment the database version and provide a `Migration(start, end)` object:
-```kotlin
-val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE users ADD COLUMN age INTEGER NOT NULL DEFAULT 0")
-    }
-}
-```
-*Best Practice:* Always avoid destructive migrations (`fallbackToDestructiveMigration`) in production releases to prevent user data loss during app updates.
-            """.trimIndent(),
-            tagsJson = "[\"Room\", \"SQLite\", \"Database\", \"Android\", \"Persistence\"]",
-            orderIndex = 2
-        ),
-
-        // =================================================================
-        // 5. LANGUAGES (languages)
-        // =================================================================
-        KnowledgePackArticleEntity(
-            id = "languages_grammar_frameworks",
-            packId = "languages",
-            title = "Core Grammatical Frameworks & Syntactic Structures",
-            section = "Linguistics",
-            content = """
-# Core Grammatical Frameworks & Syntactic Structures
-
-Language structure relies on systematic patterns of words, morphemes, and clauses that govern meaning and communicative clarity.
-
-## 1. Syntactic Typology
-Languages differ in canonical word order for transitive sentences (Subject, Verb, Object):
-- **SVO (Subject-Verb-Object):** English, Mandarin Chinese, Spanish, Russian. (e.g., "The engineer designed the circuit").
-- **SOV (Subject-Object-Verb):** Japanese, Korean, Hindi, Turkish, Latin. (e.g., "The engineer the circuit designed").
-- **VSO (Verb-Subject-Object):** Standard Arabic, Irish, Classical Hebrew.
-
-## 2. Verb Tense, Aspect, and Mood (TAM)
-- **Tense:** Locates an action in time relative to the speech event (Past, Present, Future).
-- **Aspect:** Expresses how the action extends over time:
-  - *Simple:* Complete fact ("I wrote the report").
-  - *Continuous/Progressive:* Ongoing activity ("I was writing the report").
-  - *Perfect:* Completed state with continuing relevance ("I have written the report").
-- **Mood:** The speaker's attitude toward the event:
-  - *Indicative:* Expressing factual statements ("It is raining").
-  - *Subjunctive:* Expressing hypothesis, wish, or counter-factuality ("If I were in your position...").
-  - *Imperative:* Expressing commands or requests ("Close the terminal").
-
-## 3. Technical Translation & Register
-When translating technical literature across languages:
-- Maintain terminology consistency: Map technical definitions to standardized international glossaries (e.g., ISO, IEEE).
-- Beware of **False Friends (Cognates):** Words in different languages that look similar but carry divergent meanings (e.g., Spanish *actual* means "current/present", not English "actual/real").
-            """.trimIndent(),
-            tagsJson = "[\"Linguistics\", \"Grammar\", \"Syntax\", \"Translation\", \"Language\"]",
-            orderIndex = 1
-        ),
-
-        // =================================================================
-        // 6. FIRST AID & EMERGENCY RESPONSE (first_aid)
-        // =================================================================
         KnowledgePackArticleEntity(
             id = "first_aid_cpr_adult",
             packId = "first_aid",
@@ -431,33 +17,46 @@ When translating technical literature across languages:
             content = """
 # Cardiopulmonary Resuscitation (CPR) & Airway Obstruction
 
-When a casualty is unresponsive and not breathing normally (or only gasping), immediate high-quality CPR maintains oxygenated blood flow to the brain and vital organs until definitive care arrives.
+When a casualty is unresponsive with absent or abnormal breathing (agonal gasps), high-quality CPR provides critical coronary and cerebral perfusion pressure until spontaneous circulation returns or defibrillation occurs.
 
 ## 1. Initial Assessment Protocol (DRSABCD)
-1. **D - Danger:** Ensure the scene is safe for yourself, bystanders, and the casualty.
-2. **R - Response:** Check for consciousness. Tap shoulders firmly and ask loudly: "Can you hear me? Open your eyes!"
-3. **S - Send for Help:** Call emergency services (112, 911, or local dispatch) or direct a bystander to call and locate an Automated External Defibrillator (AED).
-4. **A - Airway:** Open the airway using the head-tilt/chin-lift maneuver. Check the mouth for visible foreign blockages.
-5. **B - Breathing:** Look, listen, and feel for normal chest rise for no more than 10 seconds. Agonal gasps are not normal breathing.
-6. **C - CPR:** Immediately begin chest compressions if unbreathing.
-7. **D - Defibrillation:** Attach AED pads as soon as available and follow audio prompts.
+1. **D - Danger:** Ensure the environment is safe from electrical hazards, toxic gas, fire, and unstable structures.
+2. **R - Response:** Firmly tap shoulders and shout loudly into both ears: "Are you okay? Open your eyes!"
+3. **S - Send for Help:** Dial emergency dispatch (112, 911) or point directly at a bystander: "You in the blue jacket, call emergency services and find an AED!"
+4. **A - Airway:** Perform the head-tilt/chin-lift maneuver (or jaw-thrust without neck extension if cervical spinal injury is suspected). Inspect mouth for visible obstructions; clear solids with a finger sweep.
+5. **B - Breathing:** Look, listen, and feel for normal chest rise for 5 to 10 seconds. Agonal gasps (infrequent, irregular snorting) must be treated as cardiac arrest.
+6. **C - CPR (Compressions):** Immediately place the casualty supine on a firm, flat surface and initiate chest compressions.
+7. **D - Defibrillation:** Apply an Automated External Defibrillator (AED) as soon as it arrives without interrupting compressions.
 
-## 2. High-Quality Chest Compressions
-- **Positioning:** Place the heel of one hand in the center of the chest (lower half of sternum) and interlock the other hand on top. Keep arms straight and shoulders positioned directly over the hands.
-- **Compression Depth:** Compress the chest at least 5 cm (2 inches), but no more than 6 cm in adults.
-- **Compression Rate:** 100 to 120 compressions per minute (tempo of "Stayin' Alive").
-- **Full Recoil:** Allow the chest to fully re-expand between compressions to facilitate cardiac refill; do not lean on the chest.
-- **Ratio:** 30 chest compressions followed by 2 rescue breaths. If untrained or unwilling to deliver rescue breaths, deliver continuous hands-only CPR.
+## 2. High-Quality Chest Compression Metrics (AHA / ERC Standard)
+- **Hand Position:** Heel of dominant hand centered on the lower half of the sternum; second hand interlocked over the first. Keep elbows locked straight with shoulders positioned directly above hands.
+- **Compression Depth:** 5 to 6 cm (2 to 2.4 inches) in adults. Never exceed 6 cm.
+- **Compression Rate:** 100 to 120 compressions per minute (approximate tempo of "Stayin' Alive" or 2 beats per second).
+- **Complete Chest Recoil:** Allow the chest to fully return to resting neutral position between compressions. Leaning on the chest impairs venous refill and reduces cardiac output by up to 35%.
+- **Compression-to-Ventilation Ratio:** 30 compressions to 2 rescue breaths (each delivered over 1 second, watching for chest rise). If untrained or without a barrier mask, deliver **Continuous Hands-Only CPR**.
+- **Rescuer Fatigue Rotation:** Switch compressors every 2 minutes (every 5 cycles of 30:2) to maintain compression depth.
 
-## 3. Foreign Body Airway Obstruction (Choking)
-- **Mild Obstruction (Casualty can speak, cough loudly):** Encourage vigorous coughing. Do not interfere.
-- **Severe Obstruction (Silent, clutching neck, cyanotic lips):**
-  1. Stand to the side and slightly behind the casualty. Support chest with one hand and lean them forward.
-  2. Deliver up to **5 sharp back blows** between the shoulder blades with the heel of your hand.
-  3. If back blows fail, deliver up to **5 abdominal thrusts (Heimlich maneuver)**: Position a fist just above the navel, grasp with the other hand, and pull inward and upward sharply.
-  4. Repeat sequence. If casualty becomes unresponsive, lower carefully to the ground and initiate CPR immediately.
+## 3. Automated External Defibrillator (AED) Operations
+1. Power on the AED immediately.
+2. Expose the bare chest; wipe dry with a cloth if wet.
+3. Apply self-adhesive electrode pads:
+   - Upper Right: Below right clavicle, lateral to sternum.
+   - Lower Left: Mid-axillary line, 5th intercostal space below the left pectoral.
+   - *Special Conditions:* If an implanted pacemaker/defibrillator bulge is visible, place pad at least 2.5 cm (1 inch) away. Shave excessive chest hair if pads fail to adhere.
+4. Clear casualty while the AED analyzes cardiac rhythm.
+5. If shock is advised: Shout "Clear!", ensure no one touches the casualty, and press the flashing shock button.
+6. **Immediately resume chest compressions** starting with 30 compressions; do not pause to check pulse.
+
+## 4. Foreign Body Airway Obstruction (Choking)
+- **Partial/Mild Obstruction (Casualty can speak, cough vigorously):** Encourage coughing. Do not deliver back blows or thrusts while they are coughing effectively.
+- **Complete/Severe Obstruction (Cannot speak, silent panic, universal distress sign clutching throat):**
+  1. Stand behind casualty, support chest with one arm, and lean them forward.
+  2. Deliver **5 sharp back blows** between the shoulder blades using the heel of your hand.
+  3. If unrelieved, place the thumb side of your fist midway between the navel and xiphoid process. Grasp fist with your other hand and deliver **5 rapid inward and upward abdominal thrusts (Heimlich maneuver)**.
+  4. Repeat cycle of 5 back blows and 5 abdominal thrusts.
+  5. If casualty collapses unconscious: Lower them gently to the floor, call emergency dispatch, and initiate CPR (starting with chest compressions). Check airway before rescue breaths.
             """.trimIndent(),
-            tagsJson = "[\"CPR\", \"Cardiac Arrest\", \"Choking\", \"BLS\", \"Emergency\"]",
+            tagsJson = "[\"CPR\", \"Cardiac Arrest\", \"BLS\", \"AED\", \"Choking\"]",
             orderIndex = 1
         ),
         KnowledgePackArticleEntity(
@@ -468,58 +67,83 @@ When a casualty is unresponsive and not breathing normally (or only gasping), im
             content = """
 # Massive Hemorrhage Control & Tourniquet Application
 
-Arterial hemorrhage can cause fatal exsanguination in under 3 minutes. Stop the bleeding before any other intervention.
+Uncontrolled arterial hemorrhage can cause irreversible hypovolemic shock and exsanguination in under 180 seconds. In tactical and remote trauma, stopping severe external bleeding precedes all other interventions.
 
-## 1. Stepwise Bleeding Control Hierarchy
-1. **Immediate Firm Direct Pressure:** Press directly onto the bleeding site using sterile gauze, clean cloth, or gloved hands. Lean your full body weight into the wound.
-2. **Wound Packing (Junctional Areas - Groin, Axilla, Neck):**
-   - Pack hemostatic gauze (quikclot/kaolin) or standard gauze tightly into the wound cavity directly against the bleeding vessel.
-   - Maintain continuous direct pressure over the packed wound for at least 3 minutes (5 minutes for non-hemostatic gauze).
-3. **Tourniquet (Extremity Wounds):** Apply immediately for life-threatening limb hemorrhage.
+## 1. Classifying External Hemorrhage
+- **Arterial Bleeding:** Bright red blood spurting pulsatile under high hydraulic pressure. Highest immediate fatality risk.
+- **Venous Bleeding:** Dark red blood flowing steadily without pulsations. Can still lead to rapid exsanguination from large junctional veins (e.g., femoral, jugular).
+- **Capillary Bleeding:** Oozing blood from superficial dermis; self-limiting via clotting cascade.
 
-## 2. Tourniquet Application Procedure (Combat Application Tourniquet - CAT)
-1. Place the tourniquet **2 to 3 inches above the bleeding site**, directly on the skin (never over a joint; if bleeding location is unclear in the dark, place "high and tight" on the limb).
-2. Pull the self-adhering band tightly to eliminate all slack before turning the windlass.
-3. Twist the windlass rod until the arterial bleeding stops completely and distal pulse vanishes.
-4. Lock the windlass rod into the clip.
-5. Secure the friction buckle strap and write the exact time of application on the time tag (e.g., "TK 14:35").
+## 2. Stepwise Hemostasis Hierarchy (TCCC MARCH Algorithm)
+1. **Direct Manual Pressure:**
+   - Press both hands directly onto the bleeding vessel with full body weight.
+   - Use sterile gauze, a clean cloth, or gloved fingertips pushed deep into the wound track.
+2. **Windlass Tourniquet (Limb Extremities):**
+   - The primary intervention for severe extremity trauma, partial/complete amputations, or complex fractures with vascular involvement.
+3. **Wound Packing (Junctional Wounds - Groin, Axilla, Neck Base):**
+   - Tourniquets cannot occlude junctional vessels. Pack hemostatic gauze (Kaolin-impregnated QuikClot or Chitosan Celox) or plain gauze deep into the wound cavity directly against the bleeding vessel.
+   - Pack tightly until the wound void is completely filled.
+   - Maintain continuous direct pressure over the pack for **3 full minutes** (5 minutes for non-hemostatic standard gauze).
+   - Secure with a pressure bandage (e.g., Israeli Emergency Bandage).
 
-## 3. Critical Tourniquet Safety Rules
-- **Never loosen or remove a tourniquet in the field.** Removal must only be performed by medical personnel in a surgical setting.
-- An improperly applied loose tourniquet acts as a venous tourniquet, increasing bleeding rather than stopping it.
-- Pain is expected and indicates effective arterial occlusion.
+## 3. Combat Application Tourniquet (CAT) Standard Operating Procedure
+1. **Placement:**
+   - In active emergency/darkness: Place "high and tight" on the proximal limb over clothing.
+   - Once bleeding site is clearly exposed: Place **5 to 7 cm (2 to 3 inches) above the proximal bleeding wound**, directly on bare skin. Never place directly over a joint (elbow or knee).
+2. **Routing:** Thread self-adhering band through the friction buckle and pull as tightly as humanly possible before engaging the windlass rod. Eliminating slack in this step is critical.
+3. **Windlass Tightening:** Twist the windlass rod until bright red arterial bleeding ceases completely and the distal peripheral pulse vanishes.
+4. **Locking:** Clip the windlass rod into the retaining C-hook and pull the windlass strap across to lock it in place.
+5. **Time Documentation:** Clearly write the exact time of application on the white time tag (e.g., "T = 14:35").
+
+## 4. Critical Safety Rules & Myths
+- **Never loosen or intermittently release a tourniquet:** Periodic loosening reintroduces arterial blood loss and washes out clotting factors while failing to save ischemic tissue. A tourniquet can remain safely applied for up to **2 hours** without significant risk of permanent nerve or muscle ischemia.
+- **Pain is Expected:** A properly applied tourniquet causes intense pain due to arterial occlusion. Do not loosen it because the casualty complains of pain.
+- **Secondary Tourniquet:** If bleeding does not stop completely with one tourniquet, apply a second tourniquet immediately proximal (above) the first.
             """.trimIndent(),
-            tagsJson = "[\"Bleeding\", \"Tourniquet\", \"Trauma\", \"Wounds\", \"Hemostatic\"]",
+            tagsJson = "[\"Hemorrhage\", \"Bleeding\", \"Tourniquet\", \"Trauma\", \"TCCC\"]",
             orderIndex = 2
         ),
         KnowledgePackArticleEntity(
             id = "first_aid_burns_treatment",
             packId = "first_aid",
-            title = "Burn Classification & Emergency Treatment",
-            section = "Wound Care",
+            title = "Burn Classification, Fluid Staging & Treatment",
+            section = "Thermal Care",
             content = """
-# Burn Classification & Emergency Treatment
+# Burn Classification, Fluid Staging & Treatment
 
-Immediate cooling and sterile dressing minimize tissue damage and infection risk following thermal, chemical, or electrical burns.
+Prompt thermal deceleration and infection prophylaxis determine survival and functional recovery after major thermal, electrical, or chemical injuries.
 
-## 1. Burn Depth Classification
-- **First-Degree (Superficial):** Affects only the epidermis. Red, painful, dry, no blisters (e.g., mild sunburn).
-- **Second-Degree (Partial-Thickness):** Involves epidermis and dermis. Redness, severe pain, edema, and fluid-filled blisters.
-- **Third-Degree (Full-Thickness):** Extends through all skin layers into subcutaneous tissue. Leathery, charred black or waxy white, often painless at the center due to nerve destruction.
+## 1. Depth Staging
+- **Superficial (1st Degree):** Confined to epidermis. Erythematous, dry, blanchable, hypersensitive, no bullae (blisters). Heals in 3 to 6 days without scarring.
+- **Partial-Thickness (2nd Degree):** Extends into dermis.
+  - *Superficial Partial:* Wet, clear blister formation, intensely painful, pink/mottled base.
+  - *Deep Partial:* White/pale base, impaired sensation, variable capillary refill.
+- **Full-Thickness (3rd Degree):** Complete destruction of epidermis and dermis into subcutaneous fat. Leathery, charred black or pearly waxy white, dry, non-blanching, anesthetic (painless) at the central burn core due to nerve terminal necrosis.
+- **4th Degree:** Extends through deep fascia into underlying skeletal muscle, tendon, and cortical bone.
 
-## 2. Emergency Management Steps
-1. **Extinguish & Remove Source:** Smother flames, disconnect electrical supply, or brush dry chemicals off before flushing.
-2. **Cool with Clean Running Water:** Apply cool running tap water (15°C - 20°C) over the burn for **at least 20 minutes**. Do this within the first 3 hours of injury.
-   - *Warning:* Never use ice or ice-cold water; extreme cold constricts capillary blood flow, deepening tissue necrosis.
-3. **Remove Constricting Items:** Gently take off rings, watches, belts, and tight clothing before swelling develops. Do not peel off clothing stuck to the wound.
-4. **Cover the Burn:** Cover loosely with a sterile, non-adherent dressing, clean polyethylene plastic food wrap (applied lengthways, not wrapped tightly), or clean damp cloth.
-5. **Keep Casualty Warm:** Extensive burns impair thermoregulation; wrap unburned areas in blankets to prevent hypothermia.
+## 2. Rule of Nines (Adult Total Body Surface Area - TBSA Estimation)
+- Head and Neck: 9%
+- Anterior Torso (Chest + Abdomen): 18%
+- Posterior Torso (Back + Buttocks): 18%
+- Each Upper Extremity (Arm): 9% (18% both)
+- Each Lower Extremity (Leg): 18% (36% both)
+- Perineum/Genitalia: 1%
+- Palmar Surface of Casualty's Hand (including fingers): approximately 1% TBSA (useful for scattered burns).
 
-## 3. Do NOT Practices
-- Do not apply butter, oil, grease, toothpaste, or home ointments.
-- Do not burst intact blisters; the blister roof acts as a biological sterile barrier.
+## 3. Acute On-Scene Management
+1. **Stop the Burning Process:** Extinguish flames (Stop, Drop, Roll), isolate electrical current before touching casualty, or brush off dry chemical powders before irrigation.
+2. **Active Thermal Deceleration (20-Minute Clean Water Rule):**
+   - Cool the burn using clean, cool running water (15°C to 20°C) for **at least 20 minutes**.
+   - Must be initiated within 3 hours of injury to reduce depth of tissue necrosis.
+   - *Contraindication:* **Never use ice or freezing water.** Extreme cold induces reflex peripheral vasoconstriction, deepening the thermal burn into ischemic necrosis and causing severe hypothermia.
+3. **Constrictive Item Removal:** Remove jewelry, watches, rings, belts, and boots immediately before massive third-space capillary leak edema develops.
+4. **Wound Dressing:** Cover loosely with clean, non-adherent sterile dressings or clear food-grade polyethylene cling wrap applied longitudinally (never circumferential wrapping, which creates a tourniquet effect as tissue swells).
+5. **Core Temperature Preservation:** Once cooled, wrap unburned body surfaces in clean, dry blankets to combat severe post-burn hypothermia.
+
+## 4. Inhalation Injury Red Flags
+Suspect airway burns in closed-space fires. Look for: singed facial/nasal hairs, carbonaceous sputum, hoarseness, inspiratory stridor, and pharyngeal edema. Requires immediate emergency transport and early endotracheal intubation before complete laryngeal closure.
             """.trimIndent(),
-            tagsJson = "[\"Burns\", \"Thermal\", \"Chemical\", \"First Aid\", \"Wounds\"]",
+            tagsJson = "[\"Burns\", \"Thermal\", \"Chemical\", \"Electrical\", \"Wound\"]",
             orderIndex = 3
         ),
         KnowledgePackArticleEntity(
@@ -530,172 +154,527 @@ Immediate cooling and sterile dressing minimize tissue damage and infection risk
             content = """
 # Fractures, Dislocations & Field Splinting
 
-Immobilizing suspected bone fractures and joint dislocations prevents further soft tissue trauma, reduces pain, and prevents closed fractures from puncturing through the skin.
+Immobilizing skeletal trauma prevents bone fragments from lacerating adjacent neurovascular bundles, reduces muscle spasm, minimizes blood loss, and prevents closed injuries from converting to open fractures.
 
-## 1. Signs of a Fracture
-- Severe localized pain and tenderness.
-- Visible deformity, unnatural angulation, or limb shortening.
-- Swelling, bruising (ecchymosis), and inability to bear weight.
-- Crepitus (grating sensation of bone ends touching).
+## 1. Classification
+- **Closed Fracture:** Skin barrier remains intact over the fracture site.
+- **Open (Compound) Fracture:** Bone pierces through the skin or an external wound communicates with the fracture hematoma. High risk of osteomyelitis; cover bone with sterile moist gauze; do NOT push exposed bone back inside.
+- **Dislocation:** Complete displacement of bone ends forming a joint.
 
-## 2. Neurovascular Examination (PMS Protocol)
-Always assess and record **PMS** distal to the injury **before and after** applying any splint:
-1. **P - Pulse:** Check distal arterial pulse (radial pulse for arm, dorsalis pedis for leg).
-2. **M - Motor:** Ask casualty to gently wiggle fingers or toes.
-3. **S - Sensory:** Touch extremities and ask casualty if they feel it without looking.
-- If distal pulse is absent, emergency reduction or repositioning may be required by trained medics.
+## 2. Neurovascular Protocol (PMS Pre- and Post-Splint Assessment)
+Always verify and document **PMS** distally before and immediately after applying any splint or bandage:
+1. **P - Pulse:** Check distal arterial pulsation (radial pulse for upper limb; dorsalis pedis / posterior tibial for lower limb). Compare bilaterally.
+2. **M - Motor:** Test voluntary distal muscular activation ("Wiggle your fingers", "Flex your toes toward your nose").
+3. **S - Sensory:** Lightly touch the casualty's distal digits with eyes closed ("Which finger am I touching?").
+- *Critical finding:* If a pulse disappears after splinting, immediately loosen the splint bindings and readjust.
 
-## 3. Splinting Rules
-- **Immobilize the Joint Above and Below:** For a mid-shaft forearm fracture, immobilize both the wrist and the elbow. For an ankle fracture, immobilize the foot and the knee.
-- **Pad the Splint:** Pad rigid items (sticks, rolled magazines, padded boards, SAM splints) with cloth to eliminate pressure sores over bony prominences.
-- **Secure in Position Found:** Never attempt to forcefully straighten a dislocated joint or push exposed bone back into an open fracture.
-- **Open Fractures:** Cover exposed bone ends with sterile moist gauze before splinting.
+## 3. The 5 Ps of Compartment Syndrome (Orthopedic Emergency)
+Elevated pressure within a closed osteofascial compartment compromises capillary perfusion:
+1. **Pain:** Disproportionate to injury and refractory to analgesics; exacerbated by passive stretch of muscles.
+2. **Pallor:** Pale, cool extremity with prolonged capillary refill.
+3. **Paresthesia:** "Pins and needles" or numbness along nerve pathways.
+4. **Paralysis:** Inability to actively contract compartment muscle groups (late sign).
+5. **Pulselessness:** Absence of distal pulse (late sign indicating impending tissue death).
+
+## 4. Fundamental Rules of Splinting
+- **Immobilize the Joint Above and Joint Below:** To splint a tibial shaft fracture, immobilize both the knee and ankle. To splint a radial/ulnar shaft fracture, immobilize both the wrist and elbow.
+- **Pad all Bony Prominences:** Cushion rigid splint material (boards, SAM splints, branches) with soft clothing or gauze around the malleoli, patella, and olecranon to avoid pressure necrosis.
+- **Splint in the Position Found:** Do not attempt to force a deformed or dislocated joint into anatomical position in the field unless distal pulse is absent and definitive evacuation is delayed hours.
             """.trimIndent(),
-            tagsJson = "[\"Fracture\", \"Splint\", \"Bone\", \"Sprain\", \"Trauma\"]",
+            tagsJson = "[\"Fracture\", \"Splint\", \"Trauma\", \"Sprain\", \"Compartment\"]",
             orderIndex = 4
         ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_anaphylaxis_epipen",
+            packId = "first_aid",
+            title = "Anaphylaxis Recognition & Epinephrine Auto-Injector Administration",
+            section = "Allergy & Immunology",
+            content = """
+# Anaphylaxis Recognition & Epinephrine Auto-Injector Administration
 
-        // =================================================================
-        // 7. FIELD ELECTRONICS & HARDWARE TROUBLESHOOTING (field_electronics)
-        // =================================================================
+Anaphylaxis is a severe, systemic, life-threatening type-I hypersensitivity reaction involving massive histamine release, vasodilation, airway bronchoconstriction, and distributive shock.
+
+## 1. Clinical Recognition Criteria
+Anaphylaxis is highly likely when any **one** of the following criteria is met following allergen exposure (stings, nuts, shellfish, medications):
+1. **Acute skin/mucosal symptoms** (generalized hives, pruritus, facial edema, swollen lips/tongue/uvula) **PLUS at least one of:**
+   - Respiratory compromise: Dyspnea, wheezing, stridor, hypoxemia.
+   - Hypotension / End-organ dysfunction: Syncope, collapse, diaphoresis, incontinence.
+2. **Two or more symptoms occurring rapidly after exposure:**
+   - Cutaneous: Urticaria, flushing, angioedema.
+   - Respiratory: Throat tightness, coughing, bronchospasm.
+   - Cardiovascular: Tachycardia, hypotension, dizziness.
+   - Gastrointestinal: Severe abdominal cramps, persistent vomiting.
+
+## 2. Epinephrine: The Sole First-Line Pharmacotherapy
+- **Dose:**
+  - Adults and children >30 kg: **0.3 mg** intramuscularly (IM).
+  - Pediatric 15 to 30 kg: **0.15 mg** intramuscularly (IM).
+- **Injection Site:** **Anterolateral middle-third of the thigh (Vastus Lateralis muscle)**.
+  - Epinephrine must NEVER be given subcutaneously or into the gluteal muscle; vastus lateralis vascularity provides the most rapid therapeutic plasma peak (under 8 minutes).
+  - Can be injected directly through clothing/jeans if necessary.
+
+## 3. Step-by-Step Auto-Injector Administration
+1. Form a fist around the injector (never place thumb over either end).
+2. Remove the safety release cap (usually blue or yellow at the top).
+3. Position the orange/black needle tip perpendicular (90°) against the outer thigh.
+4. Push down firmly until a loud click is heard or felt.
+5. **Hold firmly in place for 3 to 10 seconds** to ensure complete drug delivery.
+6. Remove unit and gently massage the injection site for 10 seconds.
+7. Record time of delivery and keep used device to give to paramedics.
+
+## 4. Secondary Dosing and Posture
+- **Refractory Symptoms:** If symptoms fail to improve or deteriorate within **5 to 15 minutes**, administer a second dose of epinephrine in the opposite thigh.
+- **Patient Positioning:** Keep casualty supine with legs elevated to maintain venous return. Do NOT allow an anaphylactic patient to stand up or walk; sudden upright posture can cause catastrophic pulseless electrical activity (Empty Heart Syndrome). If vomiting or in respiratory distress, place in recovery position or seated upright.
+            """.trimIndent(),
+            tagsJson = "[\"Anaphylaxis\", \"Epinephrine\", \"EpiPen\", \"Allergy\", \"Airway\"]",
+            orderIndex = 5
+        ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_heat_cold_emergencies",
+            packId = "first_aid",
+            title = "Environmental Emergencies: Heat Stroke & Hypothermia Staging",
+            section = "Environmental Care",
+            content = """
+# Environmental Emergencies: Heat Stroke & Hypothermia Staging
+
+Thermal dysregulation occurs when metabolic heat production and environmental heat transfer overwhelm the body's thermoregulatory mechanisms in the hypothalamus.
+
+## 1. Heat Illness Spectrum
+### A. Heat Exhaustion
+- Core temperature <40°C (<104°F).
+- Symptoms: Profuse diaphoresis (sweating), nausea, headache, tachycardia, orthostatic lightheadedness.
+- Mental Status: **Intact**. Casualty is oriented.
+- Field Treatment: Move to shade, loosen clothing, elevate legs, sip cool electrolyte fluid.
+
+### B. Exertional / Classic Heat Stroke (Life-Threatening Emergency)
+- Core body temperature **>40°C (>104°F)**.
+- Key Diagnostic Differentiator: **Altered Mental Status (CNS dysfunction)**: Confusion, delirium, ataxia, seizures, or coma.
+- Skin: Can be hot and dry, but exertional victims are often still sweating profusely.
+- **Field Treatment (Cool First, Transport Second):**
+  - **Cold Water Immersion (Gold Standard):** Submerge casualty up to neck in ice water bath with continuous stirring. Reduces core temp by 0.2°C per minute.
+  - If immersion is unavailable: Strip clothing, continuously pour water over body, vigorously fan, and place ice packs at high-perfusion areas (axillae, groin, neck).
+  - Target: Cool rapidly until core temp reaches 38.5°C (101.3°F), then halt active cooling to prevent hypothermic overshoot.
+
+## 2. Hypothermia Staging (Swiss Staging System)
+- **Stage I - Mild (32°C to 35°C):**
+  - Conscious, shivering violently, normal or mildly impaired coordination, tachycardic.
+  - Management: Passive rewarming (dry clothing, windproof shell, warm sweet non-caffeinated drinks).
+- **Stage II - Moderate (28°C to 32°C):**
+  - Shivering ceases, apathy, confusion, severe muscle rigidity, dilated pupils.
+  - Management: Active external rewarming of trunk (chemical heat pads on chest and back; never on bare extremities).
+- **Stage III - Severe (24°C to 28°C):**
+  - Unconscious, profound bradycardia, hypotension, barely perceptible respirations.
+  - Management: Full body insulation, gentle handling.
+- **Stage IV - Apparent Death (<24°C):**
+  - Asystole or pulseless electrical activity. "A casualty is not dead until warm and dead." Initiate prolonged CPR until rewarming can occur in a medical facility.
+
+## 3. The "Afterdrop" Phenomenon
+When cold, stagnant blood from vasoconstricted extremities returns suddenly to the core during rapid limb rewarming, it causes a sharp secondary temperature drop in the myocardium, frequently inducing fatal Ventricular Fibrillation (VF). Always warm the central trunk (chest, abdomen) first, and never massage or vigorously rub cold extremities.
+            """.trimIndent(),
+            tagsJson = "[\"Hypothermia\", \"Heat Stroke\", \"Frostbite\", \"Environment\", \"Cold\"]",
+            orderIndex = 6
+        ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_snakebite_envenomation",
+            packId = "first_aid",
+            title = "Snakebite Envenomation & Pressure Immobilization (PIT)",
+            section = "Venom & Toxicology",
+            content = """
+# Snakebite Envenomation & Pressure Immobilization (PIT)
+
+Venomous snakebites deliver complex biochemical cocktails of neurotoxins, hemotoxins, cytotoxins, and myotoxins into the subcutaneous lymphatic system. Correct field stabilization prevents systemic distribution.
+
+## 1. Toxin Classifications
+- **Neurotoxic (Elapids - Cobras, Kraits, Coral Snakes, Mambas, Australian Elapids):** Blocks neuromuscular junctions. Causes ptosis (drooping eyelids), diplopia, dysphagia, progressive flaccid paralysis, and respiratory failure.
+- **Hemotoxic & Cytotoxic (Viperids - Rattlesnakes, Vipers, Pit Vipers, Adders):** Destroys vascular endothelium, consumes fibrinogen (consumptive coagulopathy), causes massive local edema, bullae formation, necrosis, and systemic hemorrhage.
+
+## 2. The Pressure Immobilization Technique (PIT)
+*Recommended for all neurotoxic elapid bites and Australian venomous species. Slows lymphatic flow without occluding arterial blood supply.*
+
+1. Apply a broad elastic roller bandage (10 to 15 cm wide) directly over the bite site as firmly as for a sprained ankle (approx. 40 to 70 mmHg pressure).
+2. Extend the wrap continuously all the way down the limb (to fingers or toes) and then back up the limb to the groin or axilla.
+3. Check distal pulse: Circulation must remain intact; digits must not turn cold, pale, or cyanotic.
+4. Apply a rigid splint to immobilize the entire limb.
+5. **Absolute Physical Rest:** The casualty must NOT walk, move, or contract muscles; lymphatic valves are driven by skeletal muscle contraction. Carry the casualty or arrange immediate air evacuation.
+
+## 3. Critical Contraindications (Harmful Myths to Avoid)
+- **DO NOT apply an arterial tourniquet for snakebites:** High pressure causes localized ischemic necrosis and massive tissue loss.
+- **DO NOT cut or incise the fang punctures:** Introduces secondary bacterial infections, causes severe local arterial bleeding, and does not extract venom.
+- **DO NOT attempt mouth or mechanical device suction:** Less than 0.1% of venom is aspirated, and mouth bacteria contaminate the puncture.
+- **DO NOT apply ice or electric shocks:** Cryotherapy exacerbates local necrosis and permanent tissue destruction.
+- **DO NOT attempt to capture or kill the snake:** Avoids secondary bites; take a digital photo from a safe distance (minimum 2 meters) for anti-venom matching.
+            """.trimIndent(),
+            tagsJson = "[\"Snakebite\", \"Venom\", \"PIT\", \"Envenomation\", \"Toxins\"]",
+            orderIndex = 7
+        ),
         KnowledgePackArticleEntity(
             id = "field_multimeter_diagnostics",
             packId = "field_electronics",
-            title = "Digital Multimeter Diagnostics & Component Testing",
+            title = "Digital Multimeter Diagnostics & In-Circuit Component Testing",
             section = "Test & Measurement",
             content = """
-# Digital Multimeter Diagnostics & Component Testing
+# Digital Multimeter Diagnostics & In-Circuit Component Testing
 
-A digital multimeter (DMM) is the primary diagnostic instrument for troubleshooting unpowered and powered electronic assemblies.
+A high-input-impedance (>=10 MΩ) Digital Multimeter (DMM) allows diagnosis of passive and active components without loading low-power reference circuits.
 
-## 1. Core Operating Modes
-- **DC Voltage (V=):** Measures steady potential difference. Red probe to circuit node, black probe to common ground (GND). Use for verifying battery charge, power supplies, and logic rails (3.3V, 5V, 12V).
-- **Continuity (Beeper):** Emits an audible tone when loop resistance is below approximately 30Ω - 50Ω. Used for tracing broken PCB tracks, blown fuses, and finding solder bridges.
-- **Resistance (Ω):** Measures passive component impedance without power applied. Always isolate at least one pin of a resistor when testing in-circuit to avoid parallel paths.
-- **Diode Mode:** Injects a constant current (~1mA) and displays the forward voltage drop (V_f):
-  - Silicon PN Junction: 0.5V to 0.7V.
-  - Schottky Diode: 0.15V to 0.35V.
-  - Germanium Diode: 0.2V to 0.3V.
-  - Open or Reverse Biased: "OL" (Over Limit).
-  - Shorted Diode: 0.00V in both directions.
+## 1. Operating Modes & Measurement Procedures
+- **DC Voltage (V⎓):** Measures potential difference. Connect black lead to common chassis ground (GND) and red lead to test points.
+  - *Measurement Rule:* Logic signals (1.8V, 3.3V, 5V) should remain within ±3% tolerance under nominal load. A drooping rail (e.g. 3.3V rail measuring 2.7V) indicates excessive load or high series resistance in a ferrite bead.
+- **Continuity (Beeper):** Alerts with a tone when circuit loop resistance is beneath approximately 30Ω to 50Ω.
+  - *Field Caution:* Always perform continuity checks on unpowered systems. Residual DC charges trigger false buzzers or blow meter input fuses.
+- **Resistance (Ω):** In-circuit measurements read the equivalent parallel resistance of all attached loop branches (${"$"}R_{eq} = (R_1 \cdot R_2) / (R_1 + R_2)${"$"}). To verify precision tolerance resistors, lift at least one pin from the solder pad.
+- **Diode Mode (Forward Voltage Drop ${"$"}V_f${"$"}):** Injects a calibrated 1mA current and measures forward junction barrier potential:
+  - Standard Silicon PN Junction: `0.55V to 0.70V`.
+  - Schottky Diode (Fast Barrier): `0.18V to 0.35V`.
+  - Germanium Diode: `0.22V to 0.30V`.
+  - Gallium Arsenide LED: Red (`1.6V - 2.0V`), Green/Blue/White (`2.8V - 3.4V`).
+  - *Short:* `0.000V` in both directions indicates semiconductor breakdown.
+  - *Open:* Displays `OL` (Over Limit) in both directions.
 
-## 2. In-Circuit Capacitor Testing
-1. Disconnect all power and safely discharge high-voltage electrolytic capacitors through a 1kΩ 5W power resistor.
-2. In Resistance mode, connect probes across the capacitor:
-   - Reading should start low, then continuously climb toward infinity (OL) as the internal DMM battery charges the capacitor.
-   - If resistance stays near 0Ω: Capacitor is shorted internally (common failure mode of ceramic MLCCs).
+## 2. In-Circuit Ceramic Capacitor (MLCC) Short Testing
+Multi-layer ceramic capacitors frequently fail as dead shorts due to microscopic thermal cracking or voltage spike breakdown:
+1. De-energize circuit completely and discharge bulk capacitors through a 1 kΩ 5W power resistor.
+2. In Resistance mode, measure between the power rail and ground.
+3. If reading is <2Ω, a short exists. Because dozens of decoupling capacitors sit in parallel on a power bus, pinpoint the shorted capacitor using:
+   - **Voltage Injection Method:** Inject 1.0V with current limited to 1.5A into the rail. Spray 99% Isopropyl Alcohol (IPA). The defective capacitor boils and evaporates the alcohol within seconds while healthy components stay wet.
 
-## 3. MOSFET and BJT Transistor Quick Tests
-- **NPN BJT:** With meter in Diode Mode, black probe on Base, red probe on Collector and Emitter should read OL. Red probe on Base, black probe on Collector and Emitter should both read ~0.65V.
-- **N-Channel MOSFET:** Black probe on Source, red probe on Drain reads ~0.5V (internal body diode). Reverse should read OL. Touch red probe to Gate, then red probe to Drain: MOSFET should conduct (reading drops to 0.0V).
+## 3. Transistor Field Testing (BJT & MOSFET)
+- **NPN Bipolar Junction Transistor (Diode Mode):**
+  - Red probe on Base: Black probe on Collector reads `~0.65V`, Black probe on Emitter reads `~0.68V`.
+  - Reverse probes: All combinations read `OL`.
+- **N-Channel Enhancement MOSFET:**
+  - Black probe on Source, Red probe on Drain reads `0.45V to 0.60V` (internal body diode). Reverse reads `OL`.
+  - Touch Red probe momentarily to Gate (charges internal input capacitance ${"$"}C_{iss}${"$"}).
+  - Return Red probe to Drain: MOSFET now conducts; meter reads `0.00V` (Rds-on active).
+  - Discharge Gate by touching Gate and Source together with fingers; Drain-to-Source returns to `OL`.
             """.trimIndent(),
-            tagsJson = "[\"Multimeter\", \"Voltage\", \"Continuity\", \"Diode\", \"Resistance\"]",
+            tagsJson = "[\"Multimeter\", \"Voltage\", \"Continuity\", \"Diode\", \"Resistance\", \"Capacitance\"]",
             orderIndex = 1
         ),
         KnowledgePackArticleEntity(
             id = "field_lithium_battery_pack",
             packId = "field_electronics",
-            title = "Lithium-Ion & LiFePO4 Battery Pack Diagnostics",
+            title = "Lithium-Ion & LiFePO4 Battery Pack Diagnostics & BMS Restoration",
             section = "Power Systems",
             content = """
-# Lithium-Ion & LiFePO4 Battery Pack Diagnostics
+# Lithium-Ion & LiFePO4 Battery Pack Diagnostics & BMS Restoration
 
-Lithium secondary cells store high chemical energy density. Proper cell balancing, cutoff voltages, and Battery Management System (BMS) diagnostics are critical to avoid thermal runaway.
+Secondary lithium cells possess high specific energy density. Understanding chemistry voltage boundaries, cell balancing tolerances, and Battery Management System (BMS) trip states prevents catastrophic thermal runaway.
 
-## 1. Operating Voltage Thresholds per Cell
-| Chemistry | Nominal Voltage | Full Charge (Cutoff) | Storage Voltage | Absolute Minimum (Discharged) |
-|---|---|---|---|---|
-| **Li-Ion (NMC / Cobalt)** | 3.6V - 3.7V | 4.20V ± 0.05V | 3.82V | 2.80V (Below 2.5V damages cell) |
-| **LiFePO4 (Iron Phosphate)**| 3.2V | 3.65V ± 0.05V | 3.30V | 2.50V (Extremely safe chemistry) |
-| **Li-Po (Pouch Cells)** | 3.7V | 4.20V (4.35V LiHV) | 3.85V | 3.00V |
+## 1. Chemical Specifications Comparison
+| Parameter | Li-Ion (NMC / Cobalt 18650/21700) | LiFePO4 (Lithium Iron Phosphate) | Li-Po (Lithium Polymer Pouch) |
+|---|---|---|---|
+| **Nominal Voltage** | 3.6V - 3.7V per cell | 3.2V per cell | 3.7V per cell |
+| **Max Charge Cutoff** | 4.20V ± 0.05V | 3.65V ± 0.05V | 4.20V (4.35V for LiHV) |
+| **Storage Voltage** | 3.82V - 3.85V | 3.30V | 3.85V |
+| **Min Discharge Cutoff**| 2.80V (Damage below 2.5V) | 2.50V (Damage below 2.0V) | 3.00V |
+| **Thermal Runaway Temp**| ~150°C - 180°C | >270°C (Extremely stable) | ~140°C |
 
-## 2. Common Battery Pack Failure Modes
-1. **Cell Imbalance in Series Strings (e.g. 3S, 4S, 7S):**
-   - Measure each cell via balance connector. Imbalance greater than **50mV (0.05V)** reduces effective capacity. Imbalance over **200mV** trips BMS shutdown.
-   - Rebalance using a dedicated balance charger or CC-CV single cell supply.
-2. **BMS Lockout State:**
-   - Many BMS boards enter protection mode if any single cell drops below 2.5V or shorts.
-   - To reset a tripped BMS: Connect appropriate charging voltage across the main P+ and P- terminals for 5 seconds to re-engage the discharge MOSFETs.
-3. **Physical Swelling & Dendrites:**
-   - Any pouch cell showing gas swelling ("pillowing") has suffered electrolyte decomposition. Discontinue use immediately; do not puncture.
+## 2. Diagnosing Cell Imbalance in Series Strings (e.g. 3S, 4S, 7S, 13S)
+- Access the multi-pin white JST balance connector on the battery pack.
+- Measure voltage of each individual cell sequentially between consecutive balance pins (${"$"}B_0-B_1, B_1-B_2, B_2-B_3${"$"}).
+- **Tolerance Standards:**
+  - Optimal Pack: Delta between highest and lowest cell is **<20mV (0.02V)**.
+  - Mild Degradation: Delta between 20mV and 80mV. Charge capacity is throttled by the weakest cell.
+  - Critical Fault: Delta **>150mV (0.15V)**. BMS will trigger premature low-voltage cutoff during discharge or overvoltage cutoff during charge.
+
+## 3. BMS Lockout State & "Jumpstart" Procedure
+When a single cell drops beneath the low-voltage cutoff threshold (typically 2.4V for Li-ion), the protection IC enters hard lockout mode, turning off both the charge and discharge MOSFET gates (reading 0.0V at the main P+ / P- output terminals).
+1. Isolate the pack from loads and inspect cells physically. If any cell is bloated, dented, or below 1.5V, do not revive (internal copper dendrite short risk).
+2. If cells are resting safely between 2.2V and 2.5V:
+   - Connect a bench power supply set to nominal pack voltage with current limited to **50mA to 100mA** (trickle pre-charge rate).
+   - Apply power for 30 to 60 seconds across P+ and P- to trigger the BMS threshold detector.
+   - Once cell voltages rise above 2.8V, the BMS restores normal switching mode.
+
+## 4. C-Rating and Safe Current Delivery
+- Discharge Current formula: ${"$"}I_{max} = C_{rating} \times Capacity_{Ah}${"$"}.
+  - A 2500mAh (2.5Ah) cell rated at 10C can deliver ${"$"}2.5 \times 10 = 25A${"$"} continuous load.
+  - Operating above manufacturer C-rating causes severe I²R resistive heating and accelerated SEI layer breakdown.
             """.trimIndent(),
-            tagsJson = "[\"Battery\", \"18650\", \"Lithium\", \"BMS\", \"Safety\"]",
+            tagsJson = "[\"Battery\", \"Lithium\", \"LiFePO4\", \"18650\", \"BMS\", \"Safety\"]",
             orderIndex = 2
         ),
+        KnowledgePackArticleEntity(
+            id = "field_smps_power_supplies",
+            packId = "field_electronics",
+            title = "Switched-Mode Power Supply (SMPS) Topologies & Fault Isolation",
+            section = "Power Electronics",
+            content = """
+# Switched-Mode Power Supply (SMPS) Topologies & Fault Isolation
 
-        // =================================================================
-        // 8. WILDERNESS SURVIVAL & BUSHCRAFT NAVIGATION (wilderness_survival)
-        // =================================================================
+Switched-Mode Power Supplies provide DC-DC voltage conversion with high thermal efficiency (85% to 96%) using high-frequency pulse-width modulation (PWM), energy-storage inductors, and synchronous MOSFETs.
+
+## 1. Core Conversion Topologies
+- **Buck (Step-Down):** Produces lower output voltage (${"$"}V_{out} = D \cdot V_{in}${"$"}, where ${"$"}D${"$"} is duty cycle ${"$"}0 < D < 1${"$"}).
+  - High-side MOSFET switches input voltage; inductor and low-side synchronous FET (or freewheeling Schottky diode) filter current into output capacitor bank.
+- **Boost (Step-Up):** Produces higher output voltage (${"$"}V_{out} = V_{in} / (1 - D)${"$"}).
+  - Inductor stores magnetic energy during switch ON-time; discharges through diode into output capacitors during switch OFF-time.
+- **Buck-Boost / SEPIC:** Inverts or regulates output voltage above or below input rail.
+
+## 2. Systematic Troubleshooting Workflow
+1. **Verify Input Voltage & Inrush Limiter:**
+   - Check input fuse or reverse-polarity protection P-channel MOSFET.
+   - Inspect input NTC thermistor (cold resistance typically 5Ω to 10Ω; drops to <0.5Ω when hot).
+2. **Inspect the Switching Node (LX / SW Pad):**
+   - In a functioning buck converter, the junction between the high-side FET, low-side FET, and inductor must toggle between 0V and ${"$"}V_{in}${"$"} at the switching frequency (typically 300 kHz to 2 MHz).
+   - If SW node is pegged at 0V: High-side FET is open, controller has no VCC, or Enable pin is pulled low.
+   - If SW node is shorted to ${"$"}V_{in}${"$"}: High-side FET has suffered drain-source punch-through, sending raw unmitigated input voltage directly to downstream logic ICs!
+3. **Feedback Resistor Divider (${"$"}R_{fb1}, R_{fb2}${"$"}):**
+   - Output voltage is governed by internal bandgap reference ${"$"}V_{ref}${"$"} (typically 0.6V or 0.8V):
+     ${"$"}${"$"}V_{out} = V_{ref} \cdot \left(1 + \frac{R_1}{R_2}\right)${"$"}${"$"}
+   - If output voltage drifts high: ${"$"}R_2${"$"} is open or has increased in resistance.
+   - If output voltage is lower than nominal: ${"$"}R_1${"$"} has drifted high or feedback trace has leakage to ground.
+
+## 3. Inductor Saturation & Capacitor Degradation
+- **Inductor Saturation:** When inductor current exceeds saturation rating (${"$"}I_{sat}${"$"}), core permeability drops precipitously, turning the inductor into a plain copper wire loop. This causes instantaneous current spikes and destroys switching MOSFETs.
+- **Electrolytic Output Capacitor Dry-Out:** High ripple currents boil liquid electrolyte over time, dramatically increasing Equivalent Series Resistance (ESR) and generating high output ripple voltage that resets sensitive microcontrollers.
+            """.trimIndent(),
+            tagsJson = "[\"SMPS\", \"Buck\", \"Boost\", \"Inductor\", \"Power Supply\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "field_wire_splicing_weatherproofing",
+            packId = "field_electronics",
+            title = "High-Reliability Wire Splicing & Weatherproofing (Lineman Splice)",
+            section = "Field Workmanship",
+            content = """
+# High-Reliability Wire Splicing & Weatherproofing (Lineman Splice)
+
+Field-spliced conductor joints must withstand physical tensile strain, vibration, temperature cycling, and moisture ingress without degradation of electrical conductivity.
+
+## 1. The Western Union (Lineman) Splice
+*The NASA and military aviation benchmark for joining solid or stranded conductors subject to mechanical tension.*
+
+1. **Stripping:** Strip 3 to 4 cm (1.2 to 1.5 inches) of insulation from both wire ends without nicking or cutting copper conductor strands.
+2. **Crossed Alignment:** Cross the two exposed conductors at right angles, approximately one-third of the distance from the insulation jacket.
+3. **Interlocking Twist:** Twist the wires together for 2 to 3 interlocking center turns.
+4. **Wrapping:** Wrap the remaining ends tightly around the straight opposite conductor for at least **4 to 5 complete, tight, closed coils**.
+5. **Trim & Crimp:** Snip wire tips flush so sharp ends do not puncture heat-shrink insulation.
+6. **Soldering:** Apply rosin flux, heat the center of the splice with a soldering iron tip, and feed solder until it flows completely into the inter-strand gaps via capillary action.
+
+## 2. Weatherproofing & Moisture Sealing Hierarchy
+1. **Dual-Wall Adhesive-Lined Heat Shrink (Marine Grade):**
+   - Slip tubing over conductor prior to splicing.
+   - Standard single-wall heat shrink allows capillary moisture ingress along the wire strands.
+   - Dual-wall tubing contains an inner liner of hot-melt thermoplastic adhesive that liquifies when heated (at 120°C) and forms an airtight, hermetic moisture barrier.
+2. **Self-Amalgamating Silicone Tape:**
+   - Non-adhesive silicone rubber that chemically bonds to itself when stretched by 200% and wrapped with 50% overlap.
+   - Resistant to UV degradation, ozone, and temperatures up to 260°C.
+3. **Dielectric Silicone Compound:**
+   - Coat terminal spade and screw terminals with pure dielectric silicone grease to displace atmospheric moisture and prevent galvanic corrosion between dissimilar metals (e.g. copper wire under steel screw).
+            """.trimIndent(),
+            tagsJson = "[\"Splice\", \"Soldering\", \"Lineman\", \"Weatherproof\", \"Wiring\"]",
+            orderIndex = 4
+        ),
+        KnowledgePackArticleEntity(
+            id = "field_oscilloscope_signal_integrity",
+            packId = "field_electronics",
+            title = "Field Oscilloscope Operation & Signal Integrity Diagnostics",
+            section = "Instrumentation",
+            content = """
+# Field Oscilloscope Operation & Signal Integrity Diagnostics
+
+A digital storage oscilloscope (DSO) converts transient electrical voltages into two-dimensional graphical time-domain displays (${"$"}V${"$"} vs ${"$"}t${"$"}), allowing isolation of noise glitches, clock jitter, and bus protocol corruptions.
+
+## 1. Probe Attenuation (1X vs 10X Selection)
+- **10X Mode (Standard Operational Setting):**
+  - Inserts a 9 MΩ resistor in series with the oscilloscope's 1 MΩ input impedance, creating a 10:1 voltage divider.
+  - Increases probe input impedance to **10 MΩ** and dramatically reduces input capacitance from ~100pF down to **10pF to 15pF**.
+  - Reduces high-frequency circuit loading. Always use 10X for clock lines, SPI/I2C buses, and high-frequency digital signals.
+- **1X Mode:**
+  - Full signal amplitude; limited bandwidth (typically <10 MHz) and high capacitance (~100pF). Use only for ultra-low-voltage microvolt audio signals or small power rail ripple measurements.
+
+## 2. Probe Low-Frequency Compensation (Square Wave Trimming)
+Before making precision measurements, always calibrate passive probes using the oscilloscope's 1 kHz reference square wave test terminal:
+- Connect probe tip and ground alligator clip to the calibrator loop.
+- Use a non-conductive ceramic trimming screwdriver to adjust the trimmer capacitor on the probe BNC connector:
+  - **Overcompensated:** Leading edge shows rounded overshoot spikes.
+  - **Undercompensated:** Leading edge is sluggish and rolled off.
+  - **Correctly Compensated:** Clean, flat horizontal tops with sharp 90° transitions.
+
+## 3. Triggering Modes
+- **Auto:** Sweeps display continuously even in the absence of a trigger event. Ideal for searching for baseline DC levels and unknown frequencies.
+- **Normal:** Sweeps display **only** when input signal crosses the selected trigger voltage threshold with the chosen slope (Rising/Falling). Necessary for capturing non-periodic or bursty signals (e.g., UART packet bursts).
+- **Single Shot:** Captures exactly one waveform acquisition when triggered and freezes memory buffer. Essential for recording power-on reset sequences, transient voltage spikes, and latch-up events.
+
+## 4. Ground Lead Inductance & "Ground Bounce"
+The standard 15 cm alligator ground lead has approximately 100 nH of parasitic inductance (${"$"}L_{lead}${"$"}). Fast digital transition edges (${"$"}di/dt${"$"}) induce voltage ringing:
+${"$"}${"$"}V_{ring} = L_{lead} \cdot \frac{di}{dt}${"$"}${"$"}
+- To observe true signal edges without synthetic ground ringing artifacts, remove the long alligator ground lead and clip on a short coaxial **ground spring contact** directly touching the ground pad adjacent to the signal test point.
+            """.trimIndent(),
+            tagsJson = "[\"Oscilloscope\", \"Signal\", \"Frequency\", \"Probes\", \"Noise\"]",
+            orderIndex = 5
+        ),
         KnowledgePackArticleEntity(
             id = "survival_water_purification",
             packId = "wilderness_survival",
-            title = "Wilderness Water Sourcing, Filtration & Purification",
-            section = "Hydration",
+            title = "Wilderness Water Sourcing, Multi-Stage Filtration & Purification",
+            section = "Hydration Engineering",
             content = """
-# Wilderness Water Sourcing, Filtration & Purification
+# Wilderness Water Sourcing, Multi-Stage Filtration & Purification
 
-Humans can survive approximately 3 weeks without food, but only 3 days without water. In wilderness conditions, unpurified water harbors pathogenic protozoa, bacteria, and viruses.
+Dehydration impairs cognitive judgment within 24 hours and becomes fatal in approximately 72 hours. Untreated surface water harbors biological pathogens capable of causing debilitating dysentery, cholera, and cryptosporidiosis.
 
-## 1. Biological Contaminants & Target Sizes
-- **Protozoan Cysts (Giardia, Cryptosporidium):** 1 to 15 microns. Resistant to standard chlorine tablets; neutralized reliably by boiling or sub-micron ceramic/hollow-fiber membrane filters.
-- **Bacteria (E. coli, Salmonella, Cholera):** 0.2 to 2 microns. Removed by 0.1-micron microfilters or heat.
-- **Viruses (Hepatitis A, Norovirus, Rotavirus):** 0.02 to 0.1 microns. Too small for mechanical microfilters; neutralized by boiling, UV radiation, or chemical halogens.
+## 1. Biological Contaminants Spectrum
+- **Protozoan Cysts (Giardia lamblia, Cryptosporidium parvum):** 1 to 15 microns. Outer shell is impervious to standard chlorine and halogen tablets. Neutralized reliably by boiling or sub-micron mechanical microfilters.
+- **Bacteria (Escherichia coli, Salmonella, Vibrio cholerae):** 0.2 to 2 microns. Removed by 0.1-micron hollow-fiber membrane filters or pasteurization.
+- **Enteric Viruses (Hepatitis A, Norovirus, Rotavirus):** 0.02 to 0.1 microns. Too small for standard 0.1-micron wilderness backpacking microfilters. Neutralized by boiling, UV radiation, or chemical oxidizing agents.
 
 ## 2. Field Purification Methods
-1. **Rolling Boil (The Gold Standard):**
-   - Bring water to a vigorous rolling boil for **1 full minute** at sea level.
-   - Above 2,000 meters (6,500 feet), boil for **3 full minutes** to compensate for reduced atmospheric pressure and lower boiling points.
-2. **Improvised Multi-Layer Biofilter (Clarification):**
-   - Cut the bottom off a plastic bottle and invert it.
-   - Layer 1 (Bottom): Clean cloth or cotton.
-   - Layer 2: Crushed wood charcoal from a campfire (adsorbs organic chemical odors and impurities).
-   - Layer 3: Fine clean sand.
-   - Layer 4: Coarse sand and gravel.
-   - *Note:* Filtering removes suspended sediment and turbidity, but filtered water must still be boiled or chemically treated to kill pathogens.
-3. **SODIS (Solar Water Disinfection):**
-   - Fill clean, transparent PET bottles with clear water and expose to direct sunlight for **6 hours** (or 2 days if cloudy). UV-A rays and solar thermal heating destroy waterborne pathogens.
+### A. The Vigorous Rolling Boil (Gold Standard)
+- Bring water to a full, turbulent rolling boil for **1 complete minute** at sea level.
+- At altitudes above 2,000 meters (6,500 feet), boil for **3 complete minutes** because lower atmospheric pressure reduces the boiling temperature of water (down to ~93°C).
+- Kills 100% of all protozoa, bacteria, and viral pathogens.
+
+### B. Improvised 4-Stage Charcoal Biofilter (Turbidity Clarification)
+*Turbid, muddy water shields pathogens from chemical and UV treatment. Filter water before purifying.*
+1. Invert a clean 1-liter PET plastic bottle with the bottom cut off.
+2. **Layer 1 (Bottom/Neck):** Clean cotton cloth or porous sphagnum moss.
+3. **Layer 2:** Crushed hardwood charcoal from campfire remnants (not briquettes with binders). Charcoal adsorbs agricultural chemicals, heavy organic toxins, and eliminates foul odors.
+4. **Layer 3:** Fine, washed river sand (traps micro-particulates).
+5. **Layer 4 (Top):** Coarse sand and small pea gravel (traps suspended silt, leaves, and debris).
+- *Warning:* Filtered water is clarified of sediment, but MUST still be boiled or chemically treated to kill microscopic pathogens.
+
+### C. SODIS (Solar Water Disinfection)
+1. Fill clean, un-scratched transparent PET bottles with clear water (turbidity <30 NTU).
+2. Expose bottles horizontally on a dark or reflective corrugated iron surface in direct sunlight for **at least 6 hours** (or 2 full days under overcast skies).
+3. Synergistic action of UV-A radiation (320-400 nm) and elevated water temperature (>50°C) destroys pathogen DNA.
             """.trimIndent(),
-            tagsJson = "[\"Water\", \"Purification\", \"Filtration\", \"Boiling\", \"Survival\"]",
+            tagsJson = "[\"Water\", \"Purification\", \"Filtration\", \"Survival\", \"Pathogens\"]",
             orderIndex = 1
         ),
         KnowledgePackArticleEntity(
             id = "survival_celestial_navigation",
             packId = "wilderness_survival",
             title = "Celestial Navigation Using Crux (Southern Cross) & Polaris",
-            section = "Navigation",
+            section = "Navigation & Orientation",
             content = """
 # Celestial Navigation Using Crux (Southern Cross) & Polaris
 
-When magnetic compasses or GPS satellite receivers fail, celestial navigation using key circumpolar constellations provides absolute cardinal direction anywhere on Earth.
+When magnetic compasses suffer needle dip or GPS satellite receivers exhaust battery reserves, circumpolar star constellations provide an unjammable directional reference anywhere on Earth.
 
-## 1. Southern Hemisphere: Finding True South via Crux (Southern Cross)
-The constellation **Crux** is a distinctive 4-star kite/cross pattern accompanied by two bright "Pointer Stars" (Alpha and Beta Centauri).
+## 1. Southern Hemisphere: True South via Constellation Crux (The Southern Cross)
+The constellation **Crux** is the smallest yet most distinctive constellation in the southern celestial hemisphere, accompanied by two brilliant Pointer Stars (Alpha and Beta Centauri).
 
-### The Projection Method:
-1. Locate the four primary stars of the Southern Cross: Acrux (bottom), Gacrux (top), Mimosa (left), and Imai (right).
-2. Trace an imaginary straight line extending through the long axis of the cross, from **Gacrux through Acrux**, extending outward **4.5 times** the distance between these two stars.
-3. Draw a second line between the two bright **Pointer Stars** (Alpha and Beta Centauri), and construct a perpendicular bisector line from its midpoint.
-4. The intersection where the Crux long-axis line meets the Pointer bisector is the **South Celestial Pole (SCP)**.
-5. Drop your gaze vertically downward from the South Celestial Pole directly to the horizon: **that point on the horizon is True South**.
-6. Turn 180° around to face True North.
+### The Geometric Projection Method:
+1. Identify the four primary stars forming the kite/cross pattern:
+   - **Gacrux (Gamma Crucis):** Orange giant star at the top of the cross.
+   - **Acrux (Alpha Crucis):** Blue-white binary star at the base/foot of the cross.
+   - **Mimosa (Beta Crucis):** Eastern arm star.
+   - **Imai (Delta Crucis):** Western arm star.
+2. Trace an imaginary line along the long axis from **Gacrux through Acrux**, and extend it outward straight into the sky for **4.5 times** the distance between Gacrux and Acrux.
+3. Locate the two bright **Pointer Stars** (Alpha and Beta Centauri). Draw a straight line connecting them, find the midpoint, and project a perpendicular bisector line outward.
+4. The intersection where the 4.5× Crux extension line meets the Pointer bisector line marks the **South Celestial Pole (SCP)**.
+5. Drop your line of sight vertically downward from the South Celestial Pole directly to the horizon: **that exact point on the horizon is True South**.
+6. Face True South: East is 90° to your left, West is 90° to your right, and North is directly behind you (180°).
 
-## 2. Northern Hemisphere: Finding True North via Polaris
-Polaris (the North Star) sits almost directly above the geographic North Pole.
+## 2. Northern Hemisphere: True North via Polaris (The North Star)
+Polaris lies within 0.7° of the true north celestial pole.
 
-### The Pointer Stars Method:
-1. Locate the **Big Dipper** (Ursa Major, the Plough).
-2. Find the two outer stars of the bowl furthest from the handle: **Merak** (lower bowl) and **Dubhe** (upper bowl).
-3. Draw a straight line from Merak through Dubhe and extend it outward approximately **5 times** the distance between them.
-4. You will hit **Polaris**, a moderately bright star situated at the tip of the Little Dipper's handle (Ursa Minor).
+### The Big Dipper Pointer Method:
+1. Locate **Ursa Major** (the Big Dipper / Plough).
+2. Identify the two outer stars of the cup furthest from the handle: **Merak** (lower bowl) and **Dubhe** (upper lip).
+3. Draw an imaginary line from Merak through Dubhe and project it outward approximately **5 times** the distance between them.
+4. You will intercept **Polaris**, a moderately bright 2nd-magnitude star at the tip of the Little Dipper's handle (Ursa Minor).
 5. Drop vertically from Polaris to the horizon: **that point on the horizon is True North**.
             """.trimIndent(),
             tagsJson = "[\"Navigation\", \"Crux\", \"Polaris\", \"Stars\", \"Compass\", \"Orientation\"]",
             orderIndex = 2
         ),
+        KnowledgePackArticleEntity(
+            id = "survival_emergency_shelters",
+            packId = "wilderness_survival",
+            title = "Thermal Debris Shelters & Conduction Loss Prevention",
+            section = "Shelter Engineering",
+            content = """
+# Thermal Debris Shelters & Conduction Loss Prevention
 
-        // =================================================================
-        // 9. PROGRAMMING & DEVELOPER CHEAT SHEETS (dev_cheatsheets)
-        // =================================================================
+In severe weather, hypothermia can kill within 3 hours. The body loses thermal energy via four mechanisms: Conduction (contact with cold ground), Convection (wind chill stripping boundary layer), Radiation, and Evaporation.
+
+## 1. The Debris Hut (Solo Survival Shelter)
+*The most thermally efficient primitive shelter; requires no cordage or tools.*
+
+1. **Ridgepole Selection:** Select a sturdy, dry log 3 to 3.5 meters (10 to 12 feet) long. Prop one end on a stump or rock fork approximately 1 meter off the ground.
+2. **Bed Insulation (Critical Step):**
+   - The cold ground conducts body heat away **24 times faster** than stationary air.
+   - Pile dry leaves, pine needles, dried moss, or grass at least **60 cm to 90 cm (2 to 3 feet) deep** under the ridgepole. Compress it with your body to ensure at least 20 cm of compacted dead air space remains between you and the earth.
+3. **Ribbing / Framing:** Lean sturdy sticks along both sides of the ridgepole at a 45° angle to create an A-frame skeleton. Keep the interior space narrow (a debris hut should fit your body like a sleeping bag).
+4. **Lattice Layer:** Place smaller brush, branches, and twigs over the ribbing to prevent loose debris from falling through.
+5. **Thermal Insulation Layer:**
+   - Pile dry leaves, pine needles, and forest debris over the entire structure to a minimum thickness of **1 meter (3 feet)**.
+   - Test: Push your arm into the pile up to your shoulder; if you touch the rib sticks before your armpit, the insulation is too thin.
+6. **Entrance Stopper:** Gather a large bundle of leaves or a backpack to plug the entrance hole once inside, trapping body heat.
+            """.trimIndent(),
+            tagsJson = "[\"Shelter\", \"Debris\", \"Hypothermia\", \"Insulation\", \"Cold\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "survival_friction_firecraft",
+            packId = "wilderness_survival",
+            title = "Primitive Friction Firecraft & Ferrocerium Ignition",
+            section = "Fire & Energy",
+            content = """
+# Primitive Friction Firecraft & Ferrocerium Ignition
+
+Fire fulfills multiple survival requirements: thermoregulation, water purification, signaling, pathogen reduction in food, and predator deterrence.
+
+## 1. The Fire Triangle & Combustion Stages
+- **Tinder:** Fluffy, micro-fibrous dry plant material that ignites from a tiny spark or glowing ember (inner dry cedar bark, cattail fluff, charred cotton cloth, dried bracket fungus).
+- **Kindling:** Matchstick to thumb-thickness dry twigs that bridge heat from burning tinder to main logs.
+- **Fuel:** Wrist to thigh-thick hardwood logs that provide long-lasting radiant heat.
+
+## 2. The Bow Drill Mechanism (Primitive Friction Fire)
+1. **Spindle:** Straight hardwood cylinder, 20 cm long, 2 cm diameter. Carve top to a dull pencil point (low friction); carve base to a blunt round tip (high friction).
+2. **Hearth Board:** Flat, dry softwood board (cedar, basswood, willow, poplar), 2 cm thick.
+3. **Socket/Handhold:** Hardwood block or stone with a grease-lubricated depression to press down on the spindle.
+4. **Bow:** Curved branch with non-stretch paracord looped with slight slack.
+5. **Operation:**
+   - Burn a pilot depression into the hearth board.
+   - Cut a **60° V-notch** from the board edge into the center of the depression.
+   - Place a dry leaf or bark flake under the notch to collect hot carbon dust.
+   - Stroke the bow steadily with long, rhythmic passes.
+   - Once thick, pungent white/grey smoke billows, increase stroke speed for 15 seconds until dust reaches **400°C (750°F)**.
+   - A glowing red ember coalesces in the dust pile.
+   - Transfer the ember into the center of your prepared tinder bird's nest; blow gently with steady breaths until flames erupt.
+            """.trimIndent(),
+            tagsJson = "[\"Fire\", \"Bow Drill\", \"Tinder\", \"Ferrocerium\", \"Ember\"]",
+            orderIndex = 4
+        ),
+        KnowledgePackArticleEntity(
+            id = "survival_emergency_signaling",
+            packId = "wilderness_survival",
+            title = "Emergency Visual Signaling & Ground-to-Air Codes",
+            section = "Rescue Operations",
+            content = """
+# Emergency Visual Signaling & Ground-to-Air Codes
+
+Search and rescue (SAR) fixed-wing aircraft and helicopters fly at high speeds; active and passive ground visual distress signals maximize visibility across vast topography.
+
+## 1. Ground-to-Air Emergency Visual Code (ICAO Standard)
+Construct symbols using high-contrast materials (shadowed logs, bright rocks, stamped snow trenches):
+- **V : Require Assistance**
+- **X : Require Medical Assistance**
+- **N : No or Negative**
+- **Y : Yes or Affirmative**
+- **-> : Proceeding in this Direction**
+*Dimensions:* Minimum 3 meters (10 feet) long, 1 meter wide, separated by 1 meter.
+
+## 2. Signal Mirror Aiming (Flash Alignment Technique)
+*A glass or metal signal mirror generates flashes visible up to 50 km (30 miles) under clear conditions.*
+1. Hold the mirror in one hand close to your cheek, looking toward the target aircraft or boat.
+2. Extend your opposite arm straight out toward the target with your fingers spread in a **"V" notch**, positioning the aircraft directly between your two fingertips.
+3. Tilt the mirror until the reflected sunlight beam hits your hand.
+4. Sweep the flash directly through the "V" notch across the target back and forth.
+
+## 3. The International Rule of Three
+- Three signals of any kind indicate life-threatening distress:
+  - 3 fire plumes laid out in an equilateral triangle (30 meters apart).
+  - 3 sharp blasts on a whistle.
+  - 3 flashes of a mirror or flashlight in sequence, followed by a 1-minute pause.
+            """.trimIndent(),
+            tagsJson = "[\"Signaling\", \"Rescue\", \"Mirror\", \"SOS\", \"Aviation\"]",
+            orderIndex = 5
+        ),
         KnowledgePackArticleEntity(
             id = "dev_kotlin_coroutines",
             packId = "dev_cheatsheets",
@@ -704,79 +683,111 @@ Polaris (the North Star) sits almost directly above the geographic North Pole.
             content = """
 # Kotlin Coroutines & Flow Essential Cheat Sheet
 
-## 1. Builders and Dispatchers
+Kotlin coroutines provide structured asynchronous programming primitives backed by an event-driven cooperative runtime.
+
+## 1. Dispatcher Architectures
 ```kotlin
-// Launch fire-and-forget job
-val job = scope.launch(Dispatchers.Default) { ... }
-
-// Async with deferred result
-val deferred = scope.async(Dispatchers.IO) { fetchData() }
-val data = deferred.await()
-
-// Dispatcher Selection
-Dispatchers.Main        // UI operations & LiveData/StateFlow emission
-Dispatchers.IO          // Network requests, Room DB, SAF file I/O (elastic thread pool)
-Dispatchers.Default     // Heavy CPU calculation, JSON parsing, image downsampling
-Dispatchers.Unconfined  // Starts on caller thread, resumes on suspension thread
+Dispatchers.Main        // Android UI main thread; fast state mutations and view updates
+Dispatchers.IO          // Elastic thread pool (up to 64 threads) for blocking SAF file, Room DB, and network I/O
+Dispatchers.Default     // Fixed pool sized to CPU core count; optimized for intensive computation, parsing, encryption
+Dispatchers.Unconfined  // Starts execution in the current call-frame; resumes in whatever thread the suspension completed
 ```
 
-## 2. StateFlow vs SharedFlow
-- **StateFlow:** Hot stream, always holds one state value, replay cache of 1, conflates duplicate values, ideal for UI state (`val state = _state.asStateFlow()`).
-- **SharedFlow:** Hot stream, zero default replay, ideal for one-off events (navigation, toast, snackbar).
+## 2. Core Builders & Execution Contexts
+```kotlin
+// Launch: Fire-and-forget coroutine returning a cancellable Job handle
+val job: Job = scope.launch(Dispatchers.Default) {
+    doComputation()
+}
 
-## 3. Cooperative Cancellation
-Coroutines are cooperatively cancellable. Always verify `isActive` or call `yield()` in CPU loops:
+// Async: Concurrently yields a Deferred<T> result
+val deferred: Deferred<Data> = scope.async(Dispatchers.IO) {
+    fetchData()
+}
+val result: Data = deferred.await()
+
+// SupervisorJob: Prevents child failure propagation from cancelling sibling coroutines
+val customScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+```
+
+## 3. StateFlow vs SharedFlow Reactive Streams
+- **StateFlow<T>:** Hot stream, always caches latest value, replay buffer = 1, conflates identical consecutive values. Ideal for ViewModel UI state.
+- **SharedFlow<T>:** Hot stream, configurable replay buffer, emits one-off transient events (navigation commands, snackbar alerts).
+
+```kotlin
+private val _state = MutableStateFlow<UiState>(UiState.Idle)
+val state: StateFlow<UiState> = _state.asStateFlow()
+
+_state.update { current -> current.copy(isLoading = true) }
+```
+
+## 4. Cooperative Cancellation Rules
+Coroutines do not terminate forcibly; they cooperatively check cancellation flags:
 ```kotlin
 while (isActive) {
-    // Process chunk
     ensureActive() // Throws CancellationException if job is cancelled
+    val chunk = stream.read()
+    yield()        // Yields thread time-slice to other pending coroutines
 }
 ```
             """.trimIndent(),
-            tagsJson = "[\"Kotlin\", \"Coroutines\", \"Flow\", \"Android\", \"Concurrency\"]",
+            tagsJson = "[\"Kotlin\", \"Coroutines\", \"Flow\", \"Concurrency\", \"Android\"]",
             orderIndex = 1
         ),
         KnowledgePackArticleEntity(
             id = "dev_git_power_tools",
             packId = "dev_cheatsheets",
-            title = "Git Version Control Master Reference",
+            title = "Git Version Control Master Reference & Disaster Recovery",
             section = "Developer Tools",
             content = """
-# Git Version Control Master Reference
+# Git Version Control Master Reference & Disaster Recovery
 
-## 1. Branching & Rebasing
+Git stores content as an immutable cryptographically hashed directed acyclic graph (DAG) of blob, tree, and commit objects.
+
+## 1. Branch Maintenance & Interactive Rebasing
 ```bash
-# Rebase feature branch on top of latest master
-git checkout feature
+# Rebase feature branch on top of latest master without creating merge bubbles
+git checkout feature-branch
 git fetch origin master
 git rebase origin/master
 
-# Interactive rebase last 4 commits (squash, edit, reword)
-git rebase -i HEAD~4
+# Interactive rebase of last 5 commits (squash, reword, drop, fixup)
+git rebase -i HEAD~5
 
-# Abort an in-flight conflict rebase cleanly
+# Abort an in-flight conflict rebase cleanly without data corruption
 git rebase --abort
+
+# Continue rebase after resolving conflict markers
+git add <resolved-file>
+git rebase --continue
 ```
 
-## 2. Disaster Recovery with Reflog
-Git never deletes committed objects immediately. The `reflog` tracks every HEAD movement:
+## 2. Disaster Recovery with Reflog (Resurrecting Lost Commits)
+Git never deletes committed objects immediately; the local `reflog` tracks every pointer shift of `HEAD`:
 ```bash
-# View chronological history of HEAD changes
+# Display chronological history of all HEAD movements
 git reflog
 
-# Restore branch to state before an accidental reset or deleted branch
-git reset --hard HEAD@{3}
+# Output example:
+# a1b2c3d HEAD@{0}: reset: moving to HEAD~1
+# e4f5g6h HEAD@{1}: commit: feat(ai): implement offline tokenizer
+
+# Restore repository to the exact commit prior to an accidental hard reset
+git reset --hard HEAD@{1}
 ```
 
 ## 3. Stashing & Cherry-Picking
 ```bash
-# Stash untracked and modified files with description
-git stash push -u -m "WIP: offline parser"
+# Stash tracked and untracked files with an explicit description
+git stash push -u -m "WIP: LiteRT-LM memory optimizer"
+
+# Inspect contents of most recent stash
+git stash show -p
 
 # Apply and drop most recent stash
 git stash pop
 
-# Pick specific commit into current branch
+# Cherry-pick a specific commit hash into current active branch
 git cherry-pick <commit-sha>
 ```
             """.trimIndent(),
@@ -791,37 +802,442 @@ git cherry-pick <commit-sha>
             content = """
 # Regular Expressions (Regex) Syntax & Token Guide
 
-## 1. Anchors and Boundaries
-- `^` : Start of string (or line in multiline mode).
-- `$` : End of string (or line in multiline mode).
-- `\b` : Word boundary (transition between word and non-word character).
+Regular expressions define declarative pattern-matching engines over string character sequences.
+
+## 1. Anchors & Boundaries
+- `^` : Start of string (or start of line in multiline mode `(?m)`).
+- `${"$"}` : End of string (or end of line in multiline mode).
+- `\b` : Word boundary (transition between `\w` and `\W`).
 - `\B` : Non-word boundary.
 
 ## 2. Character Classes
-- `.` : Any character except newline.
+- `.` : Any character except newline `\n`.
 - `\d` : Digit `[0-9]`.
 - `\D` : Non-digit `[^0-9]`.
 - `\w` : Word character `[a-zA-Z0-9_]`.
-- `\s` : Whitespace (space, tab, newline).
-- `[a-z]` : Character range.
-- `[^a-z]` : Negated character range.
+- `\W` : Non-word character.
+- `\s` : Whitespace (space, tab, newline `[ \t\r\n\f]`).
+- `[a-z0-9]` : Character set range.
+- `[^a-z]` : Negated character set.
 
-## 3. Quantifiers
+## 3. Quantifiers (Greedy vs Lazy)
 - `*` : 0 or more (greedy).
 - `+` : 1 or more (greedy).
 - `?` : 0 or 1 (optional).
-- `*?` / `+?` : Non-greedy (lazy) matching.
+- `*?` / `+?` : Non-greedy (lazy) matching (stops at earliest match).
 - `{n}` : Exactly n times.
 - `{n,m}` : Between n and m times.
 
 ## 4. Lookaround Assertions (Zero-Width)
-- Positive Lookahead: `X(?=Y)` (matches X only if followed by Y).
-- Negative Lookahead: `X(?!Y)` (matches X only if NOT followed by Y).
-- Positive Lookbehind: `(?<=Y)X` (matches X only if preceded by Y).
-- Negative Lookbehind: `(?<!Y)X` (matches X only if NOT preceded by Y).
+- **Positive Lookahead `X(?=Y)`:** Matches `X` only if followed by `Y`.
+- **Negative Lookahead `X(?!Y)`:** Matches `X` only if NOT followed by `Y`.
+- **Positive Lookbehind `(?<=Y)X`:** Matches `X` only if preceded by `Y`.
+- **Negative Lookbehind `(?<!Y)X`:** Matches `X` only if NOT preceded by `Y`.
             """.trimIndent(),
             tagsJson = "[\"Regex\", \"String\", \"Pattern\", \"Parsing\", \"CLI\"]",
             orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "dev_linux_bash_cli",
+            packId = "dev_cheatsheets",
+            title = "Linux Bash Scripting & Core CLI Power Tools",
+            section = "Shell & Systems",
+            content = """
+# Linux Bash Scripting & Core CLI Power Tools
+
+Bash provides programmable POSIX shell environments for stream processing, automation, and pipeline coordination.
+
+## 1. Robust Scripting Preamble (Defensive Bash)
+Always begin production bash scripts with the strict error-handling flag string:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=${"$"}'\n\t'
+```
+- `-e`: Exit immediately if any command returns a non-zero exit status.
+- `-u`: Treat unset variables as an error and exit immediately.
+- `-o pipefail`: Return exit code of the first failing command in a pipeline, rather than only the last command.
+
+## 2. Stream Processing with sed & awk
+```bash
+# sed: Stream Editor in-place pattern substitution
+sed -i -E 's/old_endpoint/new_endpoint/g' config.env
+
+# awk: Field processing (print 1st and 3rd columns from colon-delimited /etc/passwd)
+awk -F: '{print ${"$"}1, ${"$"}3}' /etc/passwd
+
+# Filter rows where 3rd column exceeds threshold
+awk -F, '${"$"}3 > 1000 {print ${"$"}1, ${"$"}3}' sales_data.csv
+```
+
+## 3. Parallel Execution with xargs
+```bash
+# Find all PDF documents and extract text in parallel across 4 CPU cores
+find . -name "*.pdf" -print0 | xargs -0 -P 4 -I {} python extract.py "{}"
+```
+            """.trimIndent(),
+            tagsJson = "[\"Bash\", \"Linux\", \"awk\", \"sed\", \"CLI\"]",
+            orderIndex = 4
+        ),
+        KnowledgePackArticleEntity(
+            id = "dev_sql_query_patterns",
+            packId = "dev_cheatsheets",
+            title = "SQL Query Optimization & Indexing Patterns",
+            section = "Database Architecture",
+            content = """
+# SQL Query Optimization & Indexing Patterns
+
+Relational databases use B-Tree indexes and Cost-Based Query Optimizers to evaluate execution plans.
+
+## 1. B-Tree Index Mechanics & Sargable Predicates
+- An index cannot be utilized if a column is wrapped in an arithmetic expression or non-deterministic function (**Non-Sargable**):
+  - *Slow (Full Table Scan):* `SELECT * FROM logs WHERE SUBSTR(timestamp, 1, 10) = '2026-11-20'`
+  - *Fast (Index Seek):* `SELECT * FROM logs WHERE timestamp >= '2026-11-20 00:00:00' AND timestamp < '2026-11-21 00:00:00'`
+
+## 2. Covering Indexes
+A covering index contains all columns requested by a `SELECT` query in its composite key or `INCLUDE` clause, eliminating expensive table row lookups:
+```sql
+CREATE INDEX idx_messages_session_time ON messages (sessionId, timestamp, content);
+```
+
+## 3. Analyzing Execution Plans in SQLite
+```sql
+EXPLAIN QUERY PLAN
+SELECT id, title FROM documents WHERE mimeType = 'application/pdf';
+-- Look for 'SEARCH TABLE ... USING INDEX' (Optimal)
+-- Avoid 'SCAN TABLE ...' (Full Table Scan across large tables)
+```
+            """.trimIndent(),
+            tagsJson = "[\"SQL\", \"SQLite\", \"Indexing\", \"Performance\", \"Queries\"]",
+            orderIndex = 5
+        ),
+        KnowledgePackArticleEntity(
+            id = "comp_tech_linux_perms",
+            packId = "comp_tech",
+            title = "Linux File Permissions, Ownership & Access Control Lists",
+            section = "Linux & Systems",
+            content = """
+# Linux File Permissions, Ownership & Access Control Lists
+
+In Unix-like systems, security isolation is enforced via Discretionary Access Control (DAC) assigning permissions across three scopes: User (u), Group (g), and Others (o).
+
+## 1. Octal Representation & Standard Modes
+- Read (`r`) = 4, Write (`w`) = 2, Execute (`x`) = 1.
+- `chmod 755 binary`: User (rwx = 7), Group (r-x = 5), Others (r-x = 5).
+- `chmod 644 config.conf`: User (rw- = 6), Group (r-- = 4), Others (r-- = 4).
+- `chmod 600 id_rsa`: User (rw- = 6), Group (--- = 0), Others (--- = 0). Required for private SSH keys.
+
+## 2. Special Permission Bits (SUID, SGID, Sticky)
+- **SUID (4000):** Executes with the file owner's privileges (e.g. `/usr/bin/passwd`).
+- **SGID (2000):** New files created in directory inherit directory group ownership.
+- **Sticky Bit (1000):** Only the file owner or root can delete files within the directory (standard on `/tmp`).
+            """.trimIndent(),
+            tagsJson = "[\"Linux\", \"chmod\", \"chown\", \"Permissions\", \"Security\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "comp_tech_network_diag",
+            packId = "comp_tech",
+            title = "Network Diagnostics & Connectivity Troubleshooting",
+            section = "Networking",
+            content = """
+# Network Diagnostics & Connectivity Troubleshooting
+
+Troubleshoot LAN/WAN outages systematically using bottom-up OSI model verification.
+
+## 1. Physical & Link Layer
+`ip link show` — Confirm link state is `UP` and carrier is present.
+`ip addr show` — Check assigned IP and subnet mask. Ensure not assigned link-local APIPA (`169.254.x.x`).
+
+## 2. Gateway & Routing
+`ip route show` — Identify default gateway.
+`ping -c 4 <gateway-ip>` — If local gateway responds, local physical link is operational.
+
+## 3. Public WAN & DNS
+`ping -c 4 1.1.1.1` — Tests public IP routing without DNS.
+`dig @1.1.1.1 google.com +short` — Tests DNS resolver independence.
+            """.trimIndent(),
+            tagsJson = "[\"Networking\", \"ping\", \"traceroute\", \"DNS\", \"Troubleshooting\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "comp_tech_boot_diag",
+            packId = "comp_tech",
+            title = "PC Boot Sequence & Hardware Fault Isolation",
+            section = "Hardware & OS",
+            content = """
+# PC Boot Sequence & Hardware Fault Isolation
+
+## 1. Boot Stages
+1. **Power Supply On (PS-ON):** Power Good signal asserted (+5V on grey wire) once DC rails (+12V, +5V, +3.3V) stabilize.
+2. **UEFI/BIOS POST:** CPU initialization, RAM detection, PCIe bus scanning, GPU initialization.
+3. **Bootloader Hand-off:** UEFI locates the EFI System Partition (FAT32) and executes `bootmgfw.efi` (Windows) or `grubx64.efi` (Linux).
+
+## 2. POST Symptoms
+- **Fans spin, black screen, continuous beeps:** RAM initialization failure. Reseat memory in slots A2/B2.
+- **1 long, 2 short beeps:** GPU or PCIe display initialization failure.
+            """.trimIndent(),
+            tagsJson = "[\"Hardware\", \"POST\", \"UEFI\", \"BIOS\", \"Boot\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "comp_tech_systemd_services",
+            packId = "comp_tech",
+            title = "Systemd Service Units & Journalctl Logging",
+            section = "System Administration",
+            content = """
+# Systemd Service Units & Journalctl Logging
+
+Systemd manages Linux background daemons, socket activation, and logging.
+
+## 1. Unit Management
+```bash
+systemctl start service_name
+systemctl stop service_name
+systemctl restart service_name
+systemctl status service_name
+systemctl enable --now service_name  # Enable at boot and start immediately
+```
+
+## 2. Inspecting Logs with journalctl
+```bash
+journalctl -u service_name -f        # Follow real-time output
+journalctl -u service_name -e        # Jump to end of log buffer
+journalctl -p err..emerg -b          # Filter errors since current boot
+```
+            """.trimIndent(),
+            tagsJson = "[\"Systemd\", \"Linux\", \"Services\", \"Logs\", \"Daemons\"]",
+            orderIndex = 4
+        ),
+        KnowledgePackArticleEntity(
+            id = "devices_multimeter_ref",
+            packId = "devices_repairs",
+            title = "Digital Multimeter Master Operating Reference",
+            section = "Test Equipment",
+            content = """
+# Digital Multimeter (DMM) Master Operating Reference
+
+## 1. Safety Jack Selection
+- **Black Lead:** Always plugged into COM (Ground).
+- **Red Lead:** V/Ω/Hz for voltage, resistance, diode checks. Never probe voltage when plugged into 10A current jack!
+
+## 2. Modes
+- **DC Voltage:** Measure batteries, rails, logic levels.
+- **Continuity:** Beeper sounds when loop resistance <50Ω. Always test on unpowered circuits.
+- **Diode Drop:** Silicon diodes drop 0.55V - 0.70V; Schottky drops 0.18V - 0.35V.
+            """.trimIndent(),
+            tagsJson = "[\"Multimeter\", \"Voltage\", \"Continuity\", \"Resistance\", \"Diode\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "devices_soldering_guide",
+            packId = "devices_repairs",
+            title = "Precision Electronics Soldering & Desoldering Procedures",
+            section = "Workshop Practice",
+            content = """
+# Precision Electronics Soldering & Desoldering Procedures
+
+## 1. Soldering Temperatures
+- **Leaded (Sn63/Pb37):** Melting point 183°C. Iron tip: **300°C - 320°C**.
+- **Lead-Free (SAC305):** Melting point 217°C. Iron tip: **350°C - 370°C**.
+
+## 2. Joint Quality Criteria (IPC-A-610)
+- Concave, bright, smooth fillet wetting pad and pin.
+- Cold joint: Grainy, dull, globular ball shape caused by insufficient heat or movement while cooling.
+            """.trimIndent(),
+            tagsJson = "[\"Soldering\", \"Desoldering\", \"Flux\", \"PCB\", \"Repair\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "devices_power_rail_shorts",
+            packId = "devices_repairs",
+            title = "Power Rail Diagnostics & Short Circuit Isolation",
+            section = "Diagnostics",
+            content = """
+# Power Rail Diagnostics & Short Circuit Isolation
+
+Short-circuits typically arise from cracked ceramic MLCC capacitors or punctured MOSFETs.
+
+## 1. Resistance Check to Ground
+- Check resistance of main 12V/19V input rail to ground. Above 100 kΩ is normal. <5Ω is a dead short.
+- Core CPU rails naturally measure low resistance (1Ω - 15Ω). Do not confuse core resistance with a short circuit.
+
+## 2. Voltage Injection Technique
+- Set bench power supply to 1.0V with 1.0A limit.
+- Inject into shorted rail; use isopropyl alcohol evaporation or thermal camera to find the hot component.
+            """.trimIndent(),
+            tagsJson = "[\"Power Supply\", \"Short Circuit\", \"Capacitors\", \"Diagnostics\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "devices_hot_air_smd_rework",
+            packId = "devices_repairs",
+            title = "SMD Rework & Hot Air Reflow Techniques",
+            section = "Advanced Rework",
+            content = """
+# SMD Rework & Hot Air Reflow Techniques
+
+## 1. Temperature & Airflow Profiles
+- Pre-heat board area to 120°C - 150°C to minimize thermal stress and PCB warping.
+- Set hot air nozzle to 350°C - 380°C with moderate air velocity (prevent blowing away adjacent 0402 components).
+- Circle nozzle continuously around chip perimeter until solder liquifies.
+- Lift straight up with vacuum pickup or precision tweezers.
+            """.trimIndent(),
+            tagsJson = "[\"SMD\", \"Hot Air\", \"Reflow\", \"QFN\", \"BGA\"]",
+            orderIndex = 4
+        ),
+        KnowledgePackArticleEntity(
+            id = "learning_physics_mechanics",
+            packId = "learning",
+            title = "Classical Mechanics & Laws of Conservation",
+            section = "Physics",
+            content = """
+# Classical Mechanics & Laws of Conservation
+
+## 1. Newton's Laws
+1. **First Law:** Objects remain at constant velocity unless acted upon by a net external force.
+2. **Second Law:** ${"$"}F_{net} = m \cdot a = \frac{dp}{dt}${"$"}.
+3. **Third Law:** ${"$"}F_{A \to B} = -F_{B \to A}${"$"}.
+
+## 2. Energy Conservation
+Mechanical energy ${"$"}E = E_k + E_p = \text{constant}${"$"} in conservative fields.
+- Kinetic: ${"$"}E_k = \frac{1}{2} m v^2${"$"}.
+- Gravitational Potential: ${"$"}E_p = m g h${"$"} (${"$"}g \approx 9.81\text{ m/s}^2${"$"}).
+            """.trimIndent(),
+            tagsJson = "[\"Physics\", \"Mechanics\", \"Newton\", \"Energy\", \"Momentum\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "learning_chem_periodic_table",
+            packId = "learning",
+            title = "Periodic Table Principles & Chemical Bonding",
+            section = "Chemistry",
+            content = """
+# Periodic Table Principles & Chemical Bonding
+
+## 1. Trends
+- **Atomic Radius:** Decreases left-to-right across periods; increases down groups.
+- **Electronegativity:** Increases left-to-right (Fluorine = 3.98); decreases down groups.
+
+## 2. Bonding
+- **Ionic:** Electron transfer between atoms with ${"$"}\Delta EN > 1.7${"$"} (e.g. NaCl).
+- **Covalent:** Shared electron pairs (e.g. H2O, CH4).
+            """.trimIndent(),
+            tagsJson = "[\"Chemistry\", \"Periodic Table\", \"Bonds\", \"Electrons\", \"Elements\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "learning_thermodynamics_laws",
+            packId = "learning",
+            title = "Laws of Thermodynamics & Heat Engines",
+            section = "Thermodynamics",
+            content = """
+# Laws of Thermodynamics & Heat Engines
+
+## 1. The Fundamental Laws
+- **First Law (Conservation of Energy):** ${"$"}\Delta U = Q - W${"$"}, where ${"$"}\Delta U${"$"} is change in internal energy, ${"$"}Q${"$"} is heat added, and ${"$"}W${"$"} is work done by the system.
+- **Second Law (Entropy):** The total entropy of an isolated system always increases over time: ${"$"}\Delta S_{total} \ge 0${"$"}.
+- **Third Law:** The entropy of a pure crystalline substance approaches zero as temperature approaches absolute zero (0 Kelvin).
+
+## 2. Maximum Carnot Efficiency
+${"$"}${"$"}\eta_{max} = 1 - \frac{T_{cold}}{T_{hot}}${"$"}${"$"}
+            """.trimIndent(),
+            tagsJson = "[\"Thermodynamics\", \"Heat\", \"Entropy\", \"Physics\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "programming_kotlin_coroutines",
+            packId = "programming",
+            title = "Kotlin Coroutines & Structured Concurrency",
+            section = "Kotlin & Android",
+            content = """
+# Kotlin Coroutines & Structured Concurrency
+
+Kotlin coroutines provide suspendable primitives that run asynchronous tasks sequentially without thread blocking.
+
+## 1. Hierarchy & Cancellation
+Parent coroutines wait for all child jobs. Cancelling a parent recursively cancels children. Use `SupervisorJob` when failures should be isolated.
+            """.trimIndent(),
+            tagsJson = "[\"Kotlin\", \"Coroutines\", \"Android\", \"Concurrency\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "programming_room_database",
+            packId = "programming",
+            title = "Room Database Architecture & Migration Guidelines",
+            section = "Android Persistence",
+            content = """
+# Room Database Architecture & Migration Guidelines
+
+Room provides an abstraction layer over SQLite for offline persistence.
+
+## 1. Migration Best Practices
+Always provide explicit migration objects:
+```kotlin
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE documents ADD COLUMN pageCount INTEGER NOT NULL DEFAULT 1")
+    }
+}
+```
+            """.trimIndent(),
+            tagsJson = "[\"Room\", \"SQLite\", \"Database\", \"Android\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "programming_clean_architecture",
+            packId = "programming",
+            title = "Clean Architecture & Separation of Concerns",
+            section = "Software Design",
+            content = """
+# Clean Architecture & Separation of Concerns
+
+Organize applications into independent layers:
+1. **Domain:** Business entities and Use Cases. Free of Android framework dependencies.
+2. **Data:** Repositories, DAOs, API clients, and data mappers.
+3. **Presentation:** ViewModels, StateFlow, and Composable UI screens.
+            """.trimIndent(),
+            tagsJson = "[\"Architecture\", \"Design Patterns\", \"Clean Code\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "languages_grammar_frameworks",
+            packId = "languages",
+            title = "Core Grammatical Frameworks & Syntactic Structures",
+            section = "Linguistics",
+            content = """
+# Core Grammatical Frameworks & Syntactic Structures
+
+## 1. Word Order Typology
+- **SVO (Subject-Verb-Object):** English, Mandarin, Spanish.
+- **SOV (Subject-Object-Verb):** Japanese, Korean, Hindi, Turkish.
+- **VSO:** Arabic, Irish, Classical Hebrew.
+
+## 2. Tense, Aspect, Mood (TAM)
+- **Tense:** Past, Present, Future.
+- **Aspect:** Simple, Continuous, Perfect.
+- **Mood:** Indicative (fact), Subjunctive (wish/counter-factual), Imperative (command).
+            """.trimIndent(),
+            tagsJson = "[\"Linguistics\", \"Grammar\", \"Syntax\", \"Translation\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "languages_ipa_phonetics",
+            packId = "languages",
+            title = "International Phonetic Alphabet (IPA) & Phonetics",
+            section = "Phonetics",
+            content = """
+# International Phonetic Alphabet (IPA) & Phonetics
+
+The International Phonetic Alphabet provides standard visual representation of speech sounds.
+
+## 1. Consonant Articulation Dimensions
+- **Place:** Bilabial (p, b, m), Labiodental (f, v), Alveolar (t, d, s, z), Velar (k, g), Glottal (h).
+- **Manner:** Plosive/Stop (p, t, k), Fricative (f, s, z), Nasal (m, n), Approximant (w, j, l).
+- **Voicing:** Voiced (vocal cords vibrate) vs Voiceless.
+            """.trimIndent(),
+            tagsJson = "[\"IPA\", \"Phonetics\", \"Speech\", \"Linguistics\"]",
+            orderIndex = 2
         )
     )
 }

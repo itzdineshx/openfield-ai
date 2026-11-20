@@ -3,6 +3,7 @@ package com.openfield.app.feature.tools
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -25,6 +28,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
@@ -66,6 +71,12 @@ import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
 
+private val TRANSLATE_LANGUAGES = listOf(
+    "Spanish", "French", "German", "Hindi", "Arabic",
+    "Chinese", "Japanese", "Portuguese", "Russian", "Tamil",
+    "Italian", "Korean", "Turkish", "Dutch", "Swahili"
+)
+
 @Composable
 fun ToolDetailScreen(
     toolId: String,
@@ -83,6 +94,7 @@ fun ToolDetailScreen(
     var outputText by remember(toolId) { mutableStateOf("") }
     var isExecuting by remember { mutableStateOf(false) }
     var runJob by remember { mutableStateOf<Job?>(null) }
+    var selectedLanguage by remember(toolId) { mutableStateOf("Spanish") }
 
     Scaffold(
         topBar = {
@@ -193,6 +205,47 @@ fun ToolDetailScreen(
                 )
             )
 
+            if (tool.id == "translate") {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Translate to",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OpenFieldNavyText
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(TRANSLATE_LANGUAGES) { lang ->
+                        FilterChip(
+                            selected = selectedLanguage == lang,
+                            onClick = { selectedLanguage = lang },
+                            label = {
+                                Text(
+                                    text = lang,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = OpenFieldPrimaryBlue,
+                                selectedLabelColor = androidx.compose.ui.graphics.Color.White,
+                                containerColor = OpenFieldSecondaryBackground,
+                                labelColor = OpenFieldNavyText
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = selectedLanguage == lang,
+                                borderColor = OpenFieldCardBorder,
+                                selectedBorderColor = OpenFieldPrimaryBlue
+                            )
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
             PrimaryButton(
@@ -224,7 +277,7 @@ fun ToolDetailScreen(
                                     outputText = ""
                                 }
 
-                                repository.executeToolActionStream(tool.id, inputText).collect { token ->
+                                repository.executeToolActionStream(tool.id, inputText, selectedLanguage).collect { token ->
                                     outputText += token
                                 }
                             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -244,7 +297,11 @@ fun ToolDetailScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             if (isExecuting && outputText.isEmpty()) {
-                TypingIndicator(label = "Working on your device…")
+                val workingLabel = if (tool.id == "translate")
+                    "Translating to $selectedLanguage on your device…"
+                else
+                    "Working on your device…"
+                TypingIndicator(label = workingLabel)
             }
 
             // Output Section

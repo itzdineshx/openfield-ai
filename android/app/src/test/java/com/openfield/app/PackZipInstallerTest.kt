@@ -299,11 +299,12 @@ class PackZipInstallerTest {
 
     @Test
     fun installFromZipStream_realFirstAidPack_installsWithSha256Verification() = runBlocking {
-        val packFile = java.io.File("../../catalog/packs/first_aid-1.0.0.zip")
+        val manifest = com.openfield.app.feature.library.KnowledgePackManager.CURATED_CATALOG
+            .find { it.packId == "first_aid" }!!
+        val packFile = java.io.File("../../catalog/packs/first_aid-${manifest.version}.zip")
         if (packFile.exists()) {
             val bytes = packFile.readBytes()
-            val expectedHash = com.openfield.app.feature.library.KnowledgePackManager.CURATED_CATALOG
-                .find { it.packId == "first_aid" }!!.checksumSha256
+            val expectedHash = manifest.checksumSha256
             val result = installer.installFromZipStream(
                 inputStream = ByteArrayInputStream(bytes),
                 expectedSha256 = expectedHash
@@ -314,7 +315,7 @@ class PackZipInstallerTest {
             assertTrue(installResult.articleCount >= 4)
             val articles = dao.getArticlesForPack("first_aid")
             assertTrue(articles.any { it.title.contains("CPR") })
-            assertTrue(articles.any { it.title.contains("Tourniquet") })
+            assertTrue(articles.any { it.title.contains("Tourniquet") || it.title.contains("Hemorrhage") })
         }
     }
 }

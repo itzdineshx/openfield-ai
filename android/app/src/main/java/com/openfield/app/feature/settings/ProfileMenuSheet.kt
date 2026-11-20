@@ -1,6 +1,9 @@
 package com.openfield.app.feature.settings
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,19 +30,26 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.openfield.app.core.components.OfflineStatusBanner
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
 import com.openfield.app.core.theme.OpenFieldNavyText
+import com.openfield.app.core.theme.OpenFieldOfflineGreenBg
+import com.openfield.app.core.theme.OpenFieldOfflineGreenText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
+import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.data.repository.OpenFieldRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,20 +62,31 @@ fun ProfileMenuSheet(
 ) {
     if (show) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val repository = OpenFieldRepository.getInstance()
+        val modelState by repository.modelRepository.installationState.collectAsState()
 
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
             containerColor = OpenFieldBackground,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 10.dp, bottom = 4.dp)
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(OpenFieldCardBorder)
+                )
+            },
             modifier = modifier
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
             ) {
-                // User Profile Header
+                // User Profile Header: Minimal, Sleek & Focused
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -73,52 +94,135 @@ fun ProfileMenuSheet(
                     Surface(
                         shape = CircleShape,
                         color = OpenFieldPrimaryBlueLight,
-                        modifier = Modifier.size(52.dp)
+                        border = BorderStroke(1.5.dp, OpenFieldPrimaryBlue.copy(alpha = 0.25f)),
+                        modifier = Modifier.size(46.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = null,
                                 tint = OpenFieldPrimaryBlue,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
-                    Column {
-                        Text(
-                            text = "CRUX User",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = OpenFieldNavyText
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "CRUX User",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OpenFieldNavyText
+                                )
                             )
-                        )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = OpenFieldPrimaryBlue.copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    text = "OFFLINE",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = OpenFieldPrimaryBlue
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+
+                        val modelLabel = when (modelState) {
+                            is com.openfield.app.feature.ai.model.ModelInstallationState.Installed -> "Gemma 4 E2B IT (On-Device)"
+                            is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading -> "Downloading AI model..."
+                            else -> "Local On-Device Engine"
+                        }
                         Text(
-                            text = "Local Device Profile",
+                            text = modelLabel,
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = OpenFieldSecondaryText
+                                color = OpenFieldSecondaryText,
+                                fontSize = 11.5.sp
                             )
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                OfflineStatusBanner()
+                // Status Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = OpenFieldOfflineGreenBg,
+                        border = BorderStroke(1.dp, OpenFieldOfflineGreenText.copy(alpha = 0.2f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(OpenFieldOfflineGreenText)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "100% Offline",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                    color = OpenFieldOfflineGreenText
+                                )
+                            )
+                        }
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = OpenFieldSecondaryBackground,
+                        border = BorderStroke(1.dp, OpenFieldCardBorder),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(OpenFieldPrimaryBlue)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Zero Telemetry",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                    color = OpenFieldNavyText
+                                )
+                            )
+                        }
+                    }
+                }
 
-                HorizontalDivider(color = OpenFieldCardBorder)
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+                HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.6f))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // Menu items
                 ProfileMenuItem(
                     icon = Icons.Default.Settings,
                     title = "Settings",
-                    subtitle = "Model, storage, language",
+                    subtitle = "Model, AMOLED theme, memory & storage",
                     onClick = {
                         onDismiss()
                         onNavigateToSettings()
@@ -128,7 +232,7 @@ fun ProfileMenuSheet(
                 ProfileMenuItem(
                     icon = Icons.Default.Info,
                     title = "About CRUX",
-                    subtitle = "Version, purpose and license",
+                    subtitle = "Version 1.0.0, architecture & license",
                     onClick = {
                         onDismiss()
                         onNavigateToAbout()
@@ -138,14 +242,14 @@ fun ProfileMenuSheet(
                 ProfileMenuItem(
                     icon = Icons.Default.Security,
                     title = "Privacy & Safety",
-                    subtitle = "100% offline-first architecture",
+                    subtitle = "Local offline privacy guarantee",
                     onClick = {
                         onDismiss()
                         onNavigateToAbout()
                     }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -161,8 +265,9 @@ private fun ProfileMenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
@@ -175,26 +280,26 @@ private fun ProfileMenuItem(
                     imageVector = icon,
                     contentDescription = null,
                     tint = OpenFieldPrimaryBlue,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(19.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
+                    fontSize = 13.5.sp,
                     color = OpenFieldNavyText
                 )
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp,
+                    fontSize = 11.5.sp,
                     color = OpenFieldSecondaryText
                 )
             )
@@ -203,9 +308,8 @@ private fun ProfileMenuItem(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
             contentDescription = null,
-            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
-            modifier = Modifier.size(13.dp)
+            tint = OpenFieldSecondaryText.copy(alpha = 0.45f),
+            modifier = Modifier.size(12.dp)
         )
     }
 }
-

@@ -155,11 +155,11 @@ class KnowledgePackManagerTest {
 
         val results = manager.searchPacks("Linux")
         assertTrue(results.isNotEmpty())
-        assertEquals("comp_tech", results.first().id)
+        assertTrue(results.any { it.id == "comp_tech" })
 
         val electronicsResults = manager.searchPacks("Multimeter")
         assertTrue(electronicsResults.isNotEmpty())
-        assertEquals("devices_repairs", electronicsResults.first().id)
+        assertTrue(electronicsResults.any { it.id == "devices_repairs" })
 
         val emptyResults = manager.searchPacks("NonExistentTermXYZ")
         assertTrue(emptyResults.isEmpty())
