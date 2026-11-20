@@ -87,6 +87,7 @@ fun HomeScreen(
     onNavigateToCreateWrite: () -> Unit,
     onOpenProfileMenu: () -> Unit,
     onNavigateToTasks: () -> Unit = {},
+    onNavigateToModelSetup: () -> Unit = {},
     modifier: Modifier = Modifier,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
@@ -259,7 +260,7 @@ fun HomeScreen(
             OfflineStatusBanner(
                 title = bannerTitle,
                 subtitle = bannerSubtitle,
-                onClick = { showModelDialog = true }
+                onClick = { onNavigateToModelSetup() }
             )
 
             Spacer(modifier = Modifier.height(20.dp))

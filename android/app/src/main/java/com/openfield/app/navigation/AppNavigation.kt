@@ -39,6 +39,7 @@ import com.openfield.app.feature.problem.ProblemSolverScreen
 import com.openfield.app.feature.settings.AboutScreen
 import com.openfield.app.feature.settings.ProfileMenuSheet
 import com.openfield.app.feature.settings.SettingsScreen
+import com.openfield.app.feature.setup.ModelSetupScreen
 import com.openfield.app.feature.splash.SplashScreen
 import com.openfield.app.feature.tasks.TaskAutomationScreen
 import com.openfield.app.feature.tools.ToolDetailScreen
@@ -120,16 +121,36 @@ fun AppNavigation(
                     )
                 }
 
-                // 2. Onboarding (Ask Anything, Understand & Solve, Your Knowledge)
+                // 2. Onboarding (Ask Anything, Understand & Solve, Your Knowledge, Permissions)
                 composable(AppRoutes.ONBOARDING_1) {
                     OnboardingScreen(
                         onFinishOnboarding = {
+                            navController.navigate(AppRoutes.MODEL_SETUP) {
+                                popUpTo(AppRoutes.ONBOARDING_1) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                // Model Setup & Download Screen (Post-onboarding first-run setup)
+                composable(AppRoutes.MODEL_SETUP) {
+                    ModelSetupScreen(
+                        onComplete = {
                             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                                 .edit()
                                 .putBoolean(KEY_ONBOARDING_DONE, true)
                                 .apply()
                             navController.navigate(AppRoutes.HOME) {
-                                popUpTo(AppRoutes.ONBOARDING_1) { inclusive = true }
+                                popUpTo(AppRoutes.MODEL_SETUP) { inclusive = true }
+                            }
+                        },
+                        onSkipToHome = {
+                            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                .edit()
+                                .putBoolean(KEY_ONBOARDING_DONE, true)
+                                .apply()
+                            navController.navigate(AppRoutes.HOME) {
+                                popUpTo(AppRoutes.MODEL_SETUP) { inclusive = true }
                             }
                         }
                     )
@@ -161,6 +182,9 @@ fun AppNavigation(
                         },
                         onNavigateToTasks = {
                             navController.navigate(AppRoutes.TASKS)
+                        },
+                        onNavigateToModelSetup = {
+                            navController.navigate(AppRoutes.MODEL_SETUP)
                         }
                     )
                 }

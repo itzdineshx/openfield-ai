@@ -1,5 +1,10 @@
 package com.openfield.app.feature.onboarding
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +33,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FolderSpecial
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Security
@@ -41,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,9 +56,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
@@ -80,11 +90,26 @@ fun OnboardingScreen(
     onFinishOnboarding: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var currentPage by remember { mutableIntStateOf(0) }
+
+    val permissionsToRequest = remember {
+        val list = mutableListOf(Manifest.permission.RECORD_AUDIO)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        list.toTypedArray()
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        onFinishOnboarding()
+    }
 
     val pages = listOf(
         OnboardingPageData(
-            stepLabel = "1/3",
+            stepLabel = "1/4",
             pageIndex = 0,
             title = "Ask Anything",
             description = "Get help, learn new things, solve problems and understand the world around you — even offline.",
@@ -107,7 +132,7 @@ fun OnboardingScreen(
             )
         ),
         OnboardingPageData(
-            stepLabel = "2/3",
+            stepLabel = "2/4",
             pageIndex = 1,
             title = "Understand & Solve",
             description = "From everyday questions to technical issues, get clear, step-by-step guidance.",
@@ -130,7 +155,7 @@ fun OnboardingScreen(
             )
         ),
         OnboardingPageData(
-            stepLabel = "3/3",
+            stepLabel = "3/4",
             pageIndex = 2,
             title = "Use Your Own Knowledge",
             description = "Add your documents, manuals or notes and ask questions about them.",
@@ -149,6 +174,29 @@ fun OnboardingScreen(
                     icon = Icons.Default.Security,
                     title = "Private & Local",
                     subtitle = "Your data stays on your device"
+                )
+            )
+        ),
+        OnboardingPageData(
+            stepLabel = "4/4",
+            pageIndex = 3,
+            title = "App Permissions",
+            description = "Grant essential device permissions for offline voice queries and background model download tracking.",
+            features = listOf(
+                OnboardingFeatureItem(
+                    icon = Icons.Default.Mic,
+                    title = "Microphone (Voice Input)",
+                    subtitle = "Ask questions naturally using offline Speech-to-Text"
+                ),
+                OnboardingFeatureItem(
+                    icon = Icons.Default.Notifications,
+                    title = "Download Notifications",
+                    subtitle = "Get notified when the on-device AI model completes"
+                ),
+                OnboardingFeatureItem(
+                    icon = Icons.Default.Security,
+                    title = "100% On-Device Privacy",
+                    subtitle = "Zero audio, prompts, or documents are ever uploaded"
                 )
             )
         )
@@ -170,7 +218,7 @@ fun OnboardingScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Top Bar: Step Indicator (1/3), Dots, and Skip Button
+            // Top Bar: Step Indicator (1/4), Dots, and Skip Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -189,7 +237,7 @@ fun OnboardingScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    repeat(3) { idx ->
+                    repeat(4) { idx ->
                         Box(
                             modifier = Modifier
                                 .size(if (idx == currentPage) 7.dp else 5.dp)
@@ -199,7 +247,7 @@ fun OnboardingScreen(
                                     else OpenFieldMutedText.copy(alpha = 0.4f)
                                 )
                         )
-                        if (idx < 2) Spacer(modifier = Modifier.width(6.dp))
+                        if (idx < 3) Spacer(modifier = Modifier.width(6.dp))
                     }
                 }
 
@@ -253,6 +301,7 @@ fun OnboardingScreen(
                     0 -> OnboardingIllustrationChat()
                     1 -> OnboardingIllustrationTroubleshoot()
                     2 -> OnboardingIllustrationDocument()
+                    3 -> OnboardingIllustrationPermissions()
                 }
             }
 
@@ -306,17 +355,26 @@ fun OnboardingScreen(
                 }
             }
 
-            // Bottom Navigation Button: "Next →" or "Get Started ✓"
+            // Bottom Navigation Button: "Next →" or "Grant Permissions & Continue →"
             PrimaryButton(
-                text = if (currentPage == 2) "Get Started" else "Next",
+                text = if (currentPage == 3) "Grant Permissions & Continue" else "Next",
                 onClick = {
-                    if (currentPage < 2) {
+                    if (currentPage < 3) {
                         currentPage += 1
                     } else {
-                        onFinishOnboarding()
+                        val hasMic = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                        val hasNotif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                        } else true
+
+                        if (hasMic && hasNotif) {
+                            onFinishOnboarding()
+                        } else {
+                            permissionLauncher.launch(permissionsToRequest)
+                        }
                     }
                 },
-                trailingIcon = if (currentPage == 2) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward,
+                trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
@@ -474,6 +532,67 @@ private fun OnboardingIllustrationDocument() {
                     .clip(RoundedCornerShape(2.dp))
                     .background(OpenFieldCardBorder)
             )
+        }
+    }
+}
+
+@Composable
+private fun OnboardingIllustrationPermissions() {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, OpenFieldCardBorder),
+        modifier = Modifier.size(170.dp, 80.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = OpenFieldPrimaryBlueLight,
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = null,
+                        tint = OpenFieldPrimaryBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Surface(
+                shape = CircleShape,
+                color = OpenFieldPrimaryBlueLight,
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = OpenFieldPrimaryBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Surface(
+                shape = CircleShape,
+                color = Color(0xFFE8F5E9),
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Security,
+                        contentDescription = null,
+                        tint = Color(0xFF2E7D32),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
     }
 }

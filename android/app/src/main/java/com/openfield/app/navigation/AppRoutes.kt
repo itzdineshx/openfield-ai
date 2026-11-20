@@ -5,6 +5,8 @@ object AppRoutes {
     const val ONBOARDING_1 = "onboarding_1"
     const val ONBOARDING_2 = "onboarding_2"
     const val ONBOARDING_3 = "onboarding_3"
+    const val PERMISSIONS = "permissions"
+    const val MODEL_SETUP = "model_setup"
 
     // Main 4 Top-level Tabs
     const val HOME = "home"
