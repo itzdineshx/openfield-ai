@@ -152,6 +152,7 @@ class OpenFieldRepository(
         database.taskSessionDao(),
         scope
     )
+    val backupManager = com.openfield.app.data.local.BackupManager(database)
 
     // Reactive Collections Flow
     val collections: StateFlow<List<KnowledgeCollection>> = database.collectionDao().getCollectionsFlow()

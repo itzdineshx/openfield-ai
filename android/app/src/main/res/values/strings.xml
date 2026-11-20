@@ -1,5 +1,13 @@
 <resources>
     <string name="app_name">OpenField</string>
     <string name="app_subtitle">Your offline AI companion</string>
+    <string name="shortcut_chat">Ask AI</string>
+    <string name="shortcut_chat_desc">Start a new conversation with Gemma</string>
+    <string name="shortcut_image">Analyze Image</string>
+    <string name="shortcut_image_desc">Identify and inspect photos on-device</string>
+    <string name="shortcut_document">Ask Document</string>
+    <string name="shortcut_document_desc">Ask questions grounded in personal documents</string>
+    <string name="shortcut_problem">Solve a Problem</string>
+    <string name="shortcut_problem_desc">Guided diagnostic troubleshooting workflow</string>
 </resources>
 

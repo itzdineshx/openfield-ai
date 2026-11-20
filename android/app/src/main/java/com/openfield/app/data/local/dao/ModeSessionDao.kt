@@ -61,6 +61,21 @@ interface ModeSessionDao {
     @Update
     suspend fun updateWritingDraft(draft: WritingDraftEntity)
 
+    @Query("SELECT * FROM troubleshoot_sessions ORDER BY updatedAt DESC")
+    suspend fun getAllTroubleshootSessions(): List<TroubleshootSessionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTroubleshootSessions(sessions: List<TroubleshootSessionEntity>)
+
+    @Query("SELECT * FROM learning_sessions ORDER BY updatedAt DESC")
+    suspend fun getAllLearningSessions(): List<LearningSessionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLearningSessions(sessions: List<LearningSessionEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWritingDrafts(drafts: List<WritingDraftEntity>)
+
     @Query("DELETE FROM writing_drafts WHERE id = :id")
     suspend fun deleteWritingDraft(id: String)
 }

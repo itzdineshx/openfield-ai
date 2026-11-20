@@ -1,6 +1,12 @@
 package com.openfield.app.feature.settings
 
+import android.net.Uri
 import android.widget.Toast
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,12 +29,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.WifiOff
 import com.openfield.app.core.util.PerformanceTracker
 import androidx.compose.material3.AlertDialog
@@ -48,7 +56,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,6 +99,37 @@ fun SettingsScreen(
     var showModelDialog by remember { mutableStateOf(false) }
     var showMemoryDialog by remember { mutableStateOf(false) }
     var editedMemory by remember(settings.userCustomMemory) { mutableStateOf(settings.userCustomMemory) }
+
+    val scope = rememberCoroutineScope()
+    val exportBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                val result = repository.backupManager.exportBackup(context, uri)
+                result.onSuccess { count ->
+                    Toast.makeText(context, "Backup exported successfully ($count records)", Toast.LENGTH_LONG).show()
+                }.onFailure { err ->
+                    Toast.makeText(context, "Export failed: ${err.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    val importBackupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                val result = repository.backupManager.importBackup(context, uri)
+                result.onSuccess { count ->
+                    Toast.makeText(context, "Restored $count records from backup", Toast.LENGTH_LONG).show()
+                }.onFailure { err ->
+                    Toast.makeText(context, "Restore failed: ${err.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -493,6 +534,91 @@ fun SettingsScreen(
                                 )
                                 Text(
                                     text = "Frees temporary scratch and preview bitmaps",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Export Local Backup
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                                exportBackupLauncher.launch("openfield_backup_$timestamp.json")
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Download)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Export Local Backup (.json)",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                Text(
+                                    text = "Save chats, drafts, and lessons to your storage",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = OpenFieldSecondaryText,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Restore from Backup
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                importBackupLauncher.launch(arrayOf("application/json", "text/*"))
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            SettingsIconBadge(icon = Icons.Default.Upload)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Restore from Backup",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OpenFieldNavyText
+                                    )
+                                )
+                                Text(
+                                    text = "Restore all knowledge and history from backup file",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = OpenFieldSecondaryText,
                                         fontSize = 11.sp

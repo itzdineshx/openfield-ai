@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -99,6 +102,7 @@ import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.ai.controller.TroubleshootingUiState
 import com.openfield.app.feature.ai.mode.DiagnosticAssessment
 import com.openfield.app.feature.ai.mode.DiagnosticStepHistory
+import com.openfield.app.feature.voice.SpeechSynthesisManager
 
 private val exampleProblems = listOf(
     "Phone won't charge",
@@ -114,6 +118,12 @@ fun ProblemSolverScreen(
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
     val context = LocalContext.current
+    val speechManager = remember { SpeechSynthesisManager(context) }
+    val isSpeaking by speechManager.isSpeaking.collectAsState()
+    DisposableEffect(Unit) {
+        onDispose { speechManager.release() }
+    }
+
     val controller = repository.troubleshootingController
     val uiState by controller.uiState.collectAsState()
     val history by controller.history.collectAsState()
@@ -148,6 +158,12 @@ fun ProblemSolverScreen(
 
     LaunchedEffect(uiState::class) { scrollState.animateScrollTo(0) }
 
+    val activeAssessment = when (val s = uiState) {
+        is TroubleshootingUiState.DiagnosticStep -> s.assessment
+        is TroubleshootingUiState.Resolution -> s.assessment
+        else -> null
+    }
+
     Scaffold(
         topBar = {
             ScreenTopBar(
@@ -155,8 +171,30 @@ fun ProblemSolverScreen(
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {
+                    if (activeAssessment != null) {
+                        IconButton(onClick = {
+                            if (isSpeaking) {
+                                speechManager.stop()
+                            } else {
+                                val stepText = buildString {
+                                    append("Step ${activeAssessment.currentStepNumber}. ")
+                                    append(activeAssessment.question)
+                                    activeAssessment.explanation?.let { append(". $it") }
+                                    activeAssessment.recommendedSolution?.let { append(". Recommended solution: $it") }
+                                }
+                                speechManager.speak(stepText)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = if (isSpeaking) "Stop voice" else "Read step aloud",
+                                tint = if (isSpeaking) OpenFieldPrimaryBlue else OpenFieldNavyText
+                            )
+                        }
+                    }
                     if (uiState !is TroubleshootingUiState.Idle) {
                         IconButton(onClick = {
+                            speechManager.stop()
                             controller.reset()
                             problemInput = ""
                         }) {

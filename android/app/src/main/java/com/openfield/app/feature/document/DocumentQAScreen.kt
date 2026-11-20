@@ -49,6 +49,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -83,6 +84,7 @@ import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.data.repository.OpenFieldRepository
+import com.openfield.app.feature.voice.SpeechSynthesisManager
 import com.openfield.app.feature.voice.rememberVoiceInput
 
 private val documentStarterQuestions = listOf(
@@ -109,6 +111,13 @@ fun DocumentQAScreen(
     val messages by controller.messages.collectAsState()
     val indexingState by controller.indexingState.collectAsState()
     val isQuerying by controller.isQuerying.collectAsState()
+
+    val speechManager = remember { SpeechSynthesisManager(context) }
+    val isSpeaking by speechManager.isSpeaking.collectAsState()
+    val currentUtteranceId by speechManager.currentUtteranceId.collectAsState()
+    DisposableEffect(Unit) {
+        onDispose { speechManager.release() }
+    }
 
     var inputQuestion by remember { mutableStateOf("") }
     var showMenu by remember { mutableStateOf(false) }
@@ -338,7 +347,14 @@ fun DocumentQAScreen(
                     sourcePage = msg.sourcePage,
                     isComplete = msg.isComplete,
                     pendingLabel = "Searching your document…",
-                    onSourceClick = { activeDoc?.let { onNavigateToDocumentDetail(it.id) } }
+                    onSourceClick = { activeDoc?.let { onNavigateToDocumentDetail(it.id) } },
+                    onSpeakClick = if (!msg.isUser && msg.text.isNotBlank()) {
+                        {
+                            if (isSpeaking && currentUtteranceId == msg.id) speechManager.stop()
+                            else speechManager.speak(msg.text, msg.id)
+                        }
+                    } else null,
+                    isSpeaking = isSpeaking && currentUtteranceId == msg.id
                 )
             }
         }

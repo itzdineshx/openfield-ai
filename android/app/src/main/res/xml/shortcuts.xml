@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_chat"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_chat"
+        android:shortcutLongLabel="@string/shortcut_chat_desc">
+        <intent
+            android:action="com.openfield.app.ACTION_CHAT"
+            android:targetPackage="com.openfield.app"
+            android:targetClass="com.openfield.app.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_image"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_image"
+        android:shortcutLongLabel="@string/shortcut_image_desc">
+        <intent
+            android:action="com.openfield.app.ACTION_IMAGE"
+            android:targetPackage="com.openfield.app"
+            android:targetClass="com.openfield.app.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_document"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_document"
+        android:shortcutLongLabel="@string/shortcut_document_desc">
+        <intent
+            android:action="com.openfield.app.ACTION_DOCUMENT"
+            android:targetPackage="com.openfield.app"
+            android:targetClass="com.openfield.app.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_problem"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_problem"
+        android:shortcutLongLabel="@string/shortcut_problem_desc">
+        <intent
+            android:action="com.openfield.app.ACTION_PROBLEM"
+            android:targetPackage="com.openfield.app"
+            android:targetClass="com.openfield.app.MainActivity" />
+    </shortcut>
+</shortcuts>

@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +61,16 @@ fun AppNavigation(
     val startDestination = remember {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (prefs.getBoolean(KEY_ONBOARDING_DONE, false)) AppRoutes.HOME else AppRoutes.SPLASH
+    }
+
+    val targetRoute by NavigationDispatcher.targetRoute.collectAsState()
+    LaunchedEffect(targetRoute) {
+        targetRoute?.let { route ->
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+            NavigationDispatcher.clear()
+        }
     }
 
     var showProfileSheet by remember { mutableStateOf(false) }

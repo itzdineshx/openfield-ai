@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -97,6 +98,7 @@ fun HomeScreen(
     val activeTask = remember(tasks) { tasks.firstOrNull { it.status != "COMPLETED" && it.status != "CANCELLED" } }
     var promptInput by remember { mutableStateOf("") }
     var showModelDialog by remember { mutableStateOf(false) }
+    var showGlobalSearch by remember { mutableStateOf(false) }
 
     val voiceInputManager = remember { VoiceInputManager(context) }
     val voiceState by voiceInputManager.state.collectAsState()
@@ -147,7 +149,7 @@ fun HomeScreen(
         item {
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Top Header: Logo + Brand Name (Left), Profile Button (Right)
+            // Top Header: Logo + Brand Name (Left), Search + Profile Buttons (Right)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -159,21 +161,78 @@ fun HomeScreen(
                     textFontSize = 19
                 )
 
-                Surface(
-                    shape = CircleShape,
-                    color = OpenFieldPrimaryBlueLight,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clickable { onOpenProfileMenu() }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile and settings",
-                            tint = OpenFieldPrimaryBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Surface(
+                        shape = CircleShape,
+                        color = OpenFieldSecondaryBackground,
+                        border = BorderStroke(1.dp, OpenFieldCardBorder),
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clickable { showGlobalSearch = true }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search everything",
+                                tint = OpenFieldNavyText,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
                     }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = OpenFieldPrimaryBlueLight,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clickable { onOpenProfileMenu() }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile and settings",
+                                tint = OpenFieldPrimaryBlue,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Universal Spotlight quick search bar
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = OpenFieldSecondaryBackground,
+                border = BorderStroke(1.dp, OpenFieldCardBorder),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showGlobalSearch = true }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = OpenFieldSecondaryText,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Search documents, notes, chats, tools…",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldSecondaryText.copy(alpha = 0.8f),
+                            fontSize = 13.sp
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
 
@@ -453,5 +512,19 @@ fun HomeScreen(
                 )
             }
         }
+    }
+
+    if (showGlobalSearch) {
+        GlobalSearchDialog(
+            onDismiss = { showGlobalSearch = false },
+            onNavigateToChat = onNavigateToChat,
+            onNavigateToDocumentQA = onNavigateToDocumentQA,
+            onNavigateToDocumentDetail = { onNavigateToDocumentQA() },
+            onNavigateToImageAnalysis = onNavigateToImageAnalysis,
+            onNavigateToProblemSolver = onNavigateToProblemSolver,
+            onNavigateToLearnExplain = onNavigateToLearnExplain,
+            onNavigateToCreateWrite = onNavigateToCreateWrite,
+            onNavigateToCalculator = onNavigateToTasks
+        )
     }
 }

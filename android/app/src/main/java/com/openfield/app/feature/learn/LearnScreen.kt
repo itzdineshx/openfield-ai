@@ -26,10 +26,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -43,6 +45,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -96,6 +100,7 @@ import com.openfield.app.feature.ai.controller.PracticeStatus
 import com.openfield.app.feature.ai.mode.LearningLevel
 import com.openfield.app.feature.ai.mode.LessonQuiz
 import com.openfield.app.feature.ai.mode.QuizProgress
+import com.openfield.app.feature.voice.SpeechSynthesisManager
 import com.openfield.app.feature.voice.rememberVoiceInput
 
 private val topicSuggestions = listOf(
@@ -116,6 +121,13 @@ fun LearnScreen(
     val uiState by controller.uiState.collectAsState()
     val currentLevel by controller.currentLevel.collectAsState()
     val savedSessions by controller.savedLessons.collectAsState()
+
+    val context = LocalContext.current
+    val speechManager = remember { SpeechSynthesisManager(context) }
+    val isSpeaking by speechManager.isSpeaking.collectAsState()
+    DisposableEffect(Unit) {
+        onDispose { speechManager.release() }
+    }
 
     var topicInput by remember { mutableStateOf("") }
     var followUpPrompt by remember { mutableStateOf("") }
@@ -146,8 +158,38 @@ fun LearnScreen(
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {
+                    if (active != null) {
+                        IconButton(onClick = {
+                            if (isSpeaking) {
+                                speechManager.stop()
+                            } else {
+                                val textToSpeak = buildString {
+                                    append(active.lesson.title.ifBlank { active.lesson.topic })
+                                    append(". ")
+                                    if (active.lesson.overview.isNotBlank()) {
+                                        append(active.lesson.overview)
+                                        append(". ")
+                                    }
+                                    active.lesson.sections.forEach { s ->
+                                        append(s.heading)
+                                        append(". ")
+                                        append(s.content)
+                                        append(". ")
+                                    }
+                                }
+                                speechManager.speak(textToSpeak)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = if (isSpeaking) "Stop voice" else "Read lesson aloud",
+                                tint = if (isSpeaking) OpenFieldPrimaryBlue else OpenFieldNavyText
+                            )
+                        }
+                    }
                     if (uiState !is LearningUiState.Idle) {
                         IconButton(onClick = {
+                            speechManager.stop()
                             controller.reset()
                             topicInput = ""
                         }) {

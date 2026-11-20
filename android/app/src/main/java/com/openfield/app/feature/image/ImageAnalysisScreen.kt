@@ -25,17 +25,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,6 +48,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -84,6 +89,7 @@ import com.openfield.app.core.theme.OpenFieldSecondaryText
 import com.openfield.app.core.theme.OpenFieldSuccess
 import com.openfield.app.data.repository.OpenFieldRepository
 import com.openfield.app.feature.ai.mode.ImageAnalysisSections
+import com.openfield.app.feature.voice.SpeechSynthesisManager
 import com.openfield.app.feature.voice.rememberVoiceInput
 
 private val imageQuickQuestions = listOf(
@@ -118,6 +124,36 @@ fun ImageAnalysisScreen(
 
     val voice = rememberVoiceInput { recognized ->
         followUpInput = if (followUpInput.isBlank()) recognized else "$followUpInput $recognized"
+    }
+
+    val speechManager = remember { SpeechSynthesisManager(context) }
+    val isSpeaking by speechManager.isSpeaking.collectAsState()
+    DisposableEffect(Unit) {
+        onDispose { speechManager.release() }
+    }
+
+    var cameraPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && cameraPhotoUri != null) {
+            question = ""
+            controller.setImage(context, cameraPhotoUri!!)
+        }
+    }
+    val takePhoto = {
+        try {
+            val photoFile = java.io.File(context.cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photoFile
+            )
+            cameraPhotoUri = uri
+            takePhotoLauncher.launch(uri)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Could not open camera: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -182,6 +218,7 @@ fun ImageAnalysisScreen(
                 uri = selectedUri,
                 isBusy = isAnalyzing,
                 onPick = pickImage,
+                onTakePhoto = takePhoto,
                 onRemove = {
                     controller.reset()
                     question = ""
@@ -227,7 +264,23 @@ fun ImageAnalysisScreen(
                 isAnalyzing -> StreamingCard(rawText = rawText, onStop = { controller.stopAnalysis() })
 
                 sections != null -> {
-                    AnalysisResult(sections!!)
+                    AnalysisResult(
+                        s = sections!!,
+                        isSpeaking = isSpeaking,
+                        onSpeakToggle = {
+                            if (isSpeaking) {
+                                speechManager.stop()
+                            } else {
+                                val textToRead = buildString {
+                                    append(sections!!.subject)
+                                    sections!!.possibleIdentification?.let { append(". $it") }
+                                    if (sections!!.whatISee.isNotBlank()) append(". ${sections!!.whatISee}")
+                                    if (sections!!.explanation.isNotBlank()) append(". ${sections!!.explanation}")
+                                }
+                                speechManager.speak(textToRead)
+                            }
+                        }
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                         ResultAction(
                             label = "Share",
@@ -280,34 +333,74 @@ fun ImageAnalysisScreen(
 }
 
 @Composable
-private fun ImagePreview(uri: Uri?, isBusy: Boolean, onPick: () -> Unit, onRemove: () -> Unit) {
+private fun ImagePreview(
+    uri: Uri?,
+    isBusy: Boolean,
+    onPick: () -> Unit,
+    onTakePhoto: () -> Unit,
+    onRemove: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (uri == null) 200.dp else 230.dp)
+            .height(if (uri == null) 210.dp else 230.dp)
             .clip(CardShape)
-            .background(if (uri == null) OpenFieldPrimaryBlueLight.copy(alpha = 0.5f) else OpenFieldSecondaryBackground)
-            .clickable(enabled = !isBusy, onClick = onPick),
+            .background(if (uri == null) OpenFieldPrimaryBlueLight.copy(alpha = 0.5f) else OpenFieldSecondaryBackground),
         contentAlignment = Alignment.Center
     ) {
         if (uri == null) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(OpenFieldBackground),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(28.dp))
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text("Choose a photo", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
-                Spacer(modifier = Modifier.height(2.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(16.dp)
+            ) {
                 Text(
-                    "Plants, animals, devices, documents, screenshots",
-                    style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText)
+                    text = "Select or Capture an Image",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText)
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Identify plants, diagnose machines, read diagrams",
+                    style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 12.sp)
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = OpenFieldBackground,
+                        border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(enabled = !isBusy, onClick = onTakePhoto)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(19.dp))
+                            Text("Camera", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = OpenFieldNavyText)
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = OpenFieldBackground,
+                        border = BorderStroke(1.dp, OpenFieldPrimaryBlue.copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(enabled = !isBusy, onClick = onPick)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(19.dp))
+                            Text("Gallery", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = OpenFieldNavyText)
+                        }
+                    }
+                }
             }
         } else {
             AsyncImage(
@@ -349,7 +442,8 @@ private fun ImagePreview(uri: Uri?, isBusy: Boolean, onPick: () -> Unit, onRemov
                         .padding(10.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OverlayButton(Icons.Default.SwapHoriz, "Replace photo", onPick)
+                    OverlayButton(Icons.Default.PhotoCamera, "Take photo", onTakePhoto)
+                    OverlayButton(Icons.Default.SwapHoriz, "Choose photo", onPick)
                     OverlayButton(Icons.Default.Close, "Remove photo", onRemove)
                 }
             }
@@ -409,7 +503,11 @@ private fun StreamingCard(rawText: String, onStop: () -> Unit) {
 }
 
 @Composable
-private fun AnalysisResult(s: ImageAnalysisSections) {
+private fun AnalysisResult(
+    s: ImageAnalysisSections,
+    isSpeaking: Boolean = false,
+    onSpeakToggle: () -> Unit = {}
+) {
     Surface(
         shape = CardShape,
         color = OpenFieldBackground,
@@ -417,26 +515,40 @@ private fun AnalysisResult(s: ImageAnalysisSections) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OpenFieldLogo(size = 32.dp)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "IDENTIFIED SUBJECT",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldPrimaryBlue,
-                            fontSize = 10.5.sp,
-                            letterSpacing = 0.5.sp
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OpenFieldLogo(size = 32.dp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "IDENTIFIED SUBJECT",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OpenFieldPrimaryBlue,
+                                fontSize = 10.5.sp,
+                                letterSpacing = 0.5.sp
+                            )
                         )
-                    )
-                    Text(
-                        text = Markdown.stripInline(s.subject),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = OpenFieldNavyText,
-                            fontSize = 17.sp
+                        Text(
+                            text = Markdown.stripInline(s.subject),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OpenFieldNavyText,
+                                fontSize = 17.sp
+                            )
                         )
+                    }
+                }
+
+                IconButton(onClick = onSpeakToggle) {
+                    Icon(
+                        imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = if (isSpeaking) "Stop voice" else "Read analysis aloud",
+                        tint = if (isSpeaking) OpenFieldPrimaryBlue else OpenFieldSecondaryText
                     )
                 }
             }
