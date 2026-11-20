@@ -525,7 +525,7 @@ fun HomeScreen(
             onNavigateToProblemSolver = onNavigateToProblemSolver,
             onNavigateToLearnExplain = onNavigateToLearnExplain,
             onNavigateToCreateWrite = onNavigateToCreateWrite,
-            onNavigateToCalculator = onNavigateToTasks
+            onNavigateToTasks = onNavigateToTasks
         )
     }
 }

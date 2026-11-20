@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Note
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Clear
@@ -88,7 +89,7 @@ fun GlobalSearchDialog(
     onNavigateToProblemSolver: () -> Unit,
     onNavigateToLearnExplain: () -> Unit,
     onNavigateToCreateWrite: () -> Unit,
-    onNavigateToCalculator: () -> Unit,
+    onNavigateToTasks: () -> Unit,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
     var query by remember { mutableStateOf("") }
@@ -124,9 +125,9 @@ fun GlobalSearchDialog(
                 onDismiss()
                 onNavigateToCreateWrite()
             },
-            ToolQuickMatch("Workflows & Tasks", "Automated checklists and action planning", Icons.Default.Speed) {
+            ToolQuickMatch("Workflows & Tasks", "Automated checklists and action planning", Icons.AutoMirrored.Filled.PlaylistAddCheck) {
                 onDismiss()
-                onNavigateToCalculator()
+                onNavigateToTasks()
             }
         )
     }
