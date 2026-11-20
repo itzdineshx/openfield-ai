@@ -23,6 +23,7 @@ import com.openfield.app.data.local.entity.DocumentEntity
 import com.openfield.app.data.local.entity.KnowledgeCollectionEntity
 import com.openfield.app.data.local.entity.KnowledgePackArticleEntity
 import com.openfield.app.data.local.entity.SavedAnswerEntity
+import com.openfield.app.feature.library.KnowledgePackInstallResult
 import com.openfield.app.feature.ai.controller.ChatController
 import com.openfield.app.feature.ai.controller.DocumentQaController
 import com.openfield.app.feature.ai.controller.ImageAnalysisController
@@ -827,6 +828,29 @@ class OpenFieldRepository(
 
     suspend fun getArticle(id: String): KnowledgePackArticleEntity? {
         return knowledgePackManager.getArticleById(id)
+    }
+
+    fun importKnowledgePackZip(context: Context, uri: Uri, onResult: (Result<KnowledgePackInstallResult>) -> Unit) {
+        scope.launch(Dispatchers.IO) {
+            val res = knowledgePackManager.installPackFromUri(context, uri)
+            withContext(Dispatchers.Main) {
+                onResult(res)
+            }
+        }
+    }
+
+    fun downloadAndInstallKnowledgePack(
+        context: Context,
+        packId: String,
+        onProgress: ((Float) -> Unit)? = null,
+        onResult: (Result<KnowledgePackInstallResult>) -> Unit
+    ) {
+        scope.launch(Dispatchers.IO) {
+            val res = knowledgePackManager.downloadAndInstallPack(packId, context, onProgress)
+            withContext(Dispatchers.Main) {
+                onResult(res)
+            }
+        }
     }
 
     // -------------------------------------------------------------

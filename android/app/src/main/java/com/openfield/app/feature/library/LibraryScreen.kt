@@ -130,6 +130,20 @@ fun LibraryScreen(
         }
     }
 
+    val packZipPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            repository.importKnowledgePackZip(context, uri) { result ->
+                result.onSuccess { summary ->
+                    Toast.makeText(context, "Installed ${summary.title} (${summary.articleCount} offline guides ready)", Toast.LENGTH_LONG).show()
+                }.onFailure { err ->
+                    Toast.makeText(context, "Pack import failed: ${err.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
     val tabs = listOf(
         TabItem("Knowledge Packs", Icons.AutoMirrored.Filled.MenuBook),
         TabItem("My Documents", Icons.Default.Description),
@@ -274,7 +288,18 @@ fun LibraryScreen(
                 3 -> {
                     DownloadsSection(
                         packs = packs,
-                        onInstallPack = { repository.toggleKnowledgePack(it) }
+                        onInstallPack = { packId ->
+                            repository.downloadAndInstallKnowledgePack(context, packId) { result ->
+                                result.onSuccess {
+                                    Toast.makeText(context, "Activated ${it.title} (${it.articleCount} guides ready)", Toast.LENGTH_LONG).show()
+                                }.onFailure {
+                                    Toast.makeText(context, "Install failed: ${it.message}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        },
+                        onSideloadPack = {
+                            packZipPickerLauncher.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
+                        }
                     )
                 }
             }
@@ -624,7 +649,8 @@ private fun SavedAnswersSection(
 @Composable
 private fun DownloadsSection(
     packs: List<com.openfield.app.core.model.KnowledgePack>,
-    onInstallPack: (String) -> Unit
+    onInstallPack: (String) -> Unit,
+    onSideloadPack: () -> Unit
 ) {
     val installedCount = packs.count { it.isInstalled }
     val availableCount = packs.size - installedCount
@@ -666,6 +692,73 @@ private fun DownloadsSection(
                         fontSize = 12.sp
                     )
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Sideload / Import Pack Archive Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSideloadPack() },
+            shape = CardShape,
+            colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
+            border = BorderStroke(1.dp, OpenFieldCardBorder)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(OpenFieldPrimaryBlue.copy(alpha = 0.12f), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = null,
+                            tint = OpenFieldPrimaryBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Import Pack File (.zip)",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OpenFieldNavyText
+                            )
+                        )
+                        Text(
+                            text = "Sideload verified pack bundles from SD card or storage",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = OpenFieldSecondaryText,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = OpenFieldPrimaryBlue,
+                    modifier = Modifier.clickable { onSideloadPack() }
+                ) {
+                    Text(
+                        text = "Browse",
+                        color = Color.White,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
             }
         }
 

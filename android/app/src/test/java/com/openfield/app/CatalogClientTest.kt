@@ -68,9 +68,9 @@ class CatalogClientTest {
         override fun getArticlesForPackFlow(packId: String) = kotlinx.coroutines.flow.flowOf(articles.filter { it.packId == packId })
         override suspend fun getArticlesForPack(packId: String) = articles.filter { it.packId == packId }
         override suspend fun getArticleById(id: String) = articles.find { it.id == id }
-        override suspend fun insertArticles(articlesToInsert: List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>) {
-            articles.removeAll { a -> articlesToInsert.any { it.id == a.id } }
-            articles.addAll(articlesToInsert)
+        override suspend fun insertArticles(articles: List<com.openfield.app.data.local.entity.KnowledgePackArticleEntity>) {
+            this.articles.removeAll { a -> articles.any { it.id == a.id } }
+            this.articles.addAll(articles)
         }
         override suspend fun deleteArticlesForPack(packId: String) {
             articles.removeAll { it.packId == packId }
