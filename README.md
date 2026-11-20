@@ -1,9 +1,11 @@
 <div align="center">
 
-# 🌿 OpenField
+<img src="docs/logo.png" alt="CRUX Official Logo" width="240" />
+
+# 🌌 CRUX
 
 ### **The Private, 100% Offline-First Android AI Companion**
-*Useful intelligence should never depend on an internet connection or a paid cloud subscription.*
+*Named after the southern celestial cross navigators used to find their way in complete darkness without maps or compasses. CRUX provides autonomous intelligence when you are off-grid, traveling, or offline.*
 
 ---
 
@@ -30,34 +32,36 @@
 
 <br/>
 
-<img src="docs/ui.png" alt="OpenField Complete User Interface Overview" width="96%" />
+<img src="docs/ui.png" alt="CRUX Complete User Interface Overview" width="96%" />
 
 </div>
 
 ---
 
-## 💡 Why OpenField?
+## 💡 Why CRUX?
 
 Every major AI assistant today—ChatGPT, Claude, Copilot, Gemini—requires an active internet connection, a registered account, and silent transmission of your personal queries, documents, and photos to remote corporate data centers.
 
-**OpenField changes that.**
+**CRUX changes that.**
 
-OpenField brings state-of-the-art **on-device language modeling (Gemma 4 E2B IT)** directly to your Android device via **Google LiteRT-LM**. Everything executes on your phone's processor. No cloud servers, no API tokens, no monthly subscriptions, and zero data leakage.
+CRUX brings state-of-the-art **on-device language modeling (Gemma 4 E2B IT)** directly to your Android device via **Google LiteRT-LM**. Everything executes on your phone's processor. No cloud servers, no API tokens, no monthly subscriptions, and zero data leakage.
 
 Whether you are:
 - ✈️ **Traveling in Airplane Mode** with no cellular coverage,
-- 🌲 **Off-grid or in remote field environments** repairing electrical systems or machinery,
+- 🌲 **Off-grid or in remote field environments** diagnosing machinery or electrical setups,
 - 🏥 **Handling confidential documents** that legally cannot leave your device,
 - 🎓 **Studying or revising textbooks** without internet distractions,
 - 🛡️ **Seeking absolute privacy** without companies training on your personal notes...
 
-**OpenField is your autonomous, always-ready intelligence companion.**
+**CRUX is your autonomous, always-ready intelligence companion.**
+
+> *Note:* CRUX was formerly developed under the project codename OpenField.
 
 ---
 
-## ⚖️ OpenField vs. Cloud AI Assistants
+## ⚖️ CRUX vs. Cloud AI Assistants
 
-| Feature | ☁️ Cloud AI Assistants (ChatGPT, Claude, etc.) | 🌿 OpenField (100% On-Device) |
+| Feature | ☁️ Cloud AI Assistants (ChatGPT, Claude, etc.) | 🌌 CRUX (100% On-Device) |
 |---|---|---|
 | **Internet Dependency** | ❌ Mandatory (Fails completely without connectivity) | ✅ **100% Offline (Works in airplane mode & remote areas)** |
 | **Privacy & Data Storage** | ❌ Prompts, images & documents sent to remote servers | ✅ **Local-Only (Stays in device app-private SQLite storage)** |
@@ -71,11 +75,11 @@ Whether you are:
 
 ## ✨ Core Workspaces & Capabilities
 
-OpenField rejects the "single generic chat transcript" pattern. Each capability is backed by a tailored workspace and dedicated prompt contracts:
+CRUX rejects the "single generic chat transcript" pattern. Each capability is backed by a tailored workspace and dedicated prompt contracts:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        OpenField Workspace Suite                       │
+│                          CRUX Workspace Suite                          │
 ├──────────────────┬──────────────────┬──────────────────┬───────────────┤
 │    💬 Ask AI     │ 📄 Ask Document  │ 📷 Analyze Image │ 🛠️ Solve Prob │
 │ Conversational   │ Local Grounded   │ On-Device Vision │ Diagnostic    │
@@ -143,10 +147,10 @@ OpenField rejects the "single generic chat transcript" pattern. Each capability 
 
 ## 🏛️ System Architecture
 
-OpenField implements modern Android Clean Architecture with unidirectional data flow (UDF), isolated domain controllers, and strict separation between presentation, local retrieval, and local inference.
+CRUX implements modern Android Clean Architecture with unidirectional data flow (UDF), isolated domain controllers, and strict separation between presentation, local retrieval, and local inference.
 
 <p align="center">
-  <img src="docs/architecture.png" alt="OpenField Architecture Diagram" width="96%" />
+  <img src="docs/architecture.png" alt="CRUX Architecture Diagram" width="96%" />
 </p>
 
 ### Architectural Layers:
@@ -176,7 +180,7 @@ OpenField implements modern Android Clean Architecture with unidirectional data 
 ## 🔄 System Workflow & Lifecycles
 
 <p align="center">
-  <img src="docs/workflow.png" alt="OpenField Workflow Diagram" width="96%" />
+  <img src="docs/workflow.png" alt="CRUX Workflow Diagram" width="96%" />
 </p>
 
 ### 1. Document RAG Pipeline
@@ -267,7 +271,7 @@ cd openfield-ai/android
 
 ## 📦 Packaging Custom Knowledge Packs
 
-You can package your own domain guides into standardized OpenField Knowledge Packs for free distribution:
+You can package your own domain guides into standardized CRUX Knowledge Packs for free distribution:
 
 ```powershell
 python scripts/package_knowledge_packs.py
@@ -281,7 +285,7 @@ This generates `.zip` bundles in `catalog/packs/` and updates `catalog/packs.jso
 - 🚫 **No Silent Uploads:** Zero transmission of user prompts, conversations, images, documents, or audio.
 - 🛡️ **Zip-Slip Protected:** Safe extraction rejecting relative path traversals (`..`) or absolute paths.
 - 🔐 **SHA-256 Verified:** Strict cryptographic integrity checking for all model artifacts and knowledge packs.
-- 🧹 **Factory Reset Guarantee:** Transparent **"Clear All OpenField Data"** setting that purges all SQLite databases and user files while preserving the downloaded model weights.
+- 🧹 **Factory Reset Guarantee:** Transparent **"Clear All CRUX Data"** setting that purges all SQLite databases and user files while preserving the downloaded model weights.
 
 ---
 
@@ -296,7 +300,7 @@ We welcome contributions from developers, researchers, technical writers, and de
 
 ---
 
-## ⭐ Support OpenField
+## ⭐ Support CRUX
 
 If you believe in **offline-first, privacy-preserving AI for everyone**, please give this repository a ⭐ on GitHub! It helps more developers, travelers, and field workers discover the project.
 
@@ -306,5 +310,5 @@ If you believe in **offline-first, privacy-preserving AI for everyone**, please 
 
 ## 📄 License
 
-OpenField is licensed under the **[Apache License, Version 2.0](LICENSE)**.  
+CRUX is licensed under the **[Apache License, Version 2.0](LICENSE)**.  
 Third-party model weights (Gemma 4) and inference runtimes (Google LiteRT-LM) are subject to Google's terms and licenses.

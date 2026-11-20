@@ -41,7 +41,7 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             ScreenTopBar(
-                title = "About OpenField",
+                title = "About CRUX",
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack
             )
@@ -66,7 +66,7 @@ fun AboutScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "OpenField",
+                text = "CRUX",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = OpenFieldNavyText
@@ -103,7 +103,7 @@ fun AboutScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "OpenField is an offline-first companion designed to help people ask questions, understand unfamiliar things, analyze images and documents, learn concepts, and solve everyday problems without requiring cloud internet access.",
+                        text = "CRUX is an offline-first companion designed to help people ask questions, understand unfamiliar things, analyze images and documents, learn concepts, and solve everyday problems without requiring cloud internet access.",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 13.sp,
                             lineHeight = 20.sp,

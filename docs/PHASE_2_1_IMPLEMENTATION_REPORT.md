@@ -1,6 +1,6 @@
-# OpenField Phase 2.1 (v0.2.1) — Implementation & Verification Report
+# CRUX Phase 2.1 (v0.2.1) — Implementation & Verification Report
 
-**Project:** OpenField  
+**Project:** CRUX  
 **Release Version:** v0.2.1  
 **Document Date:** 20 November 2026  
 **Target Platform:** Android 14 (API 34)  
@@ -146,7 +146,7 @@ Tested live on the connected physical device:
   - Installed `Devices & Repairs` (1.8 GB) pack; verified state changed to `Installed & active offline` with green checkmark.
   - Performed offline topic search for `"soldering"`: instantly filtered and matched `Devices & Repairs` from local Room database.
 - **About & Settings Verification:**
-  - Verified version display: `About OpenField` displays `Version 0.2.1 (Phase 2.1)` with 100% offline-first principles.
+  - Verified version display: `About CRUX` displays `Version 0.2.1 (Phase 2.1)` with 100% offline-first principles.
 - **Memory, Thermal & Battery:**
   - Peak RAM usage during model inference: ~3.8 GB (well within 6 GB total).
   - Page bitmap rendering bounded to < 25 MB with immediate recycling.

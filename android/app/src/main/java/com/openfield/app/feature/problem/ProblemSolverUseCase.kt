@@ -23,7 +23,7 @@ Keep instructions practical, safe, and easy to follow.
         val config = AiGenerationConfig(
             temperature = 0.4,
             topP = 0.9,
-            systemPrompt = "You are OpenField's offline troubleshooting and diagnostics assistant. Provide systematic, safe, and actionable repair steps."
+            systemPrompt = "You are CRUX's offline troubleshooting and diagnostics assistant. Provide systematic, safe, and actionable repair steps."
         )
 
         return aiEngine.generateStream(prompt, config)

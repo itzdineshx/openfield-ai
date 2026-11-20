@@ -160,7 +160,7 @@ class ModelDownloadService : Service() {
     private fun acquireWakeLock() {
         if (wakeLock?.isHeld == true) return
         val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OpenField:ModelDownload").apply {
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "CRUX:ModelDownload").apply {
             setReferenceCounted(false)
             acquire(30 * 60 * 1000L /* 30 min safety timeout */)
         }
@@ -180,7 +180,7 @@ class ModelDownloadService : Service() {
             if (existing == null) {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "Model Download",
+                    "CRUX Model Download",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
                     description = "Progress for the on-device AI model download"

@@ -1,8 +1,8 @@
-# OpenField Phase 3 Implementation & Release Report
+# CRUX Phase 3 Implementation & Release Report
 
 **Document Version:** 1.0.0 (Final Stable Release)  
 **Date:** 20 November 2026  
-**Project:** OpenField — Offline-First Android AI Platform  
+**Project:** CRUX — Offline-First Android AI Platform  
 **Target Milestone:** v1.0.0 Stable (`versionCode = 10`, `versionName = "1.0.0"`)  
 **Package ID:** `com.openfield.app`  
 **Target Device Tested:** LAVA LXX503 (Android 14, ARM64, 6 GB RAM)  
@@ -13,7 +13,7 @@
 
 ## 1. Executive Summary
 
-Phase 3 successfully transforms OpenField from an offline AI application with isolated features into a unified, privacy-first personal intelligence platform. Every milestone defined in `docs/ROADMAP_P3.md` has been fully implemented, rigorously tested with a 186-test automated unit suite, and physically verified on connected hardware (`LAVA LXX503`, Android 14) in both connected and airplane modes.
+Phase 3 successfully transforms CRUX from an offline AI application with isolated features into a unified, privacy-first personal intelligence platform. Every milestone defined in `docs/ROADMAP_P3.md` has been fully implemented, rigorously tested with a 186-test automated unit suite, and physically verified on connected hardware (`LAVA LXX503`, Android 14) in both connected and airplane modes.
 
 All core promises remain intact:
 1. **Zero Cloud Inference:** 100% on-device generative reasoning via Gemma 4 E2B IT and LiteRT-LM CPU.
@@ -109,4 +109,4 @@ All releases were physically deployed via ADB to connected hardware:
 
 ## 6. Conclusion
 
-OpenField Phase 3 is **100% Complete**. The application achieves all architectural, functional, security, and verification requirements established in the Phase 1 PRD v1.1 and `docs/ROADMAP_P3.md`. It stands as a production-grade, privacy-first, offline-first personal intelligence platform for Android.
+CRUX Phase 3 is **100% Complete**. The application achieves all architectural, functional, security, and verification requirements established in the Phase 1 PRD v1.1 and `docs/ROADMAP_P3.md`. It stands as a production-grade, privacy-first, offline-first personal intelligence platform for Android.

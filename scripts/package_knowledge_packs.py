@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-OpenField Knowledge Pack Packager
-Packages authentic domain knowledge into standardized OpenField .zip bundles (.ofp).
+CRUX Knowledge Pack Packager
+Packages authentic domain knowledge into standardized CRUX .zip bundles (.ofp).
 Generates SHA-256 checksums and creates catalog/packs.json for 100% free hosting
 via GitHub Releases and GitHub Raw.
 """
@@ -30,7 +30,7 @@ PACKS = [
         "version": "1.2.0",
         "icon_color_hex": 0xFF43A047,
         "topics": ["Networking", "Linux Commands", "Hardware Architecture", "Troubleshooting", "Operating Systems", "Linux"],
-        "provenance": "OpenField Official Curated Corpus",
+        "provenance": "CRUX Official Curated Corpus",
         "articles": [
             {
                 "id": "comp_tech_linux_perms",
@@ -153,7 +153,7 @@ Understanding the standard boot sequence allows technicians to isolate hardware 
         "version": "1.3.0",
         "icon_color_hex": 0xFF43A047,
         "topics": ["Soldering", "Circuit Boards", "Multimeter Tests", "Component Replacement", "Power Supplies", "Multimeter"],
-        "provenance": "OpenField Official Curated Corpus",
+        "provenance": "CRUX Official Curated Corpus",
         "articles": [
             {
                 "id": "devices_multimeter_ref",
@@ -260,7 +260,7 @@ Short-circuits on motherboard power rails typically occur when an SMD ceramic ca
         "version": "1.0.0",
         "icon_color_hex": 0xFF7E57C2,
         "topics": ["Physics Formulas", "Periodic Table", "Calculus Essentials", "Cellular Biology", "Mechanics"],
-        "provenance": "OpenField Official Curated Corpus",
+        "provenance": "CRUX Official Curated Corpus",
         "articles": [
             {
                 "id": "learning_physics_mechanics",
@@ -330,7 +330,7 @@ The periodic table organizes all known chemical elements in order of increasing 
         "version": "1.1.0",
         "icon_color_hex": 0xFF1E88E5,
         "topics": ["Kotlin Coroutines", "Room Database", "Clean Architecture", "Data Structures", "Algorithms"],
-        "provenance": "OpenField Official Curated Corpus",
+        "provenance": "CRUX Official Curated Corpus",
         "articles": [
             {
                 "id": "programming_kotlin_coroutines",
@@ -404,7 +404,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         "version": "1.0.0",
         "icon_color_hex": 0xFF00ACC1,
         "topics": ["Vocabulary", "Technical Terms", "Grammar Rules", "Phrases", "Translations"],
-        "provenance": "OpenField Official Curated Corpus",
+        "provenance": "CRUX Official Curated Corpus",
         "articles": [
             {
                 "id": "languages_grammar_frameworks",
@@ -453,7 +453,7 @@ def package_all():
     PACKS_DIR.mkdir(parents=True, exist_ok=True)
     catalog_items = []
 
-    print(f"Building OpenField Knowledge Packs -> {PACKS_DIR}...")
+    print(f"Building CRUX Knowledge Packs -> {PACKS_DIR}...")
 
     for pack in PACKS:
         pack_id = pack["id"]

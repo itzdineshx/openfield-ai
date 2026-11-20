@@ -1,6 +1,6 @@
-# OpenField Supported Devices & Hardware Guide
+# CRUX Supported Devices & Hardware Guide
 
-This document establishes the hardware compatibility matrix, processor requirements, and performance expectations for running **OpenField** and local **Gemma 4 E2B IT** inference via **LiteRT-LM**.
+This document establishes the hardware compatibility matrix, processor requirements, and performance expectations for running **CRUX** and local **Gemma 4 E2B IT** inference via **LiteRT-LM**.
 
 ---
 
@@ -61,6 +61,6 @@ This document establishes the hardware compatibility matrix, processor requireme
 
 ## 3. Thermal and Battery Considerations
 
-1. **Cooperative Cancellation:** OpenField supports cooperative cancellation through Kotlin Coroutines (`Job.cancel()`). Halting generation instantly ceases CPU/GPU utilization, preventing thermal escalation.
+1. **Cooperative Cancellation:** CRUX supports cooperative cancellation through Kotlin Coroutines (`Job.cancel()`). Halting generation instantly ceases CPU/GPU utilization, preventing thermal escalation.
 2. **Memory Footprint:** The application reserves ~2.1 GB of working memory for model weights and dynamic activation context during active inference.
 3. **Background Behavior:** Model execution pauses when the application is backgrounded or minimized, ensuring zero passive battery drain.

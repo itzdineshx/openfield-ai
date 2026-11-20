@@ -43,6 +43,6 @@ jobs:
       - name: Archive Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: openfield-debug-apk
+          name: crux-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

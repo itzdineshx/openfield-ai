@@ -1,6 +1,6 @@
-# OpenField Phase 2 — Comprehensive Status Report & PRD Comparison
+# CRUX Phase 2 — Comprehensive Status Report & PRD Comparison
 
-**Project:** OpenField  
+**Project:** CRUX  
 **Target Version:** v0.2.0 (Phase 2 Release)  
 **Document Date:** 20 November 2026  
 **Platform:** Native Android (Kotlin + Jetpack Compose + Material 3)  
@@ -15,7 +15,7 @@
 
 ## 1. Executive Summary
 
-OpenField Phase 2 transitions the application from an initial offline AI prototype into an intelligent, task-specific, mode-based mobile workstation. While Phase 1 proved that Gemma 4 E2B IT can run offline on a mid-range Android phone, different features previously behaved like slight variations of a generic chatbot. 
+CRUX Phase 2 transitions the application from an initial offline AI prototype into an intelligent, task-specific, mode-based mobile workstation. While Phase 1 proved that Gemma 4 E2B IT can run offline on a mid-range Android phone, different features previously behaved like slight variations of a generic chatbot. 
 
 In Phase 2:
 1. **Every mode is decoupled into a dedicated workspace:** Chat, Image Analysis, Document Q&A, Problem Solving, Learning & Explanation, Writing Studio, AI Tools, and My Library have independent UI components, interaction state machines, specialized prompts, and validated output schemas.
@@ -248,7 +248,7 @@ The following capabilities were analyzed against the PRD and confirmed as **inte
 - **Community Pack Marketplace & Public Reviews (PRD Section 18, 28):**
   - *Status:* Deferred. Requires server-side moderation, authentication, and content governance.
 - **Trip Planning, GPS Navigation, SOS & Emergency Response (PRD Section 1, 6, 9):**
-  - *Status:* Strictly Out-of-Scope. OpenField is an information companion, not a safety-critical navigation or emergency signaling tool.
+  - *Status:* Strictly Out-of-Scope. CRUX is an information companion, not a safety-critical navigation or emergency signaling tool.
 - **Secondary Cloud Fallback Models (Strict Rule #1 & #4):**
   - *Status:* Prohibited. Gemma 4 E2B IT remains the only approved offline model.
 
@@ -290,7 +290,7 @@ The following capabilities were analyzed against the PRD and confirmed as **inte
 
 ## 7. Conclusion & Recommended Action Plan
 
-OpenField Phase 2 (v0.2.0) has successfully satisfied all core architectural goals and acceptance criteria defined in the PRD:
+CRUX Phase 2 (v0.2.0) has successfully satisfied all core architectural goals and acceptance criteria defined in the PRD:
 1. Every AI mode operates as a distinct, specialized workspace rather than a generic chatbot.
 2. The unified `AiOrchestrator` efficiently multiplexes Gemma 4 E2B IT across all modes on physical hardware.
 3. The UI strictly adheres to the 14-screen Material 3 design reference.

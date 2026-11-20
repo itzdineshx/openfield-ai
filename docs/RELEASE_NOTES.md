@@ -1,10 +1,10 @@
-# OpenField Release Notes
+# CRUX Release Notes
 
 ## Version 1.0.0 — Phase 3 Final Stable Release
 
 **Release Date:** November 2026
 
-OpenField v1.0.0 marks the completion of Phase 3, transforming OpenField from an offline AI application into a complete, unified personal intelligence platform. It provides everyday understanding, grounded multi-source research, structured problem solving, continuous task workflows, and high-precision deterministic tools—all operating 100% locally on Android devices without internet connectivity, cloud inference, or private data exposure:
+CRUX v1.0.0 marks the completion of Phase 3, transforming CRUX from an offline AI application into a complete, unified personal intelligence platform. It provides everyday understanding, grounded multi-source research, structured problem solving, continuous task workflows, and high-precision deterministic tools—all operating 100% locally on Android devices without internet connectivity, cloud inference, or private data exposure:
 
 ---
 
@@ -58,7 +58,7 @@ OpenField v1.0.0 marks the completion of Phase 3, transforming OpenField from an
 
 **Release Date:** November 2026
 
-OpenField v0.9.0 represents the feature-complete Release Candidate for Phase 3. It freezes all major feature developments, completes system-wide navigation and accessibility audits, hardens on-device security and data privacy boundaries, and verifies seamless end-to-end workflows on physical hardware:
+CRUX v0.9.0 represents the feature-complete Release Candidate for Phase 3. It freezes all major feature developments, completes system-wide navigation and accessibility audits, hardens on-device security and data privacy boundaries, and verifies seamless end-to-end workflows on physical hardware:
 
 ---
 
@@ -88,7 +88,7 @@ OpenField v0.9.0 represents the feature-complete Release Candidate for Phase 3. 
 
 **Release Date:** November 2026
 
-OpenField v0.6.0 completes the integration of on-device personal memory, advanced retrieval optimization, and end-to-end productivity workflows. Users now experience seamless synergy across learning, diagnostic troubleshooting, research synthesis, and task management, backed by strict offline privacy and zero cloud dependence:
+CRUX v0.6.0 completes the integration of on-device personal memory, advanced retrieval optimization, and end-to-end productivity workflows. Users now experience seamless synergy across learning, diagnostic troubleshooting, research synthesis, and task management, backed by strict offline privacy and zero cloud dependence:
 
 ---
 
@@ -132,7 +132,7 @@ OpenField v0.6.0 completes the integration of on-device personal memory, advance
 
 **Release Date:** November 2026
 
-OpenField v0.5.0 introduces automated personal task planning, structured workflow execution, and deterministic offline date and data calculation tools. Users can now convert natural-language goals into structured, actionable checklists with progress tracking, while accessing high-reliability offline utilities without internet connectivity or cloud inference:
+CRUX v0.5.0 introduces automated personal task planning, structured workflow execution, and deterministic offline date and data calculation tools. Users can now convert natural-language goals into structured, actionable checklists with progress tracking, while accessing high-reliability offline utilities without internet connectivity or cloud inference:
 
 ---
 
@@ -174,7 +174,7 @@ OpenField v0.5.0 introduces automated personal task planning, structured workflo
 
 **Release Date:** November 2026
 
-OpenField v0.4.0 delivers seamless cross-workspace continuity and deterministic offline utilities, allowing ongoing user tasks to flow naturally between features without manual re-entry, while introducing high-precision offline calculation and unit conversion tools:
+CRUX v0.4.0 delivers seamless cross-workspace continuity and deterministic offline utilities, allowing ongoing user tasks to flow naturally between features without manual re-entry, while introducing high-precision offline calculation and unit conversion tools:
 
 ---
 
@@ -223,7 +223,7 @@ OpenField v0.4.0 delivers seamless cross-workspace continuity and deterministic 
 
 **Release Date:** November 2026
 
-OpenField v0.3.0 transforms the application from independent specialized workspaces into a unified personal knowledge platform. Users can now organize, discover, and reason across their documents, notes, conversations, and installed knowledge packs with cross-source synthesis, strict evidence verification, and interactive inspection.
+CRUX v0.3.0 transforms the application from independent specialized workspaces into a unified personal knowledge platform. Users can now organize, discover, and reason across their documents, notes, conversations, and installed knowledge packs with cross-source synthesis, strict evidence verification, and interactive inspection.
 
 ---
 
@@ -272,7 +272,7 @@ OpenField v0.3.0 transforms the application from independent specialized workspa
 
 **Release Date:** November 2026
 
-OpenField Phase 2.1 hardens the offline-first capabilities of the application by introducing bundled on-device OCR, an extensible local speech recognition abstraction, real knowledge-pack catalog synchronization via FastAPI, and streamlined prompt budgeting:
+CRUX Phase 2.1 hardens the offline-first capabilities of the application by introducing bundled on-device OCR, an extensible local speech recognition abstraction, real knowledge-pack catalog synchronization via FastAPI, and streamlined prompt budgeting:
 
 ---
 
@@ -310,7 +310,7 @@ OpenField Phase 2.1 hardens the offline-first capabilities of the application by
 
 **Release Date:** November 2026
 
-OpenField Phase 2 delivers a complete, task-specific offline AI experience across all application modes, powered exclusively by the on-device Gemma 4 E2B IT model and LiteRT-LM runtime:
+CRUX Phase 2 delivers a complete, task-specific offline AI experience across all application modes, powered exclusively by the on-device Gemma 4 E2B IT model and LiteRT-LM runtime:
 
 ---
 
@@ -357,7 +357,7 @@ OpenField Phase 2 delivers a complete, task-specific offline AI experience acros
 
 **Release Date:** November 2026
 
-We are excited to deliver the first functional release of **OpenField**, the open-source, offline-first Android companion for questions, document understanding, and problem solving.
+We are excited to deliver the first functional release of **CRUX**, the open-source, offline-first Android companion for questions, document understanding, and problem solving.
 
 ---
 

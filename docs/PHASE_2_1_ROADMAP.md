@@ -1,14 +1,14 @@
-# OpenField Phase 2.1 Developer Checklist
+# CRUX Phase 2.1 Developer Checklist
 
 Use GitHub Issues/Projects as the source of truth. Check items only after implementation evidence, tests, and required physical-device verification exist.
 
 **Target Version:** v0.2.1  
 **Phase:** Phase 2.1 — Offline Intelligence, Reliability & Integration  
 **Platform:** Native Android (Kotlin + Jetpack Compose + Material 3)  
-**Baseline Release:** OpenField v0.2.0  
+**Baseline Release:** CRUX v0.2.0  
 **Primary Test Device:** Lava LXX503 — Android 14, ARM64, Unisoc T616, 6GB RAM
 
-**Phase 2.1 Goal:** Strengthen OpenField's offline-first capabilities by introducing reliable local OCR and speech recognition, completing real knowledge-pack catalog integration, improving inference efficiency, and hardening data integrity, privacy, and release reliability.
+**Phase 2.1 Goal:** Strengthen CRUX's offline-first capabilities by introducing reliable local OCR and speech recognition, completing real knowledge-pack catalog integration, improving inference efficiency, and hardening data integrity, privacy, and release reliability.
 
 ---
 
@@ -94,7 +94,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ## Gate 1 — Fully Offline OCR for Documents
 
-**Objective:** Enable OpenField to extract readable text from scanned and image-only PDFs without depending on online OCR services.
+**Objective:** Enable CRUX to extract readable text from scanned and image-only PDFs without depending on online OCR services.
 
 ### OCR engine evaluation
 
@@ -377,7 +377,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ## Gate 4 — Prompt Efficiency and Inference Optimization
 
-**Objective:** Improve response efficiency and resource usage without reducing answer quality, grounding, safety, or the distinct behavior of OpenField's AI workspaces.
+**Objective:** Improve response efficiency and resource usage without reducing answer quality, grounding, safety, or the distinct behavior of CRUX's AI workspaces.
 
 ### Evaluation baseline
 
@@ -568,7 +568,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 - [x] Display storage requirements before large asset downloads
 - [x] Display supported language information
 - [x] Ensure cancellation and retry actions are discoverable
-- [x] Ensure new screens follow the existing professional OpenField design system
+- [x] Ensure new screens follow the existing professional CRUX design system
 
 ### Performance and device verification
 
@@ -722,4 +722,4 @@ Every completed item must have appropriate evidence:
 - Keep GitHub Projects as the authoritative implementation status.
 - Do not mark an entire gate complete while required child issues remain open.
 
-**Final release rule:** OpenField v0.2.1 must remain a genuinely offline-first application. Network access for knowledge-pack discovery and downloads must remain explicit and optional. All core local AI experiences must continue to work without internet after their required models and assets are installed.
+**Final release rule:** CRUX v0.2.1 must remain a genuinely offline-first application. Network access for knowledge-pack discovery and downloads must remain explicit and optional. All core local AI experiences must continue to work without internet after their required models and assets are installed.

@@ -29,7 +29,7 @@ class BackupManager(private val database: OpenFieldDatabase) {
             val learningSessions = database.modeSessionDao().getAllLearningSessions()
 
             val rootJson = JSONObject().apply {
-                put("format", "openfield_backup")
+                put("format", "crux_backup")
                 put("version", 1)
                 put("exportedAt", System.currentTimeMillis())
 
@@ -135,8 +135,9 @@ class BackupManager(private val database: OpenFieldDatabase) {
             } ?: return@withContext Result.failure(Exception("Could not open source backup file"))
 
             val rootJson = JSONObject(content.toString())
-            if (!rootJson.has("format") || rootJson.getString("format") != "openfield_backup") {
-                return@withContext Result.failure(Exception("Invalid file format. Expected OpenField backup."))
+            val format = rootJson.optString("format")
+            if (format != "crux_backup" && format != "openfield_backup") {
+                return@withContext Result.failure(Exception("Invalid file format. Expected CRUX backup."))
             }
 
             var restoredCount = 0

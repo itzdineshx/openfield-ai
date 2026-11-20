@@ -89,7 +89,7 @@ fun ProfileMenuSheet(
 
                     Column {
                         Text(
-                            text = "OpenField User",
+                            text = "CRUX User",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = OpenFieldNavyText
@@ -127,7 +127,7 @@ fun ProfileMenuSheet(
 
                 ProfileMenuItem(
                     icon = Icons.Default.Info,
-                    title = "About OpenField",
+                    title = "About CRUX",
                     subtitle = "Version, purpose and license",
                     onClick = {
                         onDismiss()

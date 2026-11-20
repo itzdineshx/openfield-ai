@@ -1,8 +1,8 @@
-# OpenField Phase 3 Developer Checklist
+# CRUX Phase 3 Developer Checklist
 
 Use GitHub Issues/Projects as the source of truth. Check items only after implementation evidence, automated tests, and required physical-device verification exist.
 
-**Phase 3 Goal:** Transform OpenField from a collection of specialized offline AI workspaces into a unified personal intelligence platform that understands, organizes, connects, and helps users act on their personal knowledge while preserving privacy, offline functionality, and local data ownership.
+**Phase 3 Goal:** Transform CRUX from a collection of specialized offline AI workspaces into a unified personal intelligence platform that understands, organizes, connects, and helps users act on their personal knowledge while preserving privacy, offline functionality, and local data ownership.
 
 **Baseline Release:** v0.2.1 (Phase 2.1)
 
@@ -14,7 +14,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 - v0.7.0 — Advanced Intelligence and Personalization
 - v0.8.0 — Integrated Productivity Workflows
 - v0.9.0 — Release Candidate
-- v1.0.0 — Stable OpenField
+- v1.0.0 — Stable CRUX
 
 ---
 
@@ -42,7 +42,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 0 — Phase 3 Planning and Architecture Audit
 
-**Objective:** Understand the existing OpenField architecture and establish a technically sound foundation before implementing new features.
+**Objective:** Understand the existing CRUX architecture and establish a technically sound foundation before implementing new features.
 
 ### PRD and project review
 
@@ -215,7 +215,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 - [x] Implement Recent Activity section.
 - [x] Implement empty, loading, success, and error states.
 - [x] Implement responsive layouts.
-- [x] Preserve existing OpenField visual consistency.
+- [x] Preserve existing CRUX visual consistency.
 
 ### Source management
 
@@ -389,7 +389,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 4 — Context-Aware Personal Assistant
 
-**Objective:** Transform OpenField from isolated workspaces into a persistent task-oriented assistant that can continue user-approved work across different features.
+**Objective:** Transform CRUX from isolated workspaces into a persistent task-oriented assistant that can continue user-approved work across different features.
 
 ### Task-session architecture
 
@@ -476,7 +476,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 5 — Practical Offline Intelligence
 
-**Objective:** Add reliable deterministic utilities that make OpenField useful even when generative AI is not required.
+**Objective:** Add reliable deterministic utilities that make CRUX useful even when generative AI is not required.
 
 ## Calculator and expression engine
 
@@ -599,7 +599,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 6 — Personal Task Automation
 
-**Objective:** Enable OpenField to convert natural-language requests into editable, persistent, user-controlled task workflows.
+**Objective:** Enable CRUX to convert natural-language requests into editable, persistent, user-controlled task workflows.
 
 ### Task architecture
 
@@ -805,7 +805,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 8 — Integrated Productivity Workflows
 
-**Objective:** Connect OpenField's knowledge, learning, writing, troubleshooting, and task capabilities into complete end-to-end workflows.
+**Objective:** Connect CRUX's knowledge, learning, writing, troubleshooting, and task capabilities into complete end-to-end workflows.
 
 ### Research workflow
 
@@ -897,7 +897,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 # Gate 9 — Navigation, Accessibility and User Experience
 
-**Objective:** Ensure OpenField remains intuitive as its capabilities grow.
+**Objective:** Ensure CRUX remains intuitive as its capabilities grow.
 
 ### Navigation
 
@@ -1152,7 +1152,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ---
 
-# Gate 12 — v1.0.0 Stable OpenField Release
+# Gate 12 — v1.0.0 Stable CRUX Release
 
 **Objective:** Deliver a reliable, privacy-first, offline personal intelligence application suitable for real-world use.
 
@@ -1215,7 +1215,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 Phase 3 can be marked complete only when:
 
 - [x] Every approved Phase 3 gate has its acceptance criteria satisfied.
-- [x] OpenField has a unified local knowledge infrastructure.
+- [x] CRUX has a unified local knowledge infrastructure.
 - [x] Users can organize and search supported local sources.
 - [x] Cross-source AI answers use actual retrieved evidence.
 - [x] Citations resolve to real source records.
@@ -1273,4 +1273,4 @@ Maintain the following project documents:
 13. Do not change completed checkboxes without new verification evidence.
 14. Do not start a later milestone while the previous milestone has unresolved critical issues.
 
-**Final Product Goal:** OpenField should become a unified, intelligent, privacy-first personal assistant that helps people understand their information, learn, solve problems, organize knowledge, and complete meaningful tasks — with local AI and offline-first functionality at its foundation.
+**Final Product Goal:** CRUX should become a unified, intelligent, privacy-first personal assistant that helps people understand their information, learn, solve problems, organize knowledge, and complete meaningful tasks — with local AI and offline-first functionality at its foundation.

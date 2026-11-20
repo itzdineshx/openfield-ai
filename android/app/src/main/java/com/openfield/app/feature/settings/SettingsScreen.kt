@@ -560,7 +560,7 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .clickable {
                                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
-                                exportBackupLauncher.launch("openfield_backup_$timestamp.json")
+                                exportBackupLauncher.launch("crux_backup_$timestamp.json")
                             }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -665,7 +665,7 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Clear All OpenField Data",
+                                    text = "Clear All CRUX Data",
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.SemiBold,
                                         color = Color(0xFFD32F2F)
@@ -716,7 +716,7 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "About OpenField",
+                                    text = "About CRUX",
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.SemiBold,
                                         color = OpenFieldNavyText
@@ -916,7 +916,7 @@ fun SettingsScreen(
                 text = {
                     Column {
                         Text(
-                            text = "OpenField operates offline with zero cloud telemetry. You can teach the model facts about your field work or background, or wipe remembered context anytime.",
+                            text = "CRUX operates offline with zero cloud telemetry. You can teach the model facts about your field work or background, or wipe remembered context anytime.",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = OpenFieldSecondaryText,
                                 fontSize = 12.sp
@@ -966,7 +966,7 @@ fun SettingsScreen(
                 onDismissRequest = { showClearAllDataDialog = false },
                 title = {
                     Text(
-                        text = "Clear All OpenField Data?",
+                        text = "Clear All CRUX Data?",
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFD32F2F)
                     )
@@ -987,7 +987,7 @@ fun SettingsScreen(
                             scope.launch {
                                 repository.clearAllUserData()
                                 showClearAllDataDialog = false
-                                Toast.makeText(context, "All OpenField user data has been reset", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "All CRUX user data has been reset", Toast.LENGTH_LONG).show()
                             }
                         }
                     ) {

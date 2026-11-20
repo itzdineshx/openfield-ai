@@ -1,9 +1,9 @@
-# OpenField Phase 3 — Test Strategy & Quality Assurance Plan
+# CRUX Phase 3 — Test Strategy & Quality Assurance Plan
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
 **Status:** Approved for Implementation  
-**Target Milestone:** OpenField v0.3.0 → v1.0.0  
+**Target Milestone:** CRUX v0.3.0 → v1.0.0  
 **Test Frameworks:** JUnit 4, Kotlin Coroutines Test, Roborazzi / AndroidX Test  
 **Physical Hardware:** Lava LXX503 (Android 14 API 34, ARM64, 6 GB RAM)
 
@@ -11,7 +11,7 @@
 
 ## 1. Quality Philosophy & Verification Levels
 
-In accordance with OpenField project rules (`AGENTS.md`), quality is never claimed without evidence. The test strategy enforces strict separation across four distinct verification levels:
+In accordance with CRUX project rules (`AGENTS.md`), quality is never claimed without evidence. The test strategy enforces strict separation across four distinct verification levels:
 
 1. **Level 1: Automated Unit Tests (`testDebugUnitTest`):**
    - Validates pure business logic, string transformations, regex parsing, prompt builders, schema validators, scoring functions, and deterministic utilities. Runs rapidly in JVM.

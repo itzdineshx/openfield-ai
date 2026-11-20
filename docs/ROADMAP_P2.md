@@ -1,8 +1,8 @@
-# OpenField Phase 2 Developer Checklist
+# CRUX Phase 2 Developer Checklist
 
 Use GitHub Issues/Projects as the source of truth. Check items only after implementation evidence, tests, and required device verification exist.
 
-**Phase 2 Goal:** Transform OpenField from a functional offline AI application into a collection of intelligent, interactive, task-specific AI experiences while preserving its local-first architecture.
+**Phase 2 Goal:** Transform CRUX from a functional offline AI application into a collection of intelligent, interactive, task-specific AI experiences while preserving its local-first architecture.
 
 **Core Constraints:**
 - Keep Gemma 4 E2B IT as the single approved AI model.
@@ -33,7 +33,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ## Gate 1 — Mode-based AI architecture
 
-**Objective:** Make each OpenField feature behave according to its actual purpose instead of rendering every response as a generic chatbot conversation.
+**Objective:** Make each CRUX feature behave according to its actual purpose instead of rendering every response as a generic chatbot conversation.
 
 - [x] Audit all existing AI entry points
 - [x] Implement centralized AI mode identification
@@ -194,7 +194,7 @@ Use GitHub Issues/Projects as the source of truth. Check items only after implem
 
 ## Gate 7 — Personalization and local memory
 
-**Objective:** Make OpenField adapt to user preferences while keeping personalization transparent and under user control.
+**Objective:** Make CRUX adapt to user preferences while keeping personalization transparent and under user control.
 
 - [x] Audit existing user preferences and settings storage
 - [x] Implement preferred explanation level

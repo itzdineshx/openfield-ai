@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">OpenField</string>
-    <string name="app_subtitle">Your offline AI companion</string>
-    <string name="shortcut_chat">Ask AI</string>
+    <string name="app_name">CRUX</string>
+    <string name="app_subtitle">Offline-First AI Companion</string>
+    <string name="shortcut_chat">Ask Crux</string>
     <string name="shortcut_chat_desc">Start a new conversation with Gemma</string>
     <string name="shortcut_image">Analyze Image</string>
     <string name="shortcut_image_desc">Identify and inspect photos on-device</string>

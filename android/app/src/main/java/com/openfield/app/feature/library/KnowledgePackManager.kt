@@ -42,7 +42,7 @@ class KnowledgePackManager(
 ) {
 
     companion object {
-        const val OFFICIAL_PROVENANCE = "OpenField Official Curated Corpus"
+        const val OFFICIAL_PROVENANCE = "CRUX Official Curated Corpus"
         const val GITHUB_RELEASES_BASE = "https://github.com/itzdineshx/openfield-ai/releases/download/v1.0.0"
 
         val CURATED_CATALOG: List<KnowledgePackManifest> = listOf(

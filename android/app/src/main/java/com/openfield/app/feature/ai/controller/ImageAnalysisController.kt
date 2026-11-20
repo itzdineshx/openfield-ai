@@ -230,7 +230,7 @@ class ImageAnalysisController(
         val text = buildString {
             append(s.subject).append("\n\n")
             append(Markdown.toPlainText(_rawAnalysisText.value))
-            append("\n\n— Analyzed offline with OpenField")
+            append("\n\n— Analyzed offline with CRUX")
         }
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"

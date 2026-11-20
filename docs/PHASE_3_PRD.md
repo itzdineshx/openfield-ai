@@ -1,4 +1,4 @@
-# OpenField Phase 3 — Product Requirements Document (PRD)
+# CRUX Phase 3 — Product Requirements Document (PRD)
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
@@ -13,12 +13,12 @@
 
 ## 1. Executive Summary & Vision
 
-OpenField is an **offline-first Android personal intelligence platform**. It empowers people to understand personal documents, organize knowledge, learn complex concepts, troubleshoot practical problems, perform everyday calculations, and produce useful writing—completely offline, with user data remaining private by default.
+CRUX is an **offline-first Android personal intelligence platform**. It empowers people to understand personal documents, organize knowledge, learn complex concepts, troubleshoot practical problems, perform everyday calculations, and produce useful writing—completely offline, with user data remaining private by default.
 
 ### 1.1 The Phase 3 Evolution
-In Phase 1 and Phase 2, OpenField established capable, decoupled AI workspaces (Ask AI, Analyze Image, Document Q&A, Solve a Problem, Learn & Explain, Create & Write, AI Tools, and My Library).
+In Phase 1 and Phase 2, CRUX established capable, decoupled AI workspaces (Ask AI, Analyze Image, Document Q&A, Solve a Problem, Learn & Explain, Create & Write, AI Tools, and My Library).
 
-In **Phase 3**, OpenField transforms from a suite of isolated tools into a **Unified Personal Intelligence Platform**:
+In **Phase 3**, CRUX transforms from a suite of isolated tools into a **Unified Personal Intelligence Platform**:
 1. **Unified Personal Knowledge (v0.3.0):** Users can organize, search, and reason across multiple local sources (PDFs, OCR scans, notes, chat history, and installed knowledge packs) simultaneously with verifiable citations.
 2. **Context-Aware Assistant (v0.4.0):** Workspaces maintain continuous task context, enabling seamless transitions from research to explanation to drafting without repetitive prompts.
 3. **Practical Offline Intelligence (v0.5.0):** Reliable, deterministic local utilities (calculator, unit converter, date/time, QR scanner, CSV inspector) complement generative AI.

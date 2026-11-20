@@ -1,9 +1,9 @@
-# OpenField Phase 3 — Database Design Specification
+# CRUX Phase 3 — Database Design Specification
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
 **Status:** Approved for Implementation  
-**Target Milestone:** OpenField v0.3.0 (Database Schema Version 5)  
+**Target Milestone:** CRUX v0.3.0 (Database Schema Version 5)  
 **Database Engine:** Room 2.7.2 over SQLite (Android 14 API 34)  
 **FTS Engine:** SQLite FTS4 Virtual Tables
 
@@ -11,7 +11,7 @@
 
 ## 1. Database Architecture Overview
 
-OpenField relies strictly on a local Room SQLite database (`openfield.db`) located in the application's private data sandbox (`/data/user/0/com.openfield.app/databases/openfield.db`).
+CRUX relies strictly on a local Room SQLite database (`openfield.db`) located in the application's private data sandbox (`/data/user/0/com.openfield.app/databases/openfield.db`).
 
 ### Guiding Principles:
 1. **Zero Cloud Sync:** No external synchronization triggers or silent cloud replication.

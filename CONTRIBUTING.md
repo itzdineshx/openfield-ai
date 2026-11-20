@@ -1,20 +1,20 @@
-# Contributing to OpenField
+# Contributing to CRUX
 
-Thank you for considering a contribution.
+Thank you for considering a contribution to **CRUX** (formerly OpenField), the private, 100% offline-first Android AI companion.
 
 ## Before starting
 
 1. Read the Phase 1 PRD and relevant architecture/API documents.
 2. Search existing issues and discussions.
 3. For a substantial feature, open an issue first to confirm scope and design.
-4. Avoid adding features outside Phase 1 without an approved scope decision.
+4. Avoid adding features outside the offline-first scope without an approved decision.
 
 ## Development rules
 
 - Keep local AI and local content usable without a backend.
 - Do not transmit prompts, documents, images, or chat history unless the user explicitly initiates a clearly disclosed action.
 - Do not log sensitive content.
-- Keep UI code in Compose; use ViewModels/use cases/repositories for behavior.
+- Keep UI code in Jetpack Compose; use ViewModels/use cases/repositories for behavior.
 - Isolate model/runtime APIs behind an adapter.
 - Make long-running work cancellable and keep it off the main thread.
 - Add tests for behavior and edge cases.
@@ -37,6 +37,7 @@ Keep PRs focused. Do not combine unrelated refactors and features.
 ## Commit messages
 
 Use a consistent convention, for example:
+- `feat(branding): adapt brand mark to CRUX sapphire blue logo`
 - `feat(chat): persist conversation history`
 - `fix(ai): handle model initialization failure`
 - `docs: clarify offline behavior`

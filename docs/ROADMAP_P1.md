@@ -1,4 +1,4 @@
-# OpenField Phase 1 Developer Checklist
+# CRUX Phase 1 Developer Checklist
 
 Use GitHub Issues/Projects as the source of truth. Check items only after evidence exists.
 

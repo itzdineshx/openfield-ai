@@ -1,17 +1,17 @@
-# OpenField Phase 3 — Architecture & Baseline Audit
+# CRUX Phase 3 — Architecture & Baseline Audit
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
 **Auditor:** Principal Android Architect & AI Systems Engineer  
-**Baseline Release:** OpenField v0.2.1 (Phase 2.1 Release, Tag: `v0.2.1`)  
-**Target Milestone:** Phase 3 (v0.3.0 Unified Personal Knowledge → v1.0.0 Stable OpenField)  
+**Baseline Release:** CRUX v0.2.1 (Phase 2.1 Release, Tag: `v0.2.1`)  
+**Target Milestone:** Phase 3 (v0.3.0 Unified Personal Knowledge → v1.0.0 Stable CRUX)  
 **Target Hardware:** Lava LXX503 (Android 14, ARM64, 6 GB RAM, Unisoc T616)
 
 ---
 
 ## 1. Executive Baseline & Audit Summary
 
-OpenField v0.2.1 is currently deployed, passing 100% of automated tests (110 tests across 17 suites), and verified on physical hardware. The application provides local generative AI capabilities powered strictly by Google LiteRT-LM (0.19.1) running Gemma 4 E2B IT (`gemma-4-E2B-it.litertlm`, 2.58 GB weights) on-device via CPU.
+CRUX v0.2.1 is currently deployed, passing 100% of automated tests (110 tests across 17 suites), and verified on physical hardware. The application provides local generative AI capabilities powered strictly by Google LiteRT-LM (0.19.1) running Gemma 4 E2B IT (`gemma-4-E2B-it.litertlm`, 2.58 GB weights) on-device via CPU.
 
 ### Core Baseline Findings:
 1. **Single Shared Model Architecture:** A single process-scoped `AiOrchestrator` manages `LiteRtLmEngine` (implementing `LocalAiEngine`). All features share this single instance, preventing duplicate model loads and Out-Of-Memory (OOM) termination on 6 GB RAM devices.
@@ -23,7 +23,7 @@ OpenField v0.2.1 is currently deployed, passing 100% of automated tests (110 tes
    - Writing drafts are isolated in `writing_drafts`.
    - Knowledge packs reside in `knowledge_packs` (queried in-memory).
    - Learning lessons reside in `learning_sessions`.
-5. **The Phase 3 Mandate:** Phase 3 transitions OpenField from a set of isolated tools into a **Unified Personal Intelligence Platform**, allowing users to search, organize into collections, ask cross-source questions with grounded citations, maintain continuous task sessions, and execute deterministic workflows offline.
+5. **The Phase 3 Mandate:** Phase 3 transitions CRUX from a set of isolated tools into a **Unified Personal Intelligence Platform**, allowing users to search, organize into collections, ask cross-source questions with grounded citations, maintain continuous task sessions, and execute deterministic workflows offline.
 
 ---
 
@@ -36,7 +36,7 @@ android/app/src/main/java/com/openfield/app/
 ├── core/
 │   ├── components/       # Common Material 3 Compose widgets (Cards, Buttons, TopBars, Markdown, Dialogs)
 │   ├── model/            # Shared presentation models (ChatMessage, DocumentItem, KnowledgePack, etc.)
-│   ├── theme/            # Color palettes, typography, shapes (OpenField Blue, Green, Navy, CardBorder)
+│   ├── theme/            # Color palettes, typography, shapes (CRUX Blue, Green, Navy, CardBorder)
 │   └── util/             # PerformanceTracker, TextCleaner, Permission helpers
 ├── data/
 │   ├── local/

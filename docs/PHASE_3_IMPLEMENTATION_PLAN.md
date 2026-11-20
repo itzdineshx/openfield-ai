@@ -1,9 +1,9 @@
-# OpenField Phase 3 — Implementation Plan (v0.3.0 Unified Personal Knowledge)
+# CRUX Phase 3 — Implementation Plan (v0.3.0 Unified Personal Knowledge)
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
 **Status:** Approved for Implementation  
-**Target Milestone:** OpenField v0.3.0  
+**Target Milestone:** CRUX v0.3.0  
 **Baseline:** v0.2.1  
 **Estimated Complexity:** High (Multi-source retrieval, Room v5 migration, UI unification)
 
@@ -19,7 +19,7 @@ Phase 3 is divided into 7 release milestones:
 - **v0.7.0:** Advanced Intelligence & Personalization (Hybrid retrieval, local evaluation dataset, user preferences).
 - **v0.8.0:** Productivity & Integration (Full end-to-end multi-stage workflows).
 - **v0.9.0:** Release Candidate (Comprehensive stabilization, airplane-mode audit, performance benchmarks).
-- **v1.0.0:** Stable OpenField Release.
+- **v1.0.0:** Stable CRUX Release.
 
 **Immediate Objective:** Implement and verify **v0.3.0 Unified Personal Knowledge**.
 

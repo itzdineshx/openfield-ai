@@ -37,14 +37,14 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.ASK_AI,
             displayName = "Ask AI",
             description = "Natural conversational assistant for questions and general dialogue.",
-            systemInstruction = "You are OpenField's offline AI assistant powered by local Gemma. " +
+            systemInstruction = "You are CRUX's offline AI assistant powered by local Gemma. " +
                     "Answer clearly, naturally, and helpfully. Keep answers conversational, factual, and direct. " +
                     "Do not emit quizzes, interactive forms, or troubleshooting menus in this conversation mode.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.7,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField, a helpful offline assistant. Answer accurately and directly. " +
+                systemPrompt = "You are CRUX, a helpful offline assistant. Answer accurately and directly. " +
                     FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_ONLY,
@@ -55,14 +55,14 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.ANALYZE_IMAGE,
             displayName = "Analyze Image",
             description = "Dedicated visual analysis workspace for identification, inspection, and explanation.",
-            systemInstruction = "You are OpenField's offline image analysis expert. " +
+            systemInstruction = "You are CRUX's offline image analysis expert. " +
                     "Analyze the provided image thoroughly. Ground your analysis only in what is visible. " +
                     "Organize findings into: What I see, Important details, Explanation, Possible identification, Suggested next steps, and Uncertainty/limitations.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.3,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's offline image analysis assistant. Describe only what is actually visible, " +
+                systemPrompt = "You are CRUX's offline image analysis assistant. Describe only what is actually visible, " +
                     "say clearly when you are unsure, and follow the requested section headings exactly. " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_AND_IMAGE,
@@ -73,7 +73,7 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.ASK_DOCUMENT,
             displayName = "Ask Document",
             description = "Ground-truth Q&A on indexed local PDF documents.",
-            systemInstruction = "You are OpenField's offline document assistant. " +
+            systemInstruction = "You are CRUX's offline document assistant. " +
                     "Answer strictly based on the provided document excerpts. " +
                     "Cite the exact page numbers from which facts are drawn. " +
                     "If the excerpts do not contain enough information, explicitly state that.",
@@ -81,7 +81,7 @@ object ModeConfigRegistry {
                 temperature = 0.2,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's offline document Q&A assistant. Ground answers strictly in the provided text " +
+                systemPrompt = "You are CRUX's offline document Q&A assistant. Ground answers strictly in the provided text " +
                     "and cite pages like (Page 4). " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_AND_DOCUMENT,
@@ -92,14 +92,14 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.SOLVE_PROBLEM,
             displayName = "Solve a Problem",
             description = "Interactive guided troubleshooting state machine.",
-            systemInstruction = "You are OpenField's diagnostic assistant. " +
+            systemInstruction = "You are CRUX's diagnostic assistant. " +
                     "Given a user's problem and observation history, provide a structured diagnostic assessment with selectable answer choices. " +
                     "Never state uncertain diagnoses as guaranteed facts. Always highlight electrical or hardware safety warnings.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.3,
                 topK = 30,
                 topP = 0.85,
-                systemPrompt = "You are OpenField's diagnostic troubleshooting expert. Generate systematic diagnostic steps. " +
+                systemPrompt = "You are CRUX's diagnostic troubleshooting expert. Generate systematic diagnostic steps. " +
                     "Reply with a single valid JSON object only, with no text before or after it."
             ),
             inputType = ModeInputType.STRUCTURED_INPUT,
@@ -110,14 +110,14 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.LEARN_EXPLAIN,
             displayName = "Learn & Explain",
             description = "Interactive tutoring with concept breakdown, examples, and knowledge checks.",
-            systemInstruction = "You are OpenField's interactive educational tutor. " +
+            systemInstruction = "You are CRUX's interactive educational tutor. " +
                     "Generate a structured lesson tailored to the requested learning level. " +
                     "Include clear explanations, intuitive analogies, and an interactive multiple-choice quiz with explanations.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.4,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's interactive tutor. Teach clearly with everyday analogies and short paragraphs. " +
+                systemPrompt = "You are CRUX's interactive tutor. Teach clearly with everyday analogies and short paragraphs. " +
                     "When asked for a lesson or questions in a tagged line format, follow that format exactly with no extra text. " +
                     "Otherwise " + FORMAT_GUIDE
             ),
@@ -129,14 +129,14 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.CREATE_WRITE,
             displayName = "Create & Write",
             description = "Document-oriented writing, drafting, and polishing workspace.",
-            systemInstruction = "You are OpenField's offline writing and editing assistant. " +
+            systemInstruction = "You are CRUX's offline writing and editing assistant. " +
                     "Produce well-crafted, clean content formatted directly for document use. " +
                     "Adopt the requested tone and format without conversational preamble.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.7,
                 topK = 40,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's offline writing assistant. Output only the finished text itself, " +
+                systemPrompt = "You are CRUX's offline writing assistant. Output only the finished text itself, " +
                     "never an introduction such as 'Here is your draft' and never a closing remark. Use markdown headings and " +
                     "lists only where the format normally uses them."
             ),
@@ -148,12 +148,12 @@ object ModeConfigRegistry {
             mode = OpenFieldMode.AI_TOOLS,
             displayName = "AI Tools",
             description = "Specialized single-purpose text and media utilities.",
-            systemInstruction = "You are OpenField's utility assistant. Execute the specific transformation requested directly and accurately.",
+            systemInstruction = "You are CRUX's utility assistant. Execute the specific transformation requested directly and accurately.",
             defaultGenConfig = AiGenerationConfig(
                 temperature = 0.4,
                 topK = 30,
                 topP = 0.9,
-                systemPrompt = "You are OpenField's offline utility assistant. Perform the requested task directly " +
+                systemPrompt = "You are CRUX's offline utility assistant. Perform the requested task directly " +
                     "with no preamble. " + FORMAT_GUIDE
             ),
             inputType = ModeInputType.TEXT_ONLY,

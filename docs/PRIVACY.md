@@ -1,10 +1,10 @@
-# OpenField Privacy & Security Audit
+# CRUX Privacy & Security Audit
 
 **Version:** 0.2.0  
 **Status:** Verified & Enforced  
 **Last Audited:** November 2026
 
-OpenField is designed from the ground up as an offline-first, private AI assistant. All inference, personal conversations, documents, images, and preferences remain strictly on the local device.
+CRUX is designed from the ground up as an offline-first, private AI assistant. All inference, personal conversations, documents, images, and preferences remain strictly on the local device.
 
 ---
 
@@ -58,11 +58,11 @@ OpenField is designed from the ground up as an offline-first, private AI assista
 
 ## 4. Privacy FAQ
 
-**Q: Does OpenField send my questions or photos to any cloud server?**  
-**A:** No. OpenField runs Gemma 4 E2B IT completely on your phone's processor using Google LiteRT-LM. No prompt, image, or document text is ever transmitted over the network.
+**Q: Does CRUX send my questions or photos to any cloud server?**  
+**A:** No. CRUX runs Gemma 4 E2B IT completely on your phone's processor using Google LiteRT-LM. No prompt, image, or document text is ever transmitted over the network.
 
-**Q: Can OpenField work in Airplane Mode?**  
-**A:** Yes. Once the model file is downloaded or imported, OpenField operates fully in Airplane Mode without internet access.
+**Q: Can CRUX work in Airplane Mode?**  
+**A:** Yes. Once the model file is downloaded or imported, CRUX operates fully in Airplane Mode without internet access.
 
 **Q: Where are my files stored?**  
 **A:** All data is kept within the Android sandboxed application storage directory (`/data/data/com.openfield.app/`), protected by Android's application sandbox security.

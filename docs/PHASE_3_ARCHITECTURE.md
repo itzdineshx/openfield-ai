@@ -1,9 +1,9 @@
-# OpenField Phase 3 — Technical Architecture Specification
+# CRUX Phase 3 — Technical Architecture Specification
 
 **Document Version:** 1.0  
 **Date:** 20 November 2026  
 **Status:** Approved for Implementation  
-**Target Releases:** v0.3.0 (Unified Personal Knowledge) → v1.0.0 (Stable OpenField)  
+**Target Releases:** v0.3.0 (Unified Personal Knowledge) → v1.0.0 (Stable CRUX)  
 **Platform:** Native Android (Kotlin 2.4.21, Jetpack Compose, Material 3)  
 **Database:** Room 2.7.2 + SQLite FTS4  
 **Local AI Engine:** Google LiteRT-LM 0.19.1 + Gemma 4 E2B IT (`gemma-4-E2B-it.litertlm`)
@@ -12,7 +12,7 @@
 
 ## 1. Architectural Vision & Core Invariants
 
-Phase 3 transforms OpenField from a collection of isolated offline AI workspaces into a **Unified Personal Intelligence Platform**.
+Phase 3 transforms CRUX from a collection of isolated offline AI workspaces into a **Unified Personal Intelligence Platform**.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────┐

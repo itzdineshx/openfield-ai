@@ -66,7 +66,7 @@ fun SplashScreen(
 
             // App Title
             Text(
-                text = "OpenField",
+                text = "CRUX",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,

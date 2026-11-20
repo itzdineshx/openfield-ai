@@ -3,7 +3,7 @@
 **Date:** 2026-11-19  
 **Status:** Approved / Documented  
 **Component:** Multimodal Intelligence (Gate 4)  
-**Target:** OpenField v0.2.0
+**Target:** CRUX v0.2.0
 
 ---
 

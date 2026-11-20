@@ -67,7 +67,7 @@ ANSWER:
             temperature = 0.3, // Lower temperature for faithful grounded RAG
             topK = 30,
             topP = 0.85,
-            systemPrompt = "You are OpenField's offline document assistant. Provide clear, precise, and factually grounded answers with page citations based strictly on the document text provided."
+            systemPrompt = "You are CRUX's offline document assistant. Provide clear, precise, and factually grounded answers with page citations based strictly on the document text provided."
         )
 
         aiEngine.generateStream(prompt, config).collect { token ->
