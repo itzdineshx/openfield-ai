@@ -93,6 +93,8 @@ fun CrossSourceQaScreen(
     val isGenerating by controller.isGenerating.collectAsState()
     val currentEvidence by controller.currentEvidence.collectAsState()
     val showEvidenceExplorer by controller.showEvidenceExplorer.collectAsState()
+    val savedAnswers by repository.savedAnswers.collectAsState()
+    val context = LocalContext.current
 
     var inputQuestion by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -312,6 +314,9 @@ fun CrossSourceQaScreen(
 
             // Message list
             items(messages, key = { it.id }) { msg ->
+                val existingSaved = savedAnswers.find { it.answer == msg.text }
+                val isSaved = existingSaved != null
+
                 ChatMessageBubble(
                     isUser = msg.isUser,
                     message = msg.text,
@@ -319,7 +324,35 @@ fun CrossSourceQaScreen(
                     steps = msg.steps,
                     sourcePage = msg.sourcePage,
                     isComplete = !isGenerating || msg.isUser,
-                    pendingLabel = "Synthesizing across sources…"
+                    pendingLabel = "Synthesizing across sources…",
+                    isSaved = isSaved,
+                    onSaveClick = if (!msg.isUser && msg.text.isNotBlank()) {
+                        {
+                            if (existingSaved != null) {
+                                repository.deleteSavedAnswer(existingSaved.id)
+                                android.widget.Toast.makeText(context, "Removed from Saved Answers", android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                val idx = messages.indexOf(msg)
+                                val prompt = if (idx > 0) messages[idx - 1].text else "Cross-Source Question"
+                                repository.saveAnswer(
+                                    question = prompt,
+                                    answer = msg.text,
+                                    sourceTitle = activeCollection?.name ?: "Cross-Source Q&A",
+                                    sourceType = "CROSS_SOURCE"
+                                )
+                                android.widget.Toast.makeText(context, "Saved to Library", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else null,
+                    onShareClick = if (!msg.isUser && msg.text.isNotBlank()) {
+                        {
+                            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, msg.text)
+                            }
+                            context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Answer"))
+                        }
+                    } else null
                 )
             }
         }

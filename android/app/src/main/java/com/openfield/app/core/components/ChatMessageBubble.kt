@@ -22,7 +22,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,7 +76,10 @@ fun ChatMessageBubble(
     pendingLabel: String = "Thinking…",
     onSourceClick: (() -> Unit)? = null,
     onSpeakClick: (() -> Unit)? = null,
-    isSpeaking: Boolean = false
+    isSpeaking: Boolean = false,
+    onSaveClick: (() -> Unit)? = null,
+    isSaved: Boolean = false,
+    onShareClick: (() -> Unit)? = null
 ) {
     if (isUser) {
         UserMessage(message, imageUri, timestamp, modifier)
@@ -89,7 +95,10 @@ fun ChatMessageBubble(
             pendingLabel = pendingLabel,
             onSourceClick = onSourceClick,
             onSpeakClick = onSpeakClick,
-            isSpeaking = isSpeaking
+            isSpeaking = isSpeaking,
+            onSaveClick = onSaveClick,
+            isSaved = isSaved,
+            onShareClick = onShareClick
         )
     }
 }
@@ -146,7 +155,10 @@ private fun AssistantMessage(
     pendingLabel: String,
     onSourceClick: (() -> Unit)?,
     onSpeakClick: (() -> Unit)?,
-    isSpeaking: Boolean
+    isSpeaking: Boolean,
+    onSaveClick: (() -> Unit)?,
+    isSaved: Boolean,
+    onShareClick: (() -> Unit)?
 ) {
     Row(
         modifier = modifier
@@ -208,7 +220,10 @@ private fun AssistantMessage(
                     message = message,
                     timestamp = timestamp,
                     onSpeakClick = onSpeakClick,
-                    isSpeaking = isSpeaking
+                    isSpeaking = isSpeaking,
+                    onSaveClick = onSaveClick,
+                    isSaved = isSaved,
+                    onShareClick = onShareClick
                 )
             }
         }
@@ -220,7 +235,10 @@ private fun MessageActions(
     message: String,
     timestamp: String?,
     onSpeakClick: (() -> Unit)?,
-    isSpeaking: Boolean
+    isSpeaking: Boolean,
+    onSaveClick: (() -> Unit)?,
+    isSaved: Boolean,
+    onShareClick: (() -> Unit)?
 ) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
@@ -237,12 +255,27 @@ private fun MessageActions(
                 Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
             }
         )
+        if (onSaveClick != null) {
+            ActionIcon(
+                icon = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                description = if (isSaved) "Saved" else "Save answer",
+                onClick = onSaveClick,
+                active = isSaved
+            )
+        }
         if (onSpeakClick != null) {
             ActionIcon(
                 icon = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
                 description = if (isSpeaking) "Stop reading" else "Read aloud",
                 onClick = onSpeakClick,
                 active = isSpeaking
+            )
+        }
+        if (onShareClick != null) {
+            ActionIcon(
+                icon = Icons.Default.Share,
+                description = "Share",
+                onClick = onShareClick
             )
         }
         if (!timestamp.isNullOrBlank()) {

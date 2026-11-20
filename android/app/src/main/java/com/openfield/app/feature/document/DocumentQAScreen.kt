@@ -111,6 +111,7 @@ fun DocumentQAScreen(
     val messages by controller.messages.collectAsState()
     val indexingState by controller.indexingState.collectAsState()
     val isQuerying by controller.isQuerying.collectAsState()
+    val savedAnswers by repository.savedAnswers.collectAsState()
 
     val speechManager = remember { SpeechSynthesisManager(context) }
     val isSpeaking by speechManager.isSpeaking.collectAsState()
@@ -339,6 +340,9 @@ fun DocumentQAScreen(
             }
 
             items(messages, key = { it.id }) { msg ->
+                val existingSaved = savedAnswers.find { it.answer == msg.text }
+                val isSaved = existingSaved != null
+
                 ChatMessageBubble(
                     isUser = msg.isUser,
                     message = msg.text,
@@ -354,7 +358,35 @@ fun DocumentQAScreen(
                             else speechManager.speak(msg.text, msg.id)
                         }
                     } else null,
-                    isSpeaking = isSpeaking && currentUtteranceId == msg.id
+                    isSpeaking = isSpeaking && currentUtteranceId == msg.id,
+                    isSaved = isSaved,
+                    onSaveClick = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                        {
+                            if (existingSaved != null) {
+                                repository.deleteSavedAnswer(existingSaved.id)
+                                android.widget.Toast.makeText(context, "Removed from Saved Answers", android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                val idx = messages.indexOf(msg)
+                                val prompt = if (idx > 0) messages[idx - 1].text else "Document Question"
+                                repository.saveAnswer(
+                                    question = prompt,
+                                    answer = msg.text,
+                                    sourceTitle = activeDoc?.name ?: "Document Q&A",
+                                    sourceType = "DOCUMENT"
+                                )
+                                android.widget.Toast.makeText(context, "Saved to Library", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else null,
+                    onShareClick = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                        {
+                            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, msg.text)
+                            }
+                            context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Answer"))
+                        }
+                    } else null
                 )
             }
         }

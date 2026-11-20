@@ -35,6 +35,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -156,7 +157,7 @@ private fun ExpressionCalculatorView() {
                 errorMessage = null
                 if (calculationHistory.none { it.first == exprInput }) {
                     calculationHistory.add(0, exprInput to res.formatted)
-                    if (calculationHistory.size > 8) calculationHistory.removeLast()
+                    if (calculationHistory.size > 8) calculationHistory.removeAt(calculationHistory.lastIndex)
                 }
             }
             is MathResult.Error -> {
@@ -461,7 +462,7 @@ private fun UnitConverterView() {
                 label = { Text("From Unit") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fromExpanded) },
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -515,7 +516,7 @@ private fun UnitConverterView() {
                 label = { Text("To Unit") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = toExpanded) },
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )

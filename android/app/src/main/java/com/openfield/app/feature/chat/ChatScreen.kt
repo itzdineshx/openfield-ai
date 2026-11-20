@@ -102,6 +102,7 @@ fun ChatScreen(
     val allMessages by repository.messagesBySession.collectAsState()
     val messages = remember(allMessages, sessionId) { allMessages[sessionId] ?: emptyList() }
     val isGenerating by repository.chatController.isGenerating.collectAsState()
+    val savedAnswers by repository.savedAnswers.collectAsState()
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -238,6 +239,9 @@ fun ChatScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
                 ) {
                     items(messages, key = { it.id }) { msg ->
+                        val existingSaved = savedAnswers.find { it.answer == msg.text }
+                        val isSaved = existingSaved != null
+
                         ChatMessageBubble(
                             isUser = msg.isUser,
                             message = msg.text,
@@ -246,13 +250,41 @@ fun ChatScreen(
                             imageUri = msg.imageUri,
                             sourcePage = msg.sourcePage,
                             isComplete = msg.isComplete,
-                            onSpeakClick = if (!msg.isUser) {
+                            onSpeakClick = if (!msg.isUser && msg.text.isNotBlank()) {
                                 {
                                     if (isSpeaking && currentUtteranceId == msg.id) speechManager.stop()
                                     else speechManager.speak(msg.text, msg.id)
                                 }
                             } else null,
-                            isSpeaking = isSpeaking && currentUtteranceId == msg.id
+                            isSpeaking = isSpeaking && currentUtteranceId == msg.id,
+                            isSaved = isSaved,
+                            onSaveClick = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                {
+                                    if (existingSaved != null) {
+                                        repository.deleteSavedAnswer(existingSaved.id)
+                                        android.widget.Toast.makeText(context, "Removed from Saved Answers", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        val idx = messages.indexOf(msg)
+                                        val prompt = if (idx > 0) messages[idx - 1].text else "Chat Question"
+                                        repository.saveAnswer(
+                                            question = prompt,
+                                            answer = msg.text,
+                                            sourceTitle = "Chat Conversation",
+                                            sourceType = "CHAT"
+                                        )
+                                        android.widget.Toast.makeText(context, "Saved to Library", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else null,
+                            onShareClick = if (!msg.isUser && msg.text.isNotBlank() && msg.isComplete) {
+                                {
+                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, msg.text)
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share Answer"))
+                                }
+                            } else null
                         )
                     }
                 }
