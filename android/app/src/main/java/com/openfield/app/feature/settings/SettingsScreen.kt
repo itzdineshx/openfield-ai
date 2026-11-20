@@ -300,6 +300,44 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    Text(
+                        text = "Preferred Measurement Units",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = OpenFieldNavyText
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Metric", "Imperial").forEach { unit ->
+                            val isSelected = settings.preferredMeasurementUnits.equals(unit, ignoreCase = true)
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { repository.updatePreferredMeasurementUnits(unit) }
+                            ) {
+                                Text(
+                                    text = unit,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = if (isSelected) Color.White else OpenFieldNavyText,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 11.sp
+                                    ),
+                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     // Local Memory Inspector & Reset
                     Row(
                         modifier = Modifier
@@ -455,7 +493,7 @@ fun SettingsScreen(
                                     )
                                 )
                                 Text(
-                                    text = "Version 0.5.0",
+                                    text = "Version 0.6.0",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = OpenFieldSecondaryText,
                                         fontSize = 11.sp

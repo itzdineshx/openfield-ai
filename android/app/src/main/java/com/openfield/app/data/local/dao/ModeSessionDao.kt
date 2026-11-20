@@ -49,6 +49,9 @@ interface ModeSessionDao {
     @Query("SELECT * FROM writing_drafts ORDER BY updatedAt DESC")
     fun getWritingDraftsFlow(): Flow<List<WritingDraftEntity>>
 
+    @Query("SELECT * FROM writing_drafts ORDER BY updatedAt DESC")
+    suspend fun getWritingDraftsList(): List<WritingDraftEntity>
+
     @Query("SELECT * FROM writing_drafts WHERE id = :id LIMIT 1")
     suspend fun getWritingDraft(id: String): WritingDraftEntity?
 

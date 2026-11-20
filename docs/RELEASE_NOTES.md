@@ -1,5 +1,49 @@
 # OpenField Release Notes
 
+## Version 0.6.0 — Phase 3 Advanced Personalization, Intelligence Quality & Integrated Productivity Workflows
+
+**Release Date:** November 2026
+
+OpenField v0.6.0 completes the integration of on-device personal memory, advanced retrieval optimization, and end-to-end productivity workflows. Users now experience seamless synergy across learning, diagnostic troubleshooting, research synthesis, and task management, backed by strict offline privacy and zero cloud dependence:
+
+---
+
+### Highlights & Key Features
+
+#### 1. Structured Local Memory & Transparency (`LocalMemoryManager`)
+- **Explicit Memory Taxonomy:** Categorizes user-retained preferences across three discrete boundaries:
+  - **User Preferences:** Communication style, brevity, tone, and formatting.
+  - **Learning Goals:** Active subjects, exam targets, and skill progression.
+  - **Domain Context:** Technical specializations, professional focus, and project domains.
+- **Full User Sovereignty:** Inspect, edit, filter by category, and delete local memories at any time with immediate effect on derived prompts.
+- **Safe Context Injection:** Bounded to prevent CPU prompt bloat while ensuring personalized conversational responses.
+
+#### 2. Advanced Retrieval Optimization (`RetrievalOptimizer`)
+- **Offline Query Expansion:** Built-in domain dictionary expands technical, academic, and practical acronyms ("ai", "db", "carb", "ml", "calc") without external embedding models.
+- **Heading-Aware Relevance Scoring:** Boosts evidence passages matching section headings (`#`, `##`, `###`) for sharper semantic alignment.
+- **Fair-Share Multi-Source Interleaving:** Round-robin interleaving ensures balanced multi-document representation within the ~1,200 token budget, preventing single dense documents from starving the context window.
+- **Drafts Ingestion in Unified Search:** Writing drafts and personal notes are now searchable alongside documents and packs in `UnifiedSearchEngine`.
+
+#### 3. Integrated Productivity Workflows (Gate 8)
+- **Learning → Task Automation:** One-tap action from any lesson ("Add to Study Tasks") converts structured concepts into an actionable review checklist.
+- **Troubleshooting → Maintenance Tasks:** One-tap action from diagnostic resolutions ("Add to Maintenance Tasks") creates actionable repair checklists with safety notices attached.
+- **Research → Writer:** Unified citation retention allows cross-source query findings to flow straight into drafting canvas.
+
+#### 4. Extended Personalization Controls
+- **Preferred Measurement Units:** Direct toggle between Metric (km, kg, °C) and Imperial (miles, lbs, °F) in Settings with automatic prompt directive injection.
+- **Preferred Formatting Style:** Options for Standard, Bullet Points, and Markdown with Headings.
+- **Bounded Context Safety (`PromptBuilder.boundContext`):** Automatically limits excessive context payloads to protect mobile CPUs from thermal throttling.
+
+#### 5. Verification & Release Artifacts
+- **Automated Test Suite:** **186/186 unit tests passing (100% green)** including retrieval optimization, memory lifecycle, personalized prompt directives, and context bounding.
+- **Signed Release APK:**
+  - File: `android/app/build/outputs/apk/release/app-release.apk`
+  - Size: 115,003,298 bytes (~109.67 MB)
+  - SHA-256: `8A3E56124D369A66473D4D62008E708F3736C81E017E60C0544CA1CB411B3854`
+  - Target: Android 14+ / ARM64, Unisoc T616 / Snapdragon CPU local execution.
+
+---
+
 ## Version 0.5.0 — Phase 3 Practical Offline Intelligence & Task Workflows
 
 **Release Date:** November 2026

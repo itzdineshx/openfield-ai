@@ -22,7 +22,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
@@ -41,7 +43,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -463,6 +467,41 @@ private fun KnowledgeChecks(state: LearningUiState.ActiveLesson, controller: Lea
                 Text(
                     text = if (quizzes.isEmpty()) "Create practice questions" else "More practice",
                     color = OpenFieldNavyText,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            var taskCreated by remember { mutableStateOf(false) }
+            val scope = rememberCoroutineScope()
+            val repo = remember { OpenFieldRepository.getInstance() }
+
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        repo.createTask(
+                            title = "Study: ${state.lesson.title.ifBlank { state.lesson.topic }}",
+                            description = "Master core concepts and revision checks from local lesson",
+                            priority = "HIGH",
+                            subtaskTitles = state.lesson.sections.map { "Review ${it.heading}" } + listOf("Complete all practice checks")
+                        )
+                        taskCreated = true
+                    }
+                },
+                enabled = !taskCreated,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, if (taskCreated) OpenFieldSuccess else OpenFieldCardBorder),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = if (taskCreated) Icons.Default.CheckCircle else Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                    contentDescription = null,
+                    tint = if (taskCreated) OpenFieldSuccess else OpenFieldPrimaryBlue,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (taskCreated) "Added to Study Tasks" else "Add to Study Tasks",
+                    color = if (taskCreated) OpenFieldSuccess else OpenFieldNavyText,
                     fontWeight = FontWeight.SemiBold
                 )
             }

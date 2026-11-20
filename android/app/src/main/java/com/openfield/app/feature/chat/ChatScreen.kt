@@ -95,7 +95,22 @@ fun ChatScreen(
 
     fun send(text: String) {
         if (text.isBlank() || isGenerating) return
-        repository.chatController.sendMessage(sessionId, text)
+        val currentSettings = repository.settings.value
+        val structuredMemory = repository.localMemoryManager.buildContextForPrompt()
+        val combinedMemory = listOf(currentSettings.userCustomMemory, structuredMemory)
+            .filter { it.isNotBlank() }
+            .joinToString("\n")
+            .ifBlank { null }
+
+        repository.chatController.sendMessage(
+            sessionId = sessionId,
+            userPrompt = text,
+            language = currentSettings.language,
+            responseLength = currentSettings.preferredResponseLength,
+            explanationLevel = currentSettings.preferredExplanationLevel,
+            measurementUnits = currentSettings.preferredMeasurementUnits,
+            customMemory = combinedMemory
+        )
         inputMessage = ""
     }
 

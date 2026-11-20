@@ -76,6 +76,8 @@ data class AppSettings(
     val preferredExplanationLevel: String = "Beginner",
     val preferredResponseLength: String = "Balanced",
     val preferredWritingTone: String = "Professional",
+    val preferredMeasurementUnits: String = "Metric",
+    val preferredFormattingStyle: String = "Standard",
     val userCustomMemory: String = ""
 )
 
@@ -140,6 +142,10 @@ class OpenFieldRepository(
     val crossSourceQaController = com.openfield.app.feature.ai.controller.CrossSourceQaController(
         crossSourceRetriever,
         orchestrator,
+        scope
+    )
+    val localMemoryManager = com.openfield.app.feature.ai.memory.LocalMemoryManager(
+        database.settingsDao(),
         scope
     )
     val sharedContextManager = com.openfield.app.feature.ai.context.SharedContextManager(
@@ -530,7 +536,18 @@ class OpenFieldRepository(
     }
 
     fun sendMessage(sessionId: String, userPrompt: String) {
-        chatController.sendMessage(sessionId, userPrompt)
+        val s = _settings.value
+        val memoryContext = localMemoryManager.buildContextForPrompt()
+        val combined = listOf(s.userCustomMemory, memoryContext).filter { it.isNotBlank() }.joinToString("\n").ifBlank { null }
+        chatController.sendMessage(
+            sessionId = sessionId,
+            userPrompt = userPrompt,
+            language = s.language,
+            responseLength = s.preferredResponseLength,
+            explanationLevel = s.preferredExplanationLevel,
+            measurementUnits = s.preferredMeasurementUnits,
+            customMemory = combined
+        )
     }
 
     fun createNewSession(title: String): String {
@@ -824,6 +841,14 @@ class OpenFieldRepository(
 
     fun updatePreferredWritingTone(tone: String) {
         _settings.update { it.copy(preferredWritingTone = tone) }
+    }
+
+    fun updatePreferredMeasurementUnits(units: String) {
+        _settings.update { it.copy(preferredMeasurementUnits = units) }
+    }
+
+    fun updatePreferredFormattingStyle(style: String) {
+        _settings.update { it.copy(preferredFormattingStyle = style) }
     }
 
     fun updateUserCustomMemory(memory: String) {

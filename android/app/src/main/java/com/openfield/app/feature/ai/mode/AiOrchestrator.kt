@@ -36,10 +36,26 @@ class AiOrchestrator(
     fun streamAskAi(
         sessionId: String,
         userPrompt: String,
-        customConfig: AiGenerationConfig? = null
+        customConfig: AiGenerationConfig? = null,
+        language: String? = null,
+        responseLength: String? = null,
+        explanationLevel: String? = null,
+        measurementUnits: String? = null,
+        writingTone: String? = null,
+        formattingStyle: String? = null,
+        customMemory: String? = null
     ): Flow<String> {
         val config = customConfig ?: ModeConfigRegistry.get(OpenFieldMode.ASK_AI).defaultGenConfig
-        val prompt = PromptBuilder.buildAskAiPrompt(userPrompt)
+        val prompt = PromptBuilder.buildAskAiPrompt(
+            userMessage = userPrompt,
+            language = language,
+            responseLength = responseLength,
+            explanationLevel = explanationLevel,
+            measurementUnits = measurementUnits,
+            writingTone = writingTone,
+            formattingStyle = formattingStyle,
+            customMemory = customMemory
+        )
         return aiEngine.generateConversationStream(sessionId, prompt, config)
     }
 

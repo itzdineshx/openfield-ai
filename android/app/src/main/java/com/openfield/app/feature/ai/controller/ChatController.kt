@@ -53,12 +53,38 @@ class ChatController(
         }
     }
 
-    fun sendMessage(sessionId: String, userPrompt: String) {
+    fun sendMessage(
+        sessionId: String,
+        userPrompt: String,
+        language: String? = null,
+        responseLength: String? = null,
+        explanationLevel: String? = null,
+        measurementUnits: String? = null,
+        customMemory: String? = null
+    ) {
         if (userPrompt.isBlank()) return
-        startGeneration(sessionId, userPrompt.trim(), insertUserMessage = true)
+        startGeneration(
+            sessionId = sessionId,
+            userPrompt = userPrompt.trim(),
+            insertUserMessage = true,
+            language = language,
+            responseLength = responseLength,
+            explanationLevel = explanationLevel,
+            measurementUnits = measurementUnits,
+            customMemory = customMemory
+        )
     }
 
-    private fun startGeneration(sessionId: String, userPrompt: String, insertUserMessage: Boolean) {
+    private fun startGeneration(
+        sessionId: String,
+        userPrompt: String,
+        insertUserMessage: Boolean,
+        language: String? = null,
+        responseLength: String? = null,
+        explanationLevel: String? = null,
+        measurementUnits: String? = null,
+        customMemory: String? = null
+    ) {
         val assistantMsgId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
 
@@ -117,7 +143,15 @@ class ChatController(
             val accumulated = StringBuilder()
             var lastWrite = 0L
             try {
-                orchestrator.streamAskAi(sessionId, userPrompt).collect { token ->
+                orchestrator.streamAskAi(
+                    sessionId = sessionId,
+                    userPrompt = userPrompt,
+                    language = language,
+                    responseLength = responseLength,
+                    explanationLevel = explanationLevel,
+                    measurementUnits = measurementUnits,
+                    customMemory = customMemory
+                ).collect { token ->
                     accumulated.append(token)
                     val nowMs = System.currentTimeMillis()
                     if (nowMs - lastWrite >= STREAM_WRITE_INTERVAL_MS) {

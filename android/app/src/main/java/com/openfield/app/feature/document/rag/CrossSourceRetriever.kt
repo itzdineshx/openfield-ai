@@ -29,11 +29,12 @@ class CrossSourceRetriever(
         if (sourceIds.isEmpty() || query.isBlank()) return@withContext emptyList()
 
         val cleanTerms = sanitizeQuery(query)
-        val ftsQuery = if (cleanTerms.isNotEmpty()) {
-            cleanTerms.joinToString(" OR ") { "$it*" }
+        val expandedTerms = RetrievalOptimizer.expandQueryTerms(cleanTerms)
+        val ftsQuery = if (expandedTerms.isNotEmpty()) {
+            expandedTerms.joinToString(" OR ") { "$it*" }
         } else query.trim()
 
-        val evidenceList = mutableListOf<KnowledgeEvidence>()
+        val evidenceBySource = mutableMapOf<String, MutableList<KnowledgeEvidence>>()
         val maxPerSource = (maxTotalChunks / sourceIds.size).coerceAtLeast(2)
 
         // 1. Retrieve from Documents
@@ -51,42 +52,48 @@ class CrossSourceRetriever(
                 documentDao.getChunksForDocument(doc.id).take(1)
             }
 
-            candidateChunks.take(maxPerSource).forEach { chunk ->
-                evidenceList.add(
-                    KnowledgeEvidence(
-                        evidenceId = "doc_${chunk.documentId}_${chunk.pageNumber}_${chunk.chunkIndex}",
-                        sourceId = chunk.documentId,
-                        sourceTitle = doc.name,
-                        sourceType = KnowledgeSourceType.DOCUMENT,
-                        pageNumber = chunk.pageNumber,
-                        text = chunk.text,
-                        relevanceScore = 1.0f
-                    )
+            val docEvidence = candidateChunks.take(maxPerSource).map { chunk ->
+                val score = RetrievalOptimizer.scoreChunk(chunk.text, cleanTerms).coerceAtLeast(0.5f)
+                KnowledgeEvidence(
+                    evidenceId = "doc_${chunk.documentId}_${chunk.pageNumber}_${chunk.chunkIndex}",
+                    sourceId = chunk.documentId,
+                    sourceTitle = doc.name,
+                    sourceType = KnowledgeSourceType.DOCUMENT,
+                    pageNumber = chunk.pageNumber,
+                    text = chunk.text,
+                    relevanceScore = score
                 )
+            }.sortedByDescending { it.relevanceScore }
+
+            if (docEvidence.isNotEmpty()) {
+                evidenceBySource[doc.id] = docEvidence.toMutableList()
             }
         }
 
         // 2. Retrieve from Knowledge Packs
         val packs = sourceIds.mapNotNull { knowledgePackDao.getPackById(it) }.filter { it.isInstalled }
         for (pack in packs) {
-            evidenceList.add(
+            val packText = "${pack.description}\nTopics: ${pack.topicsJson}"
+            val score = RetrievalOptimizer.scoreChunk(packText, cleanTerms).coerceAtLeast(0.8f)
+            val packEvidence = mutableListOf(
                 KnowledgeEvidence(
                     evidenceId = "pack_${pack.id}",
                     sourceId = pack.id,
                     sourceTitle = pack.title,
                     sourceType = KnowledgeSourceType.KNOWLEDGE_PACK,
                     section = pack.category,
-                    text = "${pack.description}\nTopics: ${pack.topicsJson}",
-                    relevanceScore = 0.9f
+                    text = packText,
+                    relevanceScore = score
                 )
             )
+            evidenceBySource[pack.id] = packEvidence
         }
 
         val elapsed = System.currentTimeMillis() - startTime
         PerformanceTracker.recordRetrievalLatency(elapsed)
 
-        // Enforce token budget: take at most maxTotalChunks (~1,200 tokens max)
-        evidenceList.take(maxTotalChunks)
+        // Fair-share interleave across disparate sources to preserve diversity within context budget
+        RetrievalOptimizer.fairShareInterleave(evidenceBySource, maxTotalChunks)
     }
 
     private fun sanitizeQuery(raw: String): List<String> {

@@ -6,6 +6,10 @@ object PromptBuilder {
         userMessage: String,
         language: String? = null,
         responseLength: String? = null,
+        explanationLevel: String? = null,
+        measurementUnits: String? = null,
+        writingTone: String? = null,
+        formattingStyle: String? = null,
         customMemory: String? = null
     ): String {
         val directives = mutableListOf<String>()
@@ -18,6 +22,24 @@ object PromptBuilder {
                 "detailed" -> directives.add("Provide a comprehensive, detailed explanation.")
             }
         }
+        if (!explanationLevel.isNullOrBlank()) {
+            when (explanationLevel.lowercase()) {
+                "beginner" -> directives.add("Explain simply for a beginner without heavy technical jargon.")
+                "advanced" -> directives.add("Provide an advanced, technically rigorous explanation.")
+            }
+        }
+        if (!measurementUnits.isNullOrBlank()) {
+            when (measurementUnits.lowercase()) {
+                "metric" -> directives.add("Use Metric measurement units (meters, kilograms, °C).")
+                "imperial" -> directives.add("Use Imperial measurement units (feet, pounds, °F).")
+            }
+        }
+        if (!writingTone.isNullOrBlank()) {
+            directives.add("Tone: $writingTone.")
+        }
+        if (!formattingStyle.isNullOrBlank() && !formattingStyle.equals("Standard", ignoreCase = true)) {
+            directives.add("Format with $formattingStyle.")
+        }
         if (!customMemory.isNullOrBlank()) {
             directives.add("User Context: $customMemory")
         }
@@ -27,6 +49,14 @@ object PromptBuilder {
         } else {
             userMessage.trim()
         }
+    }
+
+    /**
+     * Bounded context limiter to avoid token bloat and CPU thermal throttling on mobile devices.
+     */
+    fun boundContext(text: String, maxChars: Int = 4000): String {
+        if (text.length <= maxChars) return text
+        return text.take(maxChars - 3) + "..."
     }
 
     fun buildImageAnalysisPrompt(userQuestion: String?): String {

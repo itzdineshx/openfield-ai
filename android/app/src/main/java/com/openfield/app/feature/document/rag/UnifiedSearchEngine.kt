@@ -30,12 +30,13 @@ class UnifiedSearchEngine(
         val startTime = System.currentTimeMillis()
         val terms = sanitizeQuery(query)
         if (terms.isEmpty()) return@withContext emptyList()
+        val expandedTerms = RetrievalOptimizer.expandQueryTerms(terms)
 
         val results = coroutineScope {
-            val docDeferred = async { searchDocuments(terms, query, scopeSourceIds, limit) }
+            val docDeferred = async { searchDocuments(expandedTerms, query, scopeSourceIds, limit) }
             val chatDeferred = async { searchChats(query, scopeSourceIds, limit) }
-            val packDeferred = async { searchPacks(terms, query, scopeSourceIds, limit) }
-            val draftDeferred = async { searchDrafts(terms, scopeSourceIds, limit) }
+            val packDeferred = async { searchPacks(expandedTerms, query, scopeSourceIds, limit) }
+            val draftDeferred = async { searchDrafts(expandedTerms, scopeSourceIds, limit) }
 
             val docResults = docDeferred.await()
             val chatResults = chatDeferred.await()
@@ -158,9 +159,32 @@ class UnifiedSearchEngine(
         scopeSourceIds: List<String>?,
         limit: Int
     ): List<UnifiedSearchResult> {
-        // Search through drafts
-        // In ModeSessionDao, we can fetch all or search
-        return emptyList()
+        val drafts = try {
+            modeSessionDao.getWritingDraftsList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val filtered = if (!scopeSourceIds.isNullOrEmpty()) {
+            drafts.filter { it.id in scopeSourceIds }
+        } else drafts
+
+        val matches = mutableListOf<UnifiedSearchResult>()
+        for (draft in filtered) {
+            val titleMatches = terms.any { draft.title.lowercase().contains(it) }
+            val contentMatches = terms.any { draft.content.lowercase().contains(it) }
+            if (titleMatches || contentMatches) {
+                matches.add(
+                    UnifiedSearchResult(
+                        sourceId = draft.id,
+                        sourceType = KnowledgeSourceType.NOTE,
+                        sourceTitle = draft.title.ifBlank { "Writing Draft" },
+                        snippet = generateSnippet(draft.content.ifBlank { draft.intent }, terms),
+                        score = if (titleMatches) 1.1f else 0.8f
+                    )
+                )
+            }
+        }
+        return matches.take(limit)
     }
 
     fun sanitizeQuery(raw: String): List<String> {

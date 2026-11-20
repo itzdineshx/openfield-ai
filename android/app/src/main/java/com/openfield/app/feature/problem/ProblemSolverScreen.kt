@@ -51,7 +51,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -645,6 +647,49 @@ private fun ResolutionContent(
                         PrimaryButton(text = "Try other causes", onClick = onExploreAlternatives, leadingIcon = Icons.Default.Search)
                     }
                 }
+            }
+        }
+
+        var taskAdded by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        val repo = remember { OpenFieldRepository.getInstance() }
+
+        if (!assessment.recommendedSolution.isNullOrBlank()) {
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        repo.createTask(
+                            title = "Fix: ${assessment.category.ifBlank { "Device Issue" }}",
+                            description = assessment.recommendedSolution.take(120),
+                            priority = "HIGH",
+                            subtaskTitles = listOfNotNull(
+                                assessment.safetyNotice?.let { "Safety: $it" },
+                                "Apply solution: ${assessment.recommendedSolution.take(60)}",
+                                "Verify operational status"
+                            )
+                        )
+                        taskAdded = true
+                    }
+                },
+                enabled = !taskAdded,
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, if (taskAdded) OpenFieldSuccess else OpenFieldPrimaryBlue),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (taskAdded) Icons.Default.CheckCircle else Icons.Default.Build,
+                    contentDescription = null,
+                    tint = if (taskAdded) OpenFieldSuccess else OpenFieldPrimaryBlue,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (taskAdded) "Added to Tasks" else "Add to Maintenance Tasks",
+                    color = if (taskAdded) OpenFieldSuccess else OpenFieldPrimaryBlue,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
