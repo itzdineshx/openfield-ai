@@ -296,4 +296,25 @@ class PackZipInstallerTest {
         assertTrue(ex is IllegalArgumentException)
         assertTrue(ex?.message?.contains("manifest.json") == true)
     }
+
+    @Test
+    fun installFromZipStream_realFirstAidPack_installsWithSha256Verification() = runBlocking {
+        val packFile = java.io.File("../../catalog/packs/first_aid-1.0.0.zip")
+        if (packFile.exists()) {
+            val bytes = packFile.readBytes()
+            val expectedHash = com.openfield.app.feature.library.KnowledgePackManager.CURATED_CATALOG
+                .find { it.packId == "first_aid" }!!.checksumSha256
+            val result = installer.installFromZipStream(
+                inputStream = ByteArrayInputStream(bytes),
+                expectedSha256 = expectedHash
+            )
+            assertTrue(result.isSuccess)
+            val installResult = result.getOrThrow()
+            assertEquals("first_aid", installResult.packId)
+            assertTrue(installResult.articleCount >= 4)
+            val articles = dao.getArticlesForPack("first_aid")
+            assertTrue(articles.any { it.title.contains("CPR") })
+            assertTrue(articles.any { it.title.contains("Tourniquet") })
+        }
+    }
 }

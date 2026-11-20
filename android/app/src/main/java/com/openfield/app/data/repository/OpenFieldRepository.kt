@@ -353,6 +353,10 @@ class OpenFieldRepository(
         monitorActiveChatSession()
         autoLoadModelIfInstalled()
         scope.launch(Dispatchers.IO) {
+            val savedTheme = database.settingsDao().getSetting("pref_theme_mode")
+            if (!savedTheme.isNullOrBlank()) {
+                _settings.update { it.copy(themeMode = savedTheme) }
+            }
             knowledgePackManager.seedDefaultPacksIfEmpty()
         }
     }
@@ -903,6 +907,13 @@ class OpenFieldRepository(
 
     fun updateOfflineMode(enabled: Boolean) {
         _settings.update { it.copy(offlineMode = enabled) }
+    }
+
+    fun updateThemeMode(theme: String) {
+        _settings.update { it.copy(themeMode = theme) }
+        scope.launch {
+            database.settingsDao().setSetting(com.openfield.app.data.local.entity.SettingEntity("pref_theme_mode", theme))
+        }
     }
 
     fun updateModel(model: String) {

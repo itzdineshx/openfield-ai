@@ -418,6 +418,410 @@ When translating technical literature across languages:
             """.trimIndent(),
             tagsJson = "[\"Linguistics\", \"Grammar\", \"Syntax\", \"Translation\", \"Language\"]",
             orderIndex = 1
+        ),
+
+        // =================================================================
+        // 6. FIRST AID & EMERGENCY RESPONSE (first_aid)
+        // =================================================================
+        KnowledgePackArticleEntity(
+            id = "first_aid_cpr_adult",
+            packId = "first_aid",
+            title = "Cardiopulmonary Resuscitation (CPR) & Airway Obstruction",
+            section = "Emergency Resuscitation",
+            content = """
+# Cardiopulmonary Resuscitation (CPR) & Airway Obstruction
+
+When a casualty is unresponsive and not breathing normally (or only gasping), immediate high-quality CPR maintains oxygenated blood flow to the brain and vital organs until definitive care arrives.
+
+## 1. Initial Assessment Protocol (DRSABCD)
+1. **D - Danger:** Ensure the scene is safe for yourself, bystanders, and the casualty.
+2. **R - Response:** Check for consciousness. Tap shoulders firmly and ask loudly: "Can you hear me? Open your eyes!"
+3. **S - Send for Help:** Call emergency services (112, 911, or local dispatch) or direct a bystander to call and locate an Automated External Defibrillator (AED).
+4. **A - Airway:** Open the airway using the head-tilt/chin-lift maneuver. Check the mouth for visible foreign blockages.
+5. **B - Breathing:** Look, listen, and feel for normal chest rise for no more than 10 seconds. Agonal gasps are not normal breathing.
+6. **C - CPR:** Immediately begin chest compressions if unbreathing.
+7. **D - Defibrillation:** Attach AED pads as soon as available and follow audio prompts.
+
+## 2. High-Quality Chest Compressions
+- **Positioning:** Place the heel of one hand in the center of the chest (lower half of sternum) and interlock the other hand on top. Keep arms straight and shoulders positioned directly over the hands.
+- **Compression Depth:** Compress the chest at least 5 cm (2 inches), but no more than 6 cm in adults.
+- **Compression Rate:** 100 to 120 compressions per minute (tempo of "Stayin' Alive").
+- **Full Recoil:** Allow the chest to fully re-expand between compressions to facilitate cardiac refill; do not lean on the chest.
+- **Ratio:** 30 chest compressions followed by 2 rescue breaths. If untrained or unwilling to deliver rescue breaths, deliver continuous hands-only CPR.
+
+## 3. Foreign Body Airway Obstruction (Choking)
+- **Mild Obstruction (Casualty can speak, cough loudly):** Encourage vigorous coughing. Do not interfere.
+- **Severe Obstruction (Silent, clutching neck, cyanotic lips):**
+  1. Stand to the side and slightly behind the casualty. Support chest with one hand and lean them forward.
+  2. Deliver up to **5 sharp back blows** between the shoulder blades with the heel of your hand.
+  3. If back blows fail, deliver up to **5 abdominal thrusts (Heimlich maneuver)**: Position a fist just above the navel, grasp with the other hand, and pull inward and upward sharply.
+  4. Repeat sequence. If casualty becomes unresponsive, lower carefully to the ground and initiate CPR immediately.
+            """.trimIndent(),
+            tagsJson = "[\"CPR\", \"Cardiac Arrest\", \"Choking\", \"BLS\", \"Emergency\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_hemorrhage_tourniquet",
+            packId = "first_aid",
+            title = "Massive Hemorrhage Control & Tourniquet Application",
+            section = "Trauma Management",
+            content = """
+# Massive Hemorrhage Control & Tourniquet Application
+
+Arterial hemorrhage can cause fatal exsanguination in under 3 minutes. Stop the bleeding before any other intervention.
+
+## 1. Stepwise Bleeding Control Hierarchy
+1. **Immediate Firm Direct Pressure:** Press directly onto the bleeding site using sterile gauze, clean cloth, or gloved hands. Lean your full body weight into the wound.
+2. **Wound Packing (Junctional Areas - Groin, Axilla, Neck):**
+   - Pack hemostatic gauze (quikclot/kaolin) or standard gauze tightly into the wound cavity directly against the bleeding vessel.
+   - Maintain continuous direct pressure over the packed wound for at least 3 minutes (5 minutes for non-hemostatic gauze).
+3. **Tourniquet (Extremity Wounds):** Apply immediately for life-threatening limb hemorrhage.
+
+## 2. Tourniquet Application Procedure (Combat Application Tourniquet - CAT)
+1. Place the tourniquet **2 to 3 inches above the bleeding site**, directly on the skin (never over a joint; if bleeding location is unclear in the dark, place "high and tight" on the limb).
+2. Pull the self-adhering band tightly to eliminate all slack before turning the windlass.
+3. Twist the windlass rod until the arterial bleeding stops completely and distal pulse vanishes.
+4. Lock the windlass rod into the clip.
+5. Secure the friction buckle strap and write the exact time of application on the time tag (e.g., "TK 14:35").
+
+## 3. Critical Tourniquet Safety Rules
+- **Never loosen or remove a tourniquet in the field.** Removal must only be performed by medical personnel in a surgical setting.
+- An improperly applied loose tourniquet acts as a venous tourniquet, increasing bleeding rather than stopping it.
+- Pain is expected and indicates effective arterial occlusion.
+            """.trimIndent(),
+            tagsJson = "[\"Bleeding\", \"Tourniquet\", \"Trauma\", \"Wounds\", \"Hemostatic\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_burns_treatment",
+            packId = "first_aid",
+            title = "Burn Classification & Emergency Treatment",
+            section = "Wound Care",
+            content = """
+# Burn Classification & Emergency Treatment
+
+Immediate cooling and sterile dressing minimize tissue damage and infection risk following thermal, chemical, or electrical burns.
+
+## 1. Burn Depth Classification
+- **First-Degree (Superficial):** Affects only the epidermis. Red, painful, dry, no blisters (e.g., mild sunburn).
+- **Second-Degree (Partial-Thickness):** Involves epidermis and dermis. Redness, severe pain, edema, and fluid-filled blisters.
+- **Third-Degree (Full-Thickness):** Extends through all skin layers into subcutaneous tissue. Leathery, charred black or waxy white, often painless at the center due to nerve destruction.
+
+## 2. Emergency Management Steps
+1. **Extinguish & Remove Source:** Smother flames, disconnect electrical supply, or brush dry chemicals off before flushing.
+2. **Cool with Clean Running Water:** Apply cool running tap water (15°C - 20°C) over the burn for **at least 20 minutes**. Do this within the first 3 hours of injury.
+   - *Warning:* Never use ice or ice-cold water; extreme cold constricts capillary blood flow, deepening tissue necrosis.
+3. **Remove Constricting Items:** Gently take off rings, watches, belts, and tight clothing before swelling develops. Do not peel off clothing stuck to the wound.
+4. **Cover the Burn:** Cover loosely with a sterile, non-adherent dressing, clean polyethylene plastic food wrap (applied lengthways, not wrapped tightly), or clean damp cloth.
+5. **Keep Casualty Warm:** Extensive burns impair thermoregulation; wrap unburned areas in blankets to prevent hypothermia.
+
+## 3. Do NOT Practices
+- Do not apply butter, oil, grease, toothpaste, or home ointments.
+- Do not burst intact blisters; the blister roof acts as a biological sterile barrier.
+            """.trimIndent(),
+            tagsJson = "[\"Burns\", \"Thermal\", \"Chemical\", \"First Aid\", \"Wounds\"]",
+            orderIndex = 3
+        ),
+        KnowledgePackArticleEntity(
+            id = "first_aid_fractures_splinting",
+            packId = "first_aid",
+            title = "Fractures, Dislocations & Field Splinting",
+            section = "Musculoskeletal",
+            content = """
+# Fractures, Dislocations & Field Splinting
+
+Immobilizing suspected bone fractures and joint dislocations prevents further soft tissue trauma, reduces pain, and prevents closed fractures from puncturing through the skin.
+
+## 1. Signs of a Fracture
+- Severe localized pain and tenderness.
+- Visible deformity, unnatural angulation, or limb shortening.
+- Swelling, bruising (ecchymosis), and inability to bear weight.
+- Crepitus (grating sensation of bone ends touching).
+
+## 2. Neurovascular Examination (PMS Protocol)
+Always assess and record **PMS** distal to the injury **before and after** applying any splint:
+1. **P - Pulse:** Check distal arterial pulse (radial pulse for arm, dorsalis pedis for leg).
+2. **M - Motor:** Ask casualty to gently wiggle fingers or toes.
+3. **S - Sensory:** Touch extremities and ask casualty if they feel it without looking.
+- If distal pulse is absent, emergency reduction or repositioning may be required by trained medics.
+
+## 3. Splinting Rules
+- **Immobilize the Joint Above and Below:** For a mid-shaft forearm fracture, immobilize both the wrist and the elbow. For an ankle fracture, immobilize the foot and the knee.
+- **Pad the Splint:** Pad rigid items (sticks, rolled magazines, padded boards, SAM splints) with cloth to eliminate pressure sores over bony prominences.
+- **Secure in Position Found:** Never attempt to forcefully straighten a dislocated joint or push exposed bone back into an open fracture.
+- **Open Fractures:** Cover exposed bone ends with sterile moist gauze before splinting.
+            """.trimIndent(),
+            tagsJson = "[\"Fracture\", \"Splint\", \"Bone\", \"Sprain\", \"Trauma\"]",
+            orderIndex = 4
+        ),
+
+        // =================================================================
+        // 7. FIELD ELECTRONICS & HARDWARE TROUBLESHOOTING (field_electronics)
+        // =================================================================
+        KnowledgePackArticleEntity(
+            id = "field_multimeter_diagnostics",
+            packId = "field_electronics",
+            title = "Digital Multimeter Diagnostics & Component Testing",
+            section = "Test & Measurement",
+            content = """
+# Digital Multimeter Diagnostics & Component Testing
+
+A digital multimeter (DMM) is the primary diagnostic instrument for troubleshooting unpowered and powered electronic assemblies.
+
+## 1. Core Operating Modes
+- **DC Voltage (V=):** Measures steady potential difference. Red probe to circuit node, black probe to common ground (GND). Use for verifying battery charge, power supplies, and logic rails (3.3V, 5V, 12V).
+- **Continuity (Beeper):** Emits an audible tone when loop resistance is below approximately 30Ω - 50Ω. Used for tracing broken PCB tracks, blown fuses, and finding solder bridges.
+- **Resistance (Ω):** Measures passive component impedance without power applied. Always isolate at least one pin of a resistor when testing in-circuit to avoid parallel paths.
+- **Diode Mode:** Injects a constant current (~1mA) and displays the forward voltage drop (V_f):
+  - Silicon PN Junction: 0.5V to 0.7V.
+  - Schottky Diode: 0.15V to 0.35V.
+  - Germanium Diode: 0.2V to 0.3V.
+  - Open or Reverse Biased: "OL" (Over Limit).
+  - Shorted Diode: 0.00V in both directions.
+
+## 2. In-Circuit Capacitor Testing
+1. Disconnect all power and safely discharge high-voltage electrolytic capacitors through a 1kΩ 5W power resistor.
+2. In Resistance mode, connect probes across the capacitor:
+   - Reading should start low, then continuously climb toward infinity (OL) as the internal DMM battery charges the capacitor.
+   - If resistance stays near 0Ω: Capacitor is shorted internally (common failure mode of ceramic MLCCs).
+
+## 3. MOSFET and BJT Transistor Quick Tests
+- **NPN BJT:** With meter in Diode Mode, black probe on Base, red probe on Collector and Emitter should read OL. Red probe on Base, black probe on Collector and Emitter should both read ~0.65V.
+- **N-Channel MOSFET:** Black probe on Source, red probe on Drain reads ~0.5V (internal body diode). Reverse should read OL. Touch red probe to Gate, then red probe to Drain: MOSFET should conduct (reading drops to 0.0V).
+            """.trimIndent(),
+            tagsJson = "[\"Multimeter\", \"Voltage\", \"Continuity\", \"Diode\", \"Resistance\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "field_lithium_battery_pack",
+            packId = "field_electronics",
+            title = "Lithium-Ion & LiFePO4 Battery Pack Diagnostics",
+            section = "Power Systems",
+            content = """
+# Lithium-Ion & LiFePO4 Battery Pack Diagnostics
+
+Lithium secondary cells store high chemical energy density. Proper cell balancing, cutoff voltages, and Battery Management System (BMS) diagnostics are critical to avoid thermal runaway.
+
+## 1. Operating Voltage Thresholds per Cell
+| Chemistry | Nominal Voltage | Full Charge (Cutoff) | Storage Voltage | Absolute Minimum (Discharged) |
+|---|---|---|---|---|
+| **Li-Ion (NMC / Cobalt)** | 3.6V - 3.7V | 4.20V ± 0.05V | 3.82V | 2.80V (Below 2.5V damages cell) |
+| **LiFePO4 (Iron Phosphate)**| 3.2V | 3.65V ± 0.05V | 3.30V | 2.50V (Extremely safe chemistry) |
+| **Li-Po (Pouch Cells)** | 3.7V | 4.20V (4.35V LiHV) | 3.85V | 3.00V |
+
+## 2. Common Battery Pack Failure Modes
+1. **Cell Imbalance in Series Strings (e.g. 3S, 4S, 7S):**
+   - Measure each cell via balance connector. Imbalance greater than **50mV (0.05V)** reduces effective capacity. Imbalance over **200mV** trips BMS shutdown.
+   - Rebalance using a dedicated balance charger or CC-CV single cell supply.
+2. **BMS Lockout State:**
+   - Many BMS boards enter protection mode if any single cell drops below 2.5V or shorts.
+   - To reset a tripped BMS: Connect appropriate charging voltage across the main P+ and P- terminals for 5 seconds to re-engage the discharge MOSFETs.
+3. **Physical Swelling & Dendrites:**
+   - Any pouch cell showing gas swelling ("pillowing") has suffered electrolyte decomposition. Discontinue use immediately; do not puncture.
+            """.trimIndent(),
+            tagsJson = "[\"Battery\", \"18650\", \"Lithium\", \"BMS\", \"Safety\"]",
+            orderIndex = 2
+        ),
+
+        // =================================================================
+        // 8. WILDERNESS SURVIVAL & BUSHCRAFT NAVIGATION (wilderness_survival)
+        // =================================================================
+        KnowledgePackArticleEntity(
+            id = "survival_water_purification",
+            packId = "wilderness_survival",
+            title = "Wilderness Water Sourcing, Filtration & Purification",
+            section = "Hydration",
+            content = """
+# Wilderness Water Sourcing, Filtration & Purification
+
+Humans can survive approximately 3 weeks without food, but only 3 days without water. In wilderness conditions, unpurified water harbors pathogenic protozoa, bacteria, and viruses.
+
+## 1. Biological Contaminants & Target Sizes
+- **Protozoan Cysts (Giardia, Cryptosporidium):** 1 to 15 microns. Resistant to standard chlorine tablets; neutralized reliably by boiling or sub-micron ceramic/hollow-fiber membrane filters.
+- **Bacteria (E. coli, Salmonella, Cholera):** 0.2 to 2 microns. Removed by 0.1-micron microfilters or heat.
+- **Viruses (Hepatitis A, Norovirus, Rotavirus):** 0.02 to 0.1 microns. Too small for mechanical microfilters; neutralized by boiling, UV radiation, or chemical halogens.
+
+## 2. Field Purification Methods
+1. **Rolling Boil (The Gold Standard):**
+   - Bring water to a vigorous rolling boil for **1 full minute** at sea level.
+   - Above 2,000 meters (6,500 feet), boil for **3 full minutes** to compensate for reduced atmospheric pressure and lower boiling points.
+2. **Improvised Multi-Layer Biofilter (Clarification):**
+   - Cut the bottom off a plastic bottle and invert it.
+   - Layer 1 (Bottom): Clean cloth or cotton.
+   - Layer 2: Crushed wood charcoal from a campfire (adsorbs organic chemical odors and impurities).
+   - Layer 3: Fine clean sand.
+   - Layer 4: Coarse sand and gravel.
+   - *Note:* Filtering removes suspended sediment and turbidity, but filtered water must still be boiled or chemically treated to kill pathogens.
+3. **SODIS (Solar Water Disinfection):**
+   - Fill clean, transparent PET bottles with clear water and expose to direct sunlight for **6 hours** (or 2 days if cloudy). UV-A rays and solar thermal heating destroy waterborne pathogens.
+            """.trimIndent(),
+            tagsJson = "[\"Water\", \"Purification\", \"Filtration\", \"Boiling\", \"Survival\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "survival_celestial_navigation",
+            packId = "wilderness_survival",
+            title = "Celestial Navigation Using Crux (Southern Cross) & Polaris",
+            section = "Navigation",
+            content = """
+# Celestial Navigation Using Crux (Southern Cross) & Polaris
+
+When magnetic compasses or GPS satellite receivers fail, celestial navigation using key circumpolar constellations provides absolute cardinal direction anywhere on Earth.
+
+## 1. Southern Hemisphere: Finding True South via Crux (Southern Cross)
+The constellation **Crux** is a distinctive 4-star kite/cross pattern accompanied by two bright "Pointer Stars" (Alpha and Beta Centauri).
+
+### The Projection Method:
+1. Locate the four primary stars of the Southern Cross: Acrux (bottom), Gacrux (top), Mimosa (left), and Imai (right).
+2. Trace an imaginary straight line extending through the long axis of the cross, from **Gacrux through Acrux**, extending outward **4.5 times** the distance between these two stars.
+3. Draw a second line between the two bright **Pointer Stars** (Alpha and Beta Centauri), and construct a perpendicular bisector line from its midpoint.
+4. The intersection where the Crux long-axis line meets the Pointer bisector is the **South Celestial Pole (SCP)**.
+5. Drop your gaze vertically downward from the South Celestial Pole directly to the horizon: **that point on the horizon is True South**.
+6. Turn 180° around to face True North.
+
+## 2. Northern Hemisphere: Finding True North via Polaris
+Polaris (the North Star) sits almost directly above the geographic North Pole.
+
+### The Pointer Stars Method:
+1. Locate the **Big Dipper** (Ursa Major, the Plough).
+2. Find the two outer stars of the bowl furthest from the handle: **Merak** (lower bowl) and **Dubhe** (upper bowl).
+3. Draw a straight line from Merak through Dubhe and extend it outward approximately **5 times** the distance between them.
+4. You will hit **Polaris**, a moderately bright star situated at the tip of the Little Dipper's handle (Ursa Minor).
+5. Drop vertically from Polaris to the horizon: **that point on the horizon is True North**.
+            """.trimIndent(),
+            tagsJson = "[\"Navigation\", \"Crux\", \"Polaris\", \"Stars\", \"Compass\", \"Orientation\"]",
+            orderIndex = 2
+        ),
+
+        // =================================================================
+        // 9. PROGRAMMING & DEVELOPER CHEAT SHEETS (dev_cheatsheets)
+        // =================================================================
+        KnowledgePackArticleEntity(
+            id = "dev_kotlin_coroutines",
+            packId = "dev_cheatsheets",
+            title = "Kotlin Coroutines & Flow Essential Cheat Sheet",
+            section = "Android & Kotlin",
+            content = """
+# Kotlin Coroutines & Flow Essential Cheat Sheet
+
+## 1. Builders and Dispatchers
+```kotlin
+// Launch fire-and-forget job
+val job = scope.launch(Dispatchers.Default) { ... }
+
+// Async with deferred result
+val deferred = scope.async(Dispatchers.IO) { fetchData() }
+val data = deferred.await()
+
+// Dispatcher Selection
+Dispatchers.Main        // UI operations & LiveData/StateFlow emission
+Dispatchers.IO          // Network requests, Room DB, SAF file I/O (elastic thread pool)
+Dispatchers.Default     // Heavy CPU calculation, JSON parsing, image downsampling
+Dispatchers.Unconfined  // Starts on caller thread, resumes on suspension thread
+```
+
+## 2. StateFlow vs SharedFlow
+- **StateFlow:** Hot stream, always holds one state value, replay cache of 1, conflates duplicate values, ideal for UI state (`val state = _state.asStateFlow()`).
+- **SharedFlow:** Hot stream, zero default replay, ideal for one-off events (navigation, toast, snackbar).
+
+## 3. Cooperative Cancellation
+Coroutines are cooperatively cancellable. Always verify `isActive` or call `yield()` in CPU loops:
+```kotlin
+while (isActive) {
+    // Process chunk
+    ensureActive() // Throws CancellationException if job is cancelled
+}
+```
+            """.trimIndent(),
+            tagsJson = "[\"Kotlin\", \"Coroutines\", \"Flow\", \"Android\", \"Concurrency\"]",
+            orderIndex = 1
+        ),
+        KnowledgePackArticleEntity(
+            id = "dev_git_power_tools",
+            packId = "dev_cheatsheets",
+            title = "Git Version Control Master Reference",
+            section = "Developer Tools",
+            content = """
+# Git Version Control Master Reference
+
+## 1. Branching & Rebasing
+```bash
+# Rebase feature branch on top of latest master
+git checkout feature
+git fetch origin master
+git rebase origin/master
+
+# Interactive rebase last 4 commits (squash, edit, reword)
+git rebase -i HEAD~4
+
+# Abort an in-flight conflict rebase cleanly
+git rebase --abort
+```
+
+## 2. Disaster Recovery with Reflog
+Git never deletes committed objects immediately. The `reflog` tracks every HEAD movement:
+```bash
+# View chronological history of HEAD changes
+git reflog
+
+# Restore branch to state before an accidental reset or deleted branch
+git reset --hard HEAD@{3}
+```
+
+## 3. Stashing & Cherry-Picking
+```bash
+# Stash untracked and modified files with description
+git stash push -u -m "WIP: offline parser"
+
+# Apply and drop most recent stash
+git stash pop
+
+# Pick specific commit into current branch
+git cherry-pick <commit-sha>
+```
+            """.trimIndent(),
+            tagsJson = "[\"Git\", \"VCS\", \"Rebase\", \"Reflog\", \"CLI\"]",
+            orderIndex = 2
+        ),
+        KnowledgePackArticleEntity(
+            id = "dev_regex_quickref",
+            packId = "dev_cheatsheets",
+            title = "Regular Expressions (Regex) Syntax & Token Guide",
+            section = "Text Processing",
+            content = """
+# Regular Expressions (Regex) Syntax & Token Guide
+
+## 1. Anchors and Boundaries
+- `^` : Start of string (or line in multiline mode).
+- `$` : End of string (or line in multiline mode).
+- `\b` : Word boundary (transition between word and non-word character).
+- `\B` : Non-word boundary.
+
+## 2. Character Classes
+- `.` : Any character except newline.
+- `\d` : Digit `[0-9]`.
+- `\D` : Non-digit `[^0-9]`.
+- `\w` : Word character `[a-zA-Z0-9_]`.
+- `\s` : Whitespace (space, tab, newline).
+- `[a-z]` : Character range.
+- `[^a-z]` : Negated character range.
+
+## 3. Quantifiers
+- `*` : 0 or more (greedy).
+- `+` : 1 or more (greedy).
+- `?` : 0 or 1 (optional).
+- `*?` / `+?` : Non-greedy (lazy) matching.
+- `{n}` : Exactly n times.
+- `{n,m}` : Between n and m times.
+
+## 4. Lookaround Assertions (Zero-Width)
+- Positive Lookahead: `X(?=Y)` (matches X only if followed by Y).
+- Negative Lookahead: `X(?!Y)` (matches X only if NOT followed by Y).
+- Positive Lookbehind: `(?<=Y)X` (matches X only if preceded by Y).
+- Negative Lookbehind: `(?<!Y)X` (matches X only if NOT preceded by Y).
+            """.trimIndent(),
+            tagsJson = "[\"Regex\", \"String\", \"Pattern\", \"Parsing\", \"CLI\"]",
+            orderIndex = 3
         )
     )
 }

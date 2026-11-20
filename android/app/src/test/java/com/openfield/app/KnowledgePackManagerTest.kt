@@ -212,11 +212,68 @@ class KnowledgePackManagerTest {
         assertTrue("Should cover learning & science", packIds.contains("learning"))
         assertTrue("Should cover programming", packIds.contains("programming"))
         assertTrue("Should cover languages", packIds.contains("languages"))
+        assertTrue("Should cover first aid", packIds.contains("first_aid"))
+        assertTrue("Should cover field electronics", packIds.contains("field_electronics"))
+        assertTrue("Should cover wilderness survival", packIds.contains("wilderness_survival"))
+        assertTrue("Should cover dev cheatsheets", packIds.contains("dev_cheatsheets"))
 
         for (art in articles) {
             assertTrue("Article ${art.id} must have title", art.title.isNotBlank())
             assertTrue("Article ${art.id} must have section", art.section.isNotBlank())
             assertTrue("Article ${art.id} must have substantial real content (>200 chars)", art.content.length > 200)
         }
+    }
+
+    @Test
+    fun curatedCatalog_containsAllExpandedDomainPacks() {
+        val packIds = KnowledgePackManager.CURATED_CATALOG.map { it.packId }
+        assertTrue("Catalog must contain first_aid", packIds.contains("first_aid"))
+        assertTrue("Catalog must contain field_electronics", packIds.contains("field_electronics"))
+        assertTrue("Catalog must contain wilderness_survival", packIds.contains("wilderness_survival"))
+        assertTrue("Catalog must contain dev_cheatsheets", packIds.contains("dev_cheatsheets"))
+        assertEquals(9, KnowledgePackManager.CURATED_CATALOG.size)
+    }
+
+    @Test
+    fun realTimeDomainSearch_retrievesRelevantKnowledge() = runBlocking {
+        manager.seedDefaultPacksIfEmpty()
+
+        // Install new domain packs
+        assertTrue(manager.togglePackInstallation("first_aid").getOrThrow())
+        assertTrue(manager.togglePackInstallation("field_electronics").getOrThrow())
+        assertTrue(manager.togglePackInstallation("wilderness_survival").getOrThrow())
+        assertTrue(manager.togglePackInstallation("dev_cheatsheets").getOrThrow())
+
+        // 1. First Aid searches
+        val cprResults = dao.searchArticles("CPR")
+        assertTrue("CPR query should return results", cprResults.isNotEmpty())
+        assertTrue(cprResults.any { it.title.contains("CPR") || it.content.contains("DRSABCD") })
+
+        val tourniquetResults = dao.searchArticles("Tourniquet")
+        assertTrue("Tourniquet query should return results", tourniquetResults.isNotEmpty())
+        assertTrue(tourniquetResults.any { it.content.contains("Combat Application Tourniquet") })
+
+        // 2. Field Electronics searches
+        val multimeterResults = dao.searchArticles("Multimeter")
+        assertTrue("Multimeter query should return results", multimeterResults.isNotEmpty())
+        assertTrue(multimeterResults.any { it.content.contains("Diode Mode") })
+
+        val batteryResults = dao.searchArticles("LiFePO4")
+        assertTrue("Battery chemistry query should return results", batteryResults.isNotEmpty())
+
+        // 3. Wilderness Survival searches
+        val navigationResults = dao.searchArticles("Crux")
+        assertTrue("Crux celestial navigation query should return results", navigationResults.isNotEmpty())
+        assertTrue(navigationResults.any { it.title.contains("Crux") || it.content.contains("Southern Cross") })
+
+        val waterResults = dao.searchArticles("Purification")
+        assertTrue("Water purification query should return results", waterResults.isNotEmpty())
+
+        // 4. Developer Cheatsheet searches
+        val reflogResults = dao.searchArticles("reflog")
+        assertTrue("Git reflog query should return results", reflogResults.isNotEmpty())
+
+        val coroutinesResults = dao.searchArticles("Dispatchers")
+        assertTrue("Kotlin Dispatchers query should return results", coroutinesResults.isNotEmpty())
     }
 }

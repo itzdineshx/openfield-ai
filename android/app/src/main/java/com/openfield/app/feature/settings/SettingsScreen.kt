@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Security
@@ -687,6 +688,89 @@ fun SettingsScreen(
                             tint = Color(0xFFD32F2F).copy(alpha = 0.5f),
                             modifier = Modifier.size(13.dp)
                         )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Section: Display & Appearance
+            SettingsSectionHeader(title = "Display & Appearance")
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+                border = BorderStroke(1.dp, OpenFieldCardBorder)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SettingsIconBadge(icon = Icons.Default.Lightbulb)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Theme & Battery Saver",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OpenFieldNavyText
+                                )
+                            )
+                            Text(
+                                text = "Select Light, Obsidian AMOLED (pitch black power saving), or System",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = OpenFieldSecondaryText,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "Light" to "Light",
+                            "Dark (AMOLED)" to "Obsidian",
+                            "System" to "System"
+                        ).forEach { (modeValue, displayLabel) ->
+                            val isSelected = when (modeValue) {
+                                "Dark (AMOLED)" -> settings.themeMode.contains("Dark") || settings.themeMode.contains("Obsidian") || settings.themeMode.contains("AMOLED")
+                                "Light" -> settings.themeMode == "Light"
+                                else -> settings.themeMode.contains("System") || settings.themeMode.isBlank()
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        val saveValue = when (modeValue) {
+                                            "Dark (AMOLED)" -> "Dark (AMOLED)"
+                                            "Light" -> "Light"
+                                            else -> "System Default"
+                                        }
+                                        repository.updateThemeMode(saveValue)
+                                    }
+                            ) {
+                                Text(
+                                    text = displayLabel,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = if (isSelected) Color.White else OpenFieldNavyText,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    ),
+                                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                            }
+                        }
                     }
                 }
             }

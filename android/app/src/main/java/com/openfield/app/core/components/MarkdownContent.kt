@@ -125,18 +125,24 @@ fun InlineMarkdown(
     modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE
 ) {
-    val annotated = remember(text, style) { buildInlineAnnotated(text) }
+    val codeBg = OpenFieldSecondaryBackground
+    val codeClr = OpenFieldPrimaryBlue
+    val annotated = remember(text, style, codeBg, codeClr) { buildInlineAnnotated(text, codeBg, codeClr) }
     Text(text = annotated, style = style, modifier = modifier, maxLines = maxLines)
 }
 
-fun buildInlineAnnotated(text: String): AnnotatedString = buildAnnotatedString {
+fun buildInlineAnnotated(
+    text: String,
+    codeBackground: Color = Color.Unspecified,
+    codeColor: Color = Color.Unspecified
+): AnnotatedString = buildAnnotatedString {
     Markdown.parseInline(text).forEach { span ->
         val spanStyle = SpanStyle(
             fontWeight = if (span.bold) FontWeight.Bold else null,
             fontStyle = if (span.italic) FontStyle.Italic else null,
             fontFamily = if (span.code) FontFamily.Monospace else null,
-            background = if (span.code) OpenFieldSecondaryBackground else Color.Unspecified,
-            color = if (span.code) OpenFieldPrimaryBlue else Color.Unspecified,
+            background = if (span.code) codeBackground else Color.Unspecified,
+            color = if (span.code) codeColor else Color.Unspecified,
             textDecoration = if (span.strike) TextDecoration.LineThrough else null
         )
         withStyle(spanStyle) { append(span.text) }

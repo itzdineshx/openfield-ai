@@ -54,7 +54,7 @@ class KnowledgePackManager(
                 version = "1.2.0",
                 size = "6.7 KB",
                 iconColorHex = 0xFF43A047,
-                checksumSha256 = "1c7860f89bb47da892b077056be434a11f2339344081c37aac2ab452c745d142",
+                checksumSha256 = "4a6dd5feb64089002634d872b74fd85a142e757088a60feead9170999ea732d4",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Networking", "Linux Commands", "Hardware Architecture", "Troubleshooting", "Operating Systems", "Linux"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/comp_tech-1.2.0.zip"
@@ -67,7 +67,7 @@ class KnowledgePackManager(
                 version = "1.3.0",
                 size = "6.7 KB",
                 iconColorHex = 0xFF43A047,
-                checksumSha256 = "b14c5e9b5655982d7ebb9ddd14cf333b0d402edb0154fb7bb12092c9404e5215",
+                checksumSha256 = "d0c4120b407dc0794dfe2ae7f5ff3e6053e469942e69b79e24f6a8240ff97f3e",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Soldering", "Circuit Boards", "Multimeter Tests", "Component Replacement", "Power Supplies", "Multimeter"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/devices_repairs-1.3.0.zip"
@@ -80,7 +80,7 @@ class KnowledgePackManager(
                 version = "1.0.0",
                 size = "4.3 KB",
                 iconColorHex = 0xFF7E57C2,
-                checksumSha256 = "d967d53653da346540a7ec3d29e0320d47e359f2455bf2d623c00730de5e6047",
+                checksumSha256 = "98ce1fb49ef387c3e403db243dae0ad523d5c9ca24d64a6d76125e9254370e41",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Physics Formulas", "Periodic Table", "Calculus Essentials", "Cellular Biology", "Mechanics"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/learning-1.0.0.zip"
@@ -93,7 +93,7 @@ class KnowledgePackManager(
                 version = "1.1.0",
                 size = "4.4 KB",
                 iconColorHex = 0xFF1E88E5,
-                checksumSha256 = "a1975937eec6bc5d5aa4ae4ea3bc097f1d100d685177f19a9110909acb2ff488",
+                checksumSha256 = "d9d71ad4aea47f7fb4de54e689c36100f0bed786d253415872f9d933a6303c18",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Kotlin Coroutines", "Room Database", "Clean Architecture", "Data Structures", "Algorithms"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/programming-1.1.0.zip"
@@ -106,10 +106,62 @@ class KnowledgePackManager(
                 version = "1.0.0",
                 size = "2.5 KB",
                 iconColorHex = 0xFF00ACC1,
-                checksumSha256 = "9d5664dd40f95afc11229e1fcf11a29a5a52e0e3bf906f375ac73ee8e899afba",
+                checksumSha256 = "c28eaab8893c6bf84ed5966dee82fd74034cd06d411f13626bc04d6c1d272c1b",
                 provenance = OFFICIAL_PROVENANCE,
                 topics = listOf("Vocabulary", "Technical Terms", "Grammar Rules", "Phrases", "Translations"),
                 downloadUrl = "$GITHUB_RELEASES_BASE/languages-1.0.0.zip"
+            ),
+            KnowledgePackManifest(
+                packId = "first_aid",
+                title = "First Aid & Emergency Response",
+                description = "Essential trauma protocols, CPR, wound dressing, fracture immobilization, burns, and shock management.",
+                category = "Medical & Safety",
+                version = "1.0.0",
+                size = "8.9 KB",
+                iconColorHex = 0xFFE53935,
+                checksumSha256 = "f2f97968f3471a1fed7f0bdbe13593ee382f24cb3e19021a084b7ce0ee6f2f7b",
+                provenance = OFFICIAL_PROVENANCE,
+                topics = listOf("CPR & Choking", "Hemorrhage Control", "Burn Treatment", "Fractures & Sprains", "Shock & Hypothermia", "Emergency Protocols"),
+                downloadUrl = "$GITHUB_RELEASES_BASE/first_aid-1.0.0.zip"
+            ),
+            KnowledgePackManifest(
+                packId = "field_electronics",
+                title = "Field Electronics & Hardware Troubleshooting",
+                description = "Multimeter diagnostics, circuit tracing, soldering in remote environments, battery chemistry, and power fault isolation.",
+                category = "Hardware & Engineering",
+                version = "1.0.0",
+                size = "4.6 KB",
+                iconColorHex = 0xFFFFA000,
+                checksumSha256 = "45684880af39949612fd63e29e2124c23c3d7812171ed4315b1a5e1dea09a122",
+                provenance = OFFICIAL_PROVENANCE,
+                topics = listOf("Multimeter Diagnostics", "Power Rails", "Soldering & Desoldering", "Lithium Battery Safety", "Component Testing"),
+                downloadUrl = "$GITHUB_RELEASES_BASE/field_electronics-1.0.0.zip"
+            ),
+            KnowledgePackManifest(
+                packId = "wilderness_survival",
+                title = "Wilderness Survival & Bushcraft Navigation",
+                description = "Off-grid survival techniques, water purification, celestial navigation (Crux / Southern Cross & North Star), emergency shelter, and fire craft.",
+                category = "Outdoors & Survival",
+                version = "1.0.0",
+                size = "4.6 KB",
+                iconColorHex = 0xFF2E7D32,
+                checksumSha256 = "e8631211fc841fc9e435dfc3812c35dc8412f6ee0d002cfe89393bbbee4ddccf",
+                provenance = OFFICIAL_PROVENANCE,
+                topics = listOf("Water Purification", "Celestial Navigation", "Shelter Construction", "Firecraft", "Edible & Toxic Plants", "Signaling"),
+                downloadUrl = "$GITHUB_RELEASES_BASE/wilderness_survival-1.0.0.zip"
+            ),
+            KnowledgePackManifest(
+                packId = "dev_cheatsheets",
+                title = "Programming & Developer Cheat Sheets",
+                description = "High-density reference cheat sheets for Kotlin, Python, Git, Linux CLI, SQL, Docker, and Regular Expressions.",
+                category = "Development",
+                version = "1.0.0",
+                size = "4.3 KB",
+                iconColorHex = 0xFF0288D1,
+                checksumSha256 = "537a4fac5be426ff565a4b30d784943071f7804af46476f5ed239fc903643e84",
+                provenance = OFFICIAL_PROVENANCE,
+                topics = listOf("Kotlin Concurrency", "Python Data Structures", "Git Command Reference", "Linux Bash Shell", "SQL Query Patterns", "Regex Syntax"),
+                downloadUrl = "$GITHUB_RELEASES_BASE/dev_cheatsheets-1.0.0.zip"
             )
         )
     }

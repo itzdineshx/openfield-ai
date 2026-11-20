@@ -7,8 +7,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldTheme
@@ -24,7 +27,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         handleIntent(intent)
         setContent {
-            OpenFieldTheme {
+            val settings by OpenFieldRepository.getInstance().settings.collectAsState()
+            val systemInDark = isSystemInDarkTheme()
+            val isDark = when (settings.themeMode) {
+                "Dark", "Dark (AMOLED)", "Dark (Obsidian AMOLED)" -> true
+                "Light" -> false
+                else -> systemInDark
+            }
+
+            OpenFieldTheme(darkTheme = isDark) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = OpenFieldBackground
