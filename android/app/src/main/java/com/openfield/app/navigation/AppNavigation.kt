@@ -12,20 +12,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
+import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -490,248 +500,474 @@ private fun AppDrawerContent(
         else sessions.filter { it.title.contains(searchFilter, ignoreCase = true) }.take(20)
     }
 
+    val matchingFeatures = remember(searchFilter) {
+        if (searchFilter.isBlank()) emptyList()
+        else listOf(
+            Triple("Ask AI", AppRoutes.HOME, "Chat"),
+            Triple("Analyze Image", AppRoutes.IMAGE_ANALYSIS, "Vision"),
+            Triple("Ask Document", AppRoutes.DOCUMENT_QA, "RAG"),
+            Triple("Solve a Problem", AppRoutes.PROBLEM_SOLVER, "Troubleshoot"),
+            Triple("Learn & Explain", AppRoutes.LEARN_EXPLAIN, "Tutor"),
+            Triple("Create & Write Studio", AppRoutes.CREATE_WRITE, "Editor"),
+            Triple("Knowledge Library", AppRoutes.LIBRARY, "Packs"),
+            Triple("Workflows & Tasks", AppRoutes.TASKS, "Tasks"),
+            Triple("All AI Tools", AppRoutes.TOOLS, "Tools"),
+            Triple("Summarize Tool", AppRoutes.toolDetailRoute("summarize"), "Tool"),
+            Triple("Translate Tool", AppRoutes.toolDetailRoute("translate"), "Tool"),
+            Triple("Explain Concept Tool", AppRoutes.toolDetailRoute("explain"), "Tool"),
+            Triple("Reframe & Polish Tool", AppRoutes.toolDetailRoute("reframe"), "Tool"),
+            Triple("Settings", AppRoutes.SETTINGS, "Settings"),
+            Triple("About OpenField", AppRoutes.ABOUT, "About")
+        ).filter { it.first.contains(searchFilter, ignoreCase = true) || it.third.contains(searchFilter, ignoreCase = true) }
+    }
+
     ModalDrawerSheet(
-        modifier = Modifier.width(310.dp),
+        modifier = Modifier.width(312.dp),
         drawerContainerColor = OpenFieldBackground
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 16.dp, horizontal = 12.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-            ) {
-                OpenFieldLogo(size = 32.dp, showText = true, textFontSize = 18)
-            }
-            Text(
-                text = "Offline AI Companion • Gemma 4",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = OpenFieldSecondaryText,
-                    fontSize = 11.sp
-                ),
-                modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
-            )
-
-            // + New Conversation Button
-            Surface(
-                onClick = onNewChat,
-                shape = RoundedCornerShape(12.dp),
-                color = OpenFieldPrimaryBlueLight,
-                border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
+            // --- 1. PINNED TOP HEADER ---
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                    .padding(top = 16.dp, start = 14.dp, end = 14.dp, bottom = 6.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = OpenFieldPrimaryBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "New Conversation",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = OpenFieldPrimaryBlue,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
+                    OpenFieldLogo(size = 28.dp, showText = true, textFontSize = 17)
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = OpenFieldPrimaryBlueLight
+                    ) {
+                        Text(
+                            text = "Gemma 4 • Offline",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = OpenFieldPrimaryBlue,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 10.sp
+                            ),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
-                    )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // + New Conversation Button
+                Surface(
+                    onClick = onNewChat,
+                    shape = RoundedCornerShape(12.dp),
+                    color = OpenFieldPrimaryBlueLight,
+                    border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = OpenFieldPrimaryBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "New Conversation",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = OpenFieldPrimaryBlue,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Search Filter
+                OutlinedTextField(
+                    value = searchFilter,
+                    onValueChange = { searchFilter = it },
+                    placeholder = { Text("Search chats & features…", fontSize = 12.sp, color = OpenFieldSecondaryText) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = OpenFieldSecondaryText, modifier = Modifier.size(16.dp)) },
+                    trailingIcon = if (searchFilter.isNotBlank()) {
+                        {
+                            IconButton(onClick = { searchFilter = "" }, modifier = Modifier.size(20.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear", tint = OpenFieldSecondaryText, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    } else null,
+                    singleLine = true,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = OpenFieldPrimaryBlue,
+                        unfocusedBorderColor = OpenFieldCardBorder,
+                        focusedContainerColor = OpenFieldSecondaryBackground,
+                        unfocusedContainerColor = OpenFieldSecondaryBackground
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.7f), modifier = Modifier.padding(vertical = 4.dp))
 
-            // Search Filter
-            OutlinedTextField(
-                value = searchFilter,
-                onValueChange = { searchFilter = it },
-                placeholder = { Text("Search chats…", fontSize = 12.5.sp, color = OpenFieldSecondaryText) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = OpenFieldSecondaryText, modifier = Modifier.size(16.dp)) },
-                trailingIcon = if (searchFilter.isNotBlank()) {
-                    {
-                        IconButton(onClick = { searchFilter = "" }, modifier = Modifier.size(20.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = OpenFieldSecondaryText, modifier = Modifier.size(14.dp))
-                        }
-                    }
-                } else null,
-                singleLine = true,
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = OpenFieldPrimaryBlue,
-                    unfocusedBorderColor = OpenFieldCardBorder,
-                    focusedContainerColor = OpenFieldSecondaryBackground,
-                    unfocusedContainerColor = OpenFieldSecondaryBackground
-                ),
+            // --- 2. SCROLLABLE BODY ---
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .padding(horizontal = 4.dp)
-            )
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ) {
+                if (searchFilter.isNotBlank() && matchingFeatures.isNotEmpty()) {
+                    DrawerSectionHeader("MATCHING FEATURES")
+                    matchingFeatures.forEach { (name, route, tag) ->
+                        DrawerNavItem(
+                            label = name,
+                            icon = when {
+                                route.contains("image") -> Icons.Default.Image
+                                route.contains("doc") -> Icons.Default.Description
+                                route.contains("problem") -> Icons.Default.Build
+                                route.contains("learn") -> Icons.Default.Lightbulb
+                                route.contains("write") -> Icons.Default.Edit
+                                route.contains("library") -> Icons.AutoMirrored.Filled.MenuBook
+                                route.contains("task") -> Icons.AutoMirrored.Filled.PlaylistAddCheck
+                                route.contains("tool") -> Icons.AutoMirrored.Filled.ShortText
+                                route.contains("settings") -> Icons.Default.Settings
+                                route.contains("about") -> Icons.Default.Info
+                                else -> Icons.Default.AutoAwesome
+                            },
+                            selected = currentRoute == route,
+                            onClick = { onNavigateToRoute(route) },
+                            trailingBadge = tag
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Recent Chats section
-            if (filteredSessions.isNotEmpty()) {
-                Text(
-                    text = if (searchFilter.isBlank()) "RECENT CHATS" else "MATCHING CHATS",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = OpenFieldSecondaryText,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp,
-                        fontSize = 10.5.sp
-                    ),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                // AI Experiences (Core Modes)
+                DrawerSectionHeader("AI EXPERIENCES")
+                DrawerNavItem(
+                    label = "Ask AI",
+                    subtitle = "Main chat canvas",
+                    icon = Icons.Default.AutoAwesome,
+                    selected = currentRoute == AppRoutes.HOME,
+                    onClick = { onNavigateToRoute(AppRoutes.HOME) },
+                    trailingBadge = "Local"
+                )
+                DrawerNavItem(
+                    label = "Analyze Image",
+                    subtitle = "Vision inspection & OCR",
+                    icon = Icons.Default.Image,
+                    selected = currentRoute == AppRoutes.IMAGE_ANALYSIS,
+                    onClick = { onNavigateToRoute(AppRoutes.IMAGE_ANALYSIS) }
+                )
+                DrawerNavItem(
+                    label = "Ask Document",
+                    subtitle = "PDF grounding & Q&A",
+                    icon = Icons.Default.Description,
+                    selected = currentRoute == AppRoutes.DOCUMENT_QA,
+                    onClick = { onNavigateToRoute(AppRoutes.DOCUMENT_QA) }
+                )
+                DrawerNavItem(
+                    label = "Solve a Problem",
+                    subtitle = "Guided diagnostics",
+                    icon = Icons.Default.Build,
+                    selected = currentRoute == AppRoutes.PROBLEM_SOLVER,
+                    onClick = { onNavigateToRoute(AppRoutes.PROBLEM_SOLVER) }
+                )
+                DrawerNavItem(
+                    label = "Learn & Explain",
+                    subtitle = "Interactive tutor & quizzes",
+                    icon = Icons.Default.Lightbulb,
+                    selected = currentRoute == AppRoutes.LEARN_EXPLAIN,
+                    onClick = { onNavigateToRoute(AppRoutes.LEARN_EXPLAIN) }
+                )
+                DrawerNavItem(
+                    label = "Create & Write",
+                    subtitle = "Dedicated writing studio",
+                    icon = Icons.Default.Edit,
+                    selected = currentRoute == AppRoutes.CREATE_WRITE,
+                    onClick = { onNavigateToRoute(AppRoutes.CREATE_WRITE) }
                 )
 
-                filteredSessions.forEach { session ->
-                    val isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id)
-                    Surface(
-                        onClick = { onNavigateToChat(session.id) },
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (isSelected) OpenFieldSecondaryBackground else Color.Transparent,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 1.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                // Knowledge & Workspaces
+                DrawerSectionHeader("KNOWLEDGE & WORKSPACES")
+                DrawerNavItem(
+                    label = "Knowledge Library",
+                    subtitle = "9 Curated Packs & Documents",
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
+                    selected = currentRoute == AppRoutes.LIBRARY,
+                    onClick = { onNavigateToRoute(AppRoutes.LIBRARY) },
+                    trailingBadge = "9 Packs"
+                )
+                DrawerNavItem(
+                    label = "Workflows & Tasks",
+                    subtitle = "Checklists & planning",
+                    icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                    selected = currentRoute == AppRoutes.TASKS,
+                    onClick = { onNavigateToRoute(AppRoutes.TASKS) }
+                )
+                DrawerNavItem(
+                    label = "All Saved Chats",
+                    subtitle = "Search & bookmarks",
+                    icon = Icons.Default.ChatBubble,
+                    selected = currentRoute == AppRoutes.CHATS,
+                    onClick = { onNavigateToRoute(AppRoutes.CHATS) }
+                )
+
+                // AI Tools & Utilities
+                DrawerSectionHeader("AI TOOLS")
+                DrawerNavItem(
+                    label = "All AI Tools",
+                    subtitle = "Browse full offline catalog",
+                    icon = Icons.Default.Build,
+                    selected = currentRoute == AppRoutes.TOOLS,
+                    onClick = { onNavigateToRoute(AppRoutes.TOOLS) },
+                    trailingBadge = "Catalog"
+                )
+                DrawerNavItem(
+                    label = "Summarize",
+                    subtitle = "Condense long text & articles",
+                    icon = Icons.AutoMirrored.Filled.ShortText,
+                    selected = currentRoute == AppRoutes.toolDetailRoute("summarize"),
+                    onClick = { onNavigateToRoute(AppRoutes.toolDetailRoute("summarize")) }
+                )
+                DrawerNavItem(
+                    label = "Translate",
+                    subtitle = "15 offline languages",
+                    icon = Icons.Default.Translate,
+                    selected = currentRoute == AppRoutes.toolDetailRoute("translate"),
+                    onClick = { onNavigateToRoute(AppRoutes.toolDetailRoute("translate")) }
+                )
+                DrawerNavItem(
+                    label = "Explain Concept",
+                    subtitle = "Multi-level analogies",
+                    icon = Icons.Default.Lightbulb,
+                    selected = currentRoute == AppRoutes.toolDetailRoute("explain"),
+                    onClick = { onNavigateToRoute(AppRoutes.toolDetailRoute("explain")) }
+                )
+                DrawerNavItem(
+                    label = "Reframe & Polish",
+                    subtitle = "Tone, style & clarity",
+                    icon = Icons.Default.AutoAwesome,
+                    selected = currentRoute == AppRoutes.toolDetailRoute("reframe"),
+                    onClick = { onNavigateToRoute(AppRoutes.toolDetailRoute("reframe")) }
+                )
+
+                // Recent Chats
+                DrawerSectionHeader(if (searchFilter.isBlank()) "RECENT CHATS" else "MATCHING CHATS")
+                if (filteredSessions.isEmpty()) {
+                    Text(
+                        text = if (searchFilter.isBlank()) "No chats yet" else "No matching chats",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldSecondaryText,
+                            fontSize = 12.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                    )
+                } else {
+                    filteredSessions.forEach { session ->
+                        val isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id)
+                        Surface(
+                            onClick = { onNavigateToChat(session.id) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) OpenFieldSecondaryBackground else Color.Transparent,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ChatBubble,
-                                contentDescription = null,
-                                tint = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryText.copy(alpha = 0.7f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = session.title.ifBlank { "Untitled chat" },
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = if (isSelected) OpenFieldNavyText else OpenFieldNavyText.copy(alpha = 0.85f),
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    fontSize = 13.sp
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(
-                                onClick = { repository.deleteSession(session.id) },
-                                modifier = Modifier.size(24.dp)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DeleteOutline,
-                                    contentDescription = "Delete chat",
-                                    tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(14.dp)
+                                    imageVector = Icons.Default.ChatBubble,
+                                    contentDescription = null,
+                                    tint = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryText.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(15.dp)
                                 )
+                                Text(
+                                    text = session.title.ifBlank { "Untitled chat" },
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = if (isSelected) OpenFieldNavyText else OpenFieldNavyText.copy(alpha = 0.85f),
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        fontSize = 12.5.sp
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { repository.deleteSession(session.id) },
+                                    modifier = Modifier.size(22.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "Delete chat",
+                                        tint = OpenFieldSecondaryText.copy(alpha = 0.45f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
             }
 
-            HorizontalDivider(
-                color = OpenFieldCardBorder,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
-            )
+            // --- 3. PINNED BOTTOM FOOTER ---
+            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.7f), modifier = Modifier.padding(vertical = 2.dp))
 
-            // Workspaces & Tools
-            Text(
-                text = "WORKSPACES",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = OpenFieldSecondaryText,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp,
-                    fontSize = 10.5.sp
-                ),
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-
-            NavigationDrawerItem(
-                label = { Text("All Chats") },
-                selected = currentRoute == AppRoutes.CHATS,
-                onClick = { onNavigateToRoute(AppRoutes.CHATS) },
-                icon = { Icon(Icons.Default.ChatBubble, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            NavigationDrawerItem(
-                label = { Text("Knowledge Library") },
-                selected = currentRoute == AppRoutes.LIBRARY,
-                onClick = { onNavigateToRoute(AppRoutes.LIBRARY) },
-                icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            NavigationDrawerItem(
-                label = { Text("Create & Write Studio") },
-                selected = currentRoute == AppRoutes.CREATE_WRITE,
-                onClick = { onNavigateToRoute(AppRoutes.CREATE_WRITE) },
-                icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            NavigationDrawerItem(
-                label = { Text("Workflows & Tasks") },
-                selected = currentRoute == AppRoutes.TASKS,
-                onClick = { onNavigateToRoute(AppRoutes.TASKS) },
-                icon = { Icon(Icons.AutoMirrored.Filled.PlaylistAddCheck, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            NavigationDrawerItem(
-                label = { Text("AI Tools") },
-                selected = currentRoute == AppRoutes.TOOLS,
-                onClick = { onNavigateToRoute(AppRoutes.TOOLS) },
-                icon = { Icon(Icons.Default.Build, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            NavigationDrawerItem(
-                label = { Text("Settings") },
-                selected = currentRoute == AppRoutes.SETTINGS,
-                onClick = { onNavigateToRoute(AppRoutes.SETTINGS) },
-                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = OpenFieldSecondaryBackground,
-                border = BorderStroke(1.dp, OpenFieldCardBorder),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                DrawerNavItem(
+                    label = "Settings",
+                    subtitle = "Model, AMOLED theme & storage",
+                    icon = Icons.Default.Settings,
+                    selected = currentRoute == AppRoutes.SETTINGS,
+                    onClick = { onNavigateToRoute(AppRoutes.SETTINGS) }
+                )
+                DrawerNavItem(
+                    label = "About OpenField",
+                    subtitle = "v1.1 • Offline-first architecture",
+                    icon = Icons.Default.Info,
+                    selected = currentRoute == AppRoutes.ABOUT,
+                    onClick = { onNavigateToRoute(AppRoutes.ABOUT) }
+                )
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = OpenFieldSecondaryBackground,
+                    border = BorderStroke(1.dp, OpenFieldCardBorder),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = OpenFieldSecondaryText,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "100% Offline • Private on Device",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = OpenFieldSecondaryText,
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(13.dp)
                         )
+                        Text(
+                            text = "100% Offline • Zero Telemetry",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = OpenFieldSecondaryText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawerNavItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    subtitle: String? = null,
+    trailingBadge: String? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = if (selected) OpenFieldPrimaryBlueLight else Color.Transparent,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (selected) OpenFieldPrimaryBlue else OpenFieldSecondaryText,
+                modifier = Modifier.size(18.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = if (selected) OpenFieldPrimaryBlue else OpenFieldNavyText,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                        fontSize = 13.sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = OpenFieldSecondaryText,
+                            fontSize = 10.5.sp
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (trailingBadge != null) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = if (selected) OpenFieldPrimaryBlue.copy(alpha = 0.15f) else OpenFieldSecondaryBackground
+                ) {
+                    Text(
+                        text = trailingBadge,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = if (selected) OpenFieldPrimaryBlue else OpenFieldSecondaryText,
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun DrawerSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall.copy(
+            color = OpenFieldSecondaryText,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.6.sp,
+            fontSize = 10.sp
+        ),
+        modifier = modifier.padding(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 2.dp)
+    )
 }
 
