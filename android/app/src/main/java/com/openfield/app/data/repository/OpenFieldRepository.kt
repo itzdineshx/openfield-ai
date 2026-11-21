@@ -75,7 +75,7 @@ data class AppSettings(
     val selectedModel: String = "Gemma 4 E2B IT (Local)",
     val availableModels: List<String> = listOf("Gemma 4 E2B IT"),
     val language: String = "English",
-    val themeMode: String = "Light (System)",
+    val themeMode: String = "System Default",
     val telemetryEnabled: Boolean = false,
     val preferredExplanationLevel: String = "Beginner",
     val preferredResponseLength: String = "Balanced",
@@ -379,15 +379,19 @@ class OpenFieldRepository(
                     launch {
                         database.chatDao().getMessagesFlow(session.id).collect { msgEntities ->
                             val chatMsgs = msgEntities.map { entity ->
+                                val isModeTag = entity.stepsJson?.startsWith("MODE:") == true
+                                val mode = if (isModeTag) entity.stepsJson?.removePrefix("MODE:") else null
+                                val steps = if (!isModeTag) parseSteps(entity.stepsJson) else emptyList()
                                 ChatMessage(
                                     id = entity.id,
                                     isUser = entity.isUser,
                                     text = entity.text,
                                     timestamp = formatTimestamp(entity.timestamp),
-                                    steps = parseSteps(entity.stepsJson),
+                                    steps = steps,
                                     imageUri = entity.imageUri,
                                     sourcePage = entity.sourcePage,
-                                    isComplete = entity.isComplete
+                                    isComplete = entity.isComplete,
+                                    mode = mode
                                 )
                             }
                             _messagesBySession.update { it + (session.id to chatMsgs) }
@@ -524,15 +528,19 @@ class OpenFieldRepository(
     fun getSessionMessages(sessionId: String): Flow<List<ChatMessage>> {
         return database.chatDao().getMessagesFlow(sessionId).map { entities ->
             entities.map { entity ->
+                val isModeTag = entity.stepsJson?.startsWith("MODE:") == true
+                val mode = if (isModeTag) entity.stepsJson?.removePrefix("MODE:") else null
+                val steps = if (!isModeTag) parseSteps(entity.stepsJson) else emptyList()
                 ChatMessage(
                     id = entity.id,
                     isUser = entity.isUser,
                     text = entity.text,
                     timestamp = formatTimestamp(entity.timestamp),
-                    steps = parseSteps(entity.stepsJson),
+                    steps = steps,
                     imageUri = entity.imageUri,
                     sourcePage = entity.sourcePage,
-                    isComplete = entity.isComplete
+                    isComplete = entity.isComplete,
+                    mode = mode
                 )
             }
         }

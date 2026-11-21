@@ -11,7 +11,8 @@ data class ChatMessage(
     val steps: List<StepItem> = emptyList(),
     val imageUri: Any? = null,
     val sourcePage: String? = null,
-    val isComplete: Boolean = true
+    val isComplete: Boolean = true,
+    val mode: String? = null
 )
 
 data class ChatSession(

@@ -360,6 +360,8 @@ fun HomeScreen(
                             imageUri = msg.imageUri,
                             sourcePage = msg.sourcePage,
                             isComplete = msg.isComplete,
+                            mode = msg.mode,
+                            onFollowUpAction = { actionText -> send(actionText) },
                             onSpeakClick = if (!msg.isUser && msg.text.isNotBlank()) {
                                 {
                                     if (isSpeaking && currentUtteranceId == msg.id) speechManager.stop()

@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.sp
 import com.openfield.app.core.theme.CardShape
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
+import com.openfield.app.core.theme.OpenFieldError
+import com.openfield.app.core.theme.OpenFieldErrorBg
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
@@ -171,12 +173,12 @@ fun DocumentCard(
     )
 
     val isPdf = fileName.endsWith(".pdf", ignoreCase = true) || !fileName.contains(".")
-    val iconBg = if (isPdf) Color(0xFFFFEAEA) else Color(0xFFF1F5F9)
-    val iconTint = if (isPdf) Color(0xFFE53935) else Color(0xFF475569)
+    val iconBg = if (isPdf) OpenFieldErrorBg else OpenFieldSecondaryBackground
+    val iconTint = if (isPdf) OpenFieldError else OpenFieldSecondaryText
     val iconVector = if (isPdf) Icons.Default.PictureAsPdf else Icons.Default.Description
     val badgeText = if (isPdf) "PDF" else "TXT"
-    val badgeBg = if (isPdf) Color(0xFFFEE2E2) else Color(0xFFE2E8F0)
-    val badgeTextCol = if (isPdf) Color(0xFF991B1B) else Color(0xFF334155)
+    val badgeBg = if (isPdf) OpenFieldErrorBg else OpenFieldSecondaryBackground
+    val badgeTextCol = if (isPdf) OpenFieldError else OpenFieldSecondaryText
 
     Surface(
         modifier = modifier

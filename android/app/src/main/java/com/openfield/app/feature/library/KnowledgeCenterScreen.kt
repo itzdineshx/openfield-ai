@@ -635,12 +635,13 @@ private fun SourceSelectableCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val isDark = com.openfield.app.core.theme.LocalCruxPalette.current.isDark
                     val (badgeBg, badgeFg) = when (source.type) {
-                        KnowledgeSourceType.DOCUMENT -> Color(0xFFFFE4E6) to Color(0xFFE11D48)
-                        KnowledgeSourceType.CONVERSATION -> Color(0xFFEFF6FF) to Color(0xFF2563EB)
-                        KnowledgeSourceType.NOTE -> Color(0xFFFEF3C7) to Color(0xFFD97706)
-                        KnowledgeSourceType.KNOWLEDGE_PACK -> Color(0xFFCCFBF1) to Color(0xFF0D9488)
-                        else -> Color(0xFFF1F5F9) to Color(0xFF475569)
+                        KnowledgeSourceType.DOCUMENT -> if (isDark) Color(0xFF3B1219) to Color(0xFFFB7185) else Color(0xFFFFE4E6) to Color(0xFFE11D48)
+                        KnowledgeSourceType.CONVERSATION -> if (isDark) Color(0xFF172554) to Color(0xFF60A5FA) else Color(0xFFEFF6FF) to Color(0xFF2563EB)
+                        KnowledgeSourceType.NOTE -> if (isDark) Color(0xFF451A03) to Color(0xFFFBBF24) else Color(0xFFFEF3C7) to Color(0xFFD97706)
+                        KnowledgeSourceType.KNOWLEDGE_PACK -> if (isDark) Color(0xFF042F2E) to Color(0xFF2DD4BF) else Color(0xFFCCFBF1) to Color(0xFF0D9488)
+                        else -> if (isDark) Color(0xFF1E293B) to Color(0xFF94A3B8) else Color(0xFFF1F5F9) to Color(0xFF475569)
                     }
                     Surface(
                         shape = RoundedCornerShape(6.dp),

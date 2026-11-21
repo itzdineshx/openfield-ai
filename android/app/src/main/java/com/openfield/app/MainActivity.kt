@@ -29,9 +29,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by OpenFieldRepository.getInstance().settings.collectAsState()
             val systemInDark = isSystemInDarkTheme()
-            val isDark = when (settings.themeMode) {
-                "Dark", "Dark (AMOLED)", "Dark (Obsidian AMOLED)" -> true
-                "Light" -> false
+            val isDark = when {
+                settings.themeMode.contains("Dark", ignoreCase = true) ||
+                settings.themeMode.contains("Obsidian", ignoreCase = true) ||
+                settings.themeMode.contains("AMOLED", ignoreCase = true) -> true
+                settings.themeMode.equals("Light", ignoreCase = true) -> false
                 else -> systemInDark
             }
 

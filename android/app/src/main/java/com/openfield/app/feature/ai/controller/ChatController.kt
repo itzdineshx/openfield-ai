@@ -123,6 +123,8 @@ class ChatController(
                 )
             }
 
+            val resolvedMode = mode ?: if (!imageUri.isNullOrBlank()) "IMAGE" else if (!knowledgeScopeId.isNullOrBlank()) "DOCUMENT" else null
+
             chatDao.insertMessage(
                 ChatMessageEntity(
                     id = assistantMsgId,
@@ -130,6 +132,7 @@ class ChatController(
                     isUser = false,
                     text = "",
                     timestamp = now + 1,
+                    stepsJson = if (resolvedMode != null) "MODE:$resolvedMode" else null,
                     isComplete = false
                 )
             )
@@ -169,6 +172,10 @@ class ChatController(
                             userQuestion = userPrompt.ifBlank { "Describe and analyze this image in detail." }
                         )
                     }
+                    mode.equals("IMAGE", ignoreCase = true) -> {
+                        val prompt = "You are Gemma 4 Vision assistant. The user is asking about visual diagnosis, image details, or camera observations:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ANALYZE_IMAGE).defaultGenConfig)
+                    }
                     !knowledgeScopeId.isNullOrBlank() && crossSourceRetriever != null -> {
                         val evidence = crossSourceRetriever.retrieveEvidence(userPrompt, listOf(knowledgeScopeId), maxTotalChunks = 5)
                         if (evidence.isNotEmpty()) {
@@ -197,21 +204,25 @@ class ChatController(
                             )
                         }
                     }
+                    mode.equals("EXPLAIN", ignoreCase = true) || mode.equals("LEARN", ignoreCase = true) -> {
+                        orchestrator.streamLessonGeneration(userPrompt, LearningLevel.BEGINNER)
+                    }
+                    mode.equals("SOLVE", ignoreCase = true) || mode.equals("TROUBLESHOOT", ignoreCase = true) -> {
+                        val prompt = "You are a stateful diagnostic assistant. Analyze the user's issue and propose the first safe diagnostic step. Include Step Action, Rationale, Expected Observation, and Hazard Warning:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.SOLVE_PROBLEM).defaultGenConfig)
+                    }
+                    mode.equals("WRITE", ignoreCase = true) -> {
+                        val prompt = "You are a professional writing assistant in Create & Write studio. Produce a clear, polished, well-structured draft for the following request. Include an engaging title and clear sections:\n\n$userPrompt"
+                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.CREATE_WRITE).defaultGenConfig)
+                    }
                     mode.equals("SUMMARIZE", ignoreCase = true) -> {
                         val prompt = "Provide a structured executive summary and key takeaways of the following content:\n\n$userPrompt"
                         orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ASK_AI).defaultGenConfig)
-                    }
-                    mode.equals("EXPLAIN", ignoreCase = true) -> {
-                        orchestrator.streamLessonGeneration(userPrompt, LearningLevel.BEGINNER)
                     }
                     mode.equals("TRANSLATE", ignoreCase = true) -> {
                         val targetLang = language ?: "Spanish"
                         val prompt = "Translate the following text accurately into $targetLang. Output only the clear translation without chat filler:\n\n$userPrompt"
                         orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ASK_AI).defaultGenConfig)
-                    }
-                    mode.equals("SOLVE", ignoreCase = true) -> {
-                        val prompt = "You are a stateful diagnostic assistant. Analyze the user's issue and propose the first safe diagnostic step. Include Step Action, Rationale, Expected Observation, and Hazard Warning:\n\n$userPrompt"
-                        orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.SOLVE_PROBLEM).defaultGenConfig)
                     }
                     else -> {
                         orchestrator.streamAskAi(

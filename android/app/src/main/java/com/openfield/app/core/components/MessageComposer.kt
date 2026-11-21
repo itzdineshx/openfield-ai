@@ -31,7 +31,9 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Translate
@@ -443,6 +445,17 @@ fun UnifiedOmnibar(
         }
     }
 
+    val effectivePlaceholder = when (activeMode?.uppercase()) {
+        "IMAGE" -> "Ask about this photo or image…"
+        "DOCUMENT" -> "Ask a question grounded in this document…"
+        "SOLVE" -> "Describe what's broken or what to troubleshoot…"
+        "EXPLAIN" -> "Enter a topic to learn (e.g. solar cells)…"
+        "WRITE" -> "What would you like to draft, outline, or rewrite?…"
+        "SUMMARIZE" -> "Enter text to summarize…"
+        "TRANSLATE" -> "Enter text to translate…"
+        else -> placeholder
+    }
+
     if (showCapabilitySheet) {
         OmnibarCapabilitySheet(
             onDismiss = { showCapabilitySheet = false },
@@ -513,11 +526,55 @@ fun UnifiedOmnibar(
                         )
                     }
                     if (activeMode != null) {
+                        val (modeIcon, modeLabel) = when (activeMode?.uppercase()) {
+                            "IMAGE" -> Icons.Default.CameraAlt to "Vision Mode"
+                            "SOLVE" -> Icons.Default.Build to "Troubleshoot"
+                            "EXPLAIN" -> Icons.Default.Lightbulb to "Tutor: Learn"
+                            "WRITE" -> Icons.Default.EditNote to "Writing Studio"
+                            "DOCUMENT" -> Icons.Default.Description to "Document Grounding"
+                            "SUMMARIZE" -> Icons.Default.Description to "Summarize"
+                            "TRANSLATE" -> Icons.Default.Translate to "Translate"
+                            else -> Icons.Default.AutoAwesome to "$activeMode Mode"
+                        }
                         OmnibarPill(
-                            icon = Icons.Default.AutoAwesome,
-                            label = "$activeMode Mode",
+                            icon = modeIcon,
+                            label = modeLabel,
                             onRemove = { activeMode = null }
                         )
+                    }
+                    if (activeMode?.equals("IMAGE", ignoreCase = true) == true && attachedImageUri == null) {
+                        Surface(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(16.dp),
+                            color = OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, OpenFieldCardBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(13.dp))
+                                Text("Attach Image", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldNavyText, fontSize = 11.5.sp))
+                            }
+                        }
+                    }
+                    if (activeMode?.equals("DOCUMENT", ignoreCase = true) == true && activeScopeId == null) {
+                        Surface(
+                            onClick = { documentPickerLauncher.launch(arrayOf("application/pdf", "text/plain")) },
+                            shape = RoundedCornerShape(16.dp),
+                            color = OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, OpenFieldCardBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.Description, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(13.dp))
+                                Text("Select PDF/Doc", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldNavyText, fontSize = 11.5.sp))
+                            }
+                        }
                     }
                 }
             }
@@ -595,7 +652,7 @@ fun UnifiedOmnibar(
                             Box {
                                 if (value.isEmpty()) {
                                     Text(
-                                        text = placeholder,
+                                        text = effectivePlaceholder,
                                         maxLines = 1,
                                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -703,7 +760,7 @@ fun OmnibarCapabilitySheet(
     onPickGallery: () -> Unit,
     onPickDocument: () -> Unit,
     onSelectScope: (scopeId: String, scopeTitle: String) -> Unit,
-    onSelectMode: (mode: String) -> Unit,
+    onSelectMode: (mode: String?) -> Unit,
     onOpenStudio: () -> Unit
 ) {
     ModalBottomSheet(
@@ -716,19 +773,43 @@ fun OmnibarCapabilitySheet(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            Text(
-                text = "Capabilities & Knowledge",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = OpenFieldNavyText,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
-                )
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Modes & Capabilities",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = OpenFieldNavyText,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp
+                        )
+                    )
+                    Text(
+                        text = "Switch AI mode or ground in knowledge",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OpenFieldSecondaryText,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+                IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = OpenFieldSecondaryText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Section 1: Capture & Attach
+            // Section 1: 6 Core AI Experiences
             Text(
-                text = "ATTACH TO CONVERSATION",
+                text = "AI EXPERIENCES (SWITCH MODE)",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = OpenFieldSecondaryText,
                     fontWeight = FontWeight.Bold,
@@ -741,25 +822,58 @@ fun OmnibarCapabilitySheet(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OmnibarGridAction(
-                    icon = Icons.Default.CameraAlt,
-                    title = "Camera",
-                    subtitle = "Snap photo",
+                    icon = Icons.Default.AutoAwesome,
+                    title = "Ask AI",
+                    subtitle = "General chat",
                     modifier = Modifier.weight(1f),
-                    onClick = onPickCamera
+                    onClick = { onSelectMode(null) }
                 )
                 OmnibarGridAction(
-                    icon = Icons.Default.Image,
-                    title = "Gallery",
-                    subtitle = "Pick image",
+                    icon = Icons.Default.CameraAlt,
+                    title = "Vision",
+                    subtitle = "Analyze image",
                     modifier = Modifier.weight(1f),
-                    onClick = onPickGallery
+                    onClick = {
+                        onSelectMode("IMAGE")
+                        onPickGallery()
+                    }
                 )
                 OmnibarGridAction(
                     icon = Icons.Default.Description,
-                    title = "PDF / Doc",
-                    subtitle = "Ground query",
+                    title = "Document",
+                    subtitle = "Ground in PDF",
                     modifier = Modifier.weight(1f),
-                    onClick = onPickDocument
+                    onClick = {
+                        onSelectMode("DOCUMENT")
+                        onPickDocument()
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OmnibarGridAction(
+                    icon = Icons.Default.Build,
+                    title = "Troubleshoot",
+                    subtitle = "Solve a problem",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectMode("SOLVE") }
+                )
+                OmnibarGridAction(
+                    icon = Icons.Default.Lightbulb,
+                    title = "Learn",
+                    subtitle = "Tutor & quiz",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectMode("EXPLAIN") }
+                )
+                OmnibarGridAction(
+                    icon = Icons.Default.EditNote,
+                    title = "Write",
+                    subtitle = "Studio draft",
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectMode("WRITE") }
                 )
             }
 
@@ -790,9 +904,9 @@ fun OmnibarCapabilitySheet(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Section 3: AI Quick Tools
+            // Section 3: Fast Text Tools & Camera
             Text(
-                text = "SPECIALIZED AI MODES",
+                text = "FAST TOOLS & CAPTURE",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = OpenFieldSecondaryText,
                     fontWeight = FontWeight.Bold,
@@ -804,6 +918,13 @@ fun OmnibarCapabilitySheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                OmnibarGridAction(
+                    icon = Icons.Default.CameraAlt,
+                    title = "Snap Photo",
+                    subtitle = "Open camera",
+                    modifier = Modifier.weight(1f),
+                    onClick = onPickCamera
+                )
                 OmnibarGridAction(
                     icon = Icons.Default.Description,
                     title = "Summarize",
@@ -817,13 +938,6 @@ fun OmnibarCapabilitySheet(
                     subtitle = "Multi-lingual",
                     modifier = Modifier.weight(1f),
                     onClick = { onSelectMode("TRANSLATE") }
-                )
-                OmnibarGridAction(
-                    icon = Icons.Default.Build,
-                    title = "Troubleshoot",
-                    subtitle = "Step-by-step",
-                    modifier = Modifier.weight(1f),
-                    onClick = { onSelectMode("SOLVE") }
                 )
             }
 

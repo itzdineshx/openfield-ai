@@ -64,12 +64,15 @@ import androidx.core.content.ContextCompat
 import com.openfield.app.core.components.PrimaryButton
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
+import com.openfield.app.core.theme.OpenFieldError
 import com.openfield.app.core.theme.OpenFieldMutedText
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.core.theme.OpenFieldSuccess
+import com.openfield.app.core.theme.OpenFieldSuccessBg
 
 data class OnboardingFeatureItem(
     val icon: ImageVector,
@@ -515,7 +518,7 @@ private fun OnboardingIllustrationDocument() {
             Icon(
                 imageVector = Icons.Default.PictureAsPdf,
                 contentDescription = null,
-                tint = Color(0xFFE53935),
+                tint = OpenFieldError,
                 modifier = Modifier.size(36.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -581,14 +584,14 @@ private fun OnboardingIllustrationPermissions() {
 
             Surface(
                 shape = CircleShape,
-                color = Color(0xFFE8F5E9),
+                color = OpenFieldSuccessBg,
                 modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Security,
                         contentDescription = null,
-                        tint = Color(0xFF2E7D32),
+                        tint = OpenFieldSuccess,
                         modifier = Modifier.size(20.dp)
                     )
                 }

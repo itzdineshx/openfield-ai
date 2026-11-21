@@ -903,7 +903,7 @@ private fun InteractiveFlipCard(
                 Text(
                     text = backText,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color(0xFF1E293B),
+                        color = OpenFieldNavyText,
                         lineHeight = 20.sp
                     ),
                     maxLines = 5,
