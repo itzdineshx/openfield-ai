@@ -217,7 +217,7 @@ private fun AssistantMessage(
         Spacer(modifier = Modifier.width(10.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            val effectiveMode = mode ?: if (imageUri != null) "IMAGE" else if (sourcePage != null) "DOCUMENT" else null
+            val effectiveMode = mode ?: detectModeFromContent(message, imageUri, sourcePage)
             if (effectiveMode != null) {
                 ModeResultBadge(effectiveMode)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1207,4 +1207,21 @@ private fun parseLessonQuiz(text: String): ParsedQuiz? {
 
     if (options.isEmpty()) return null
     return ParsedQuiz(question, options, answerLetter, whyText)
+}
+
+private fun detectModeFromContent(text: String, imageUri: Any?, sourcePage: String?): String? {
+    if (imageUri != null) return "IMAGE"
+    if (sourcePage != null) return "DOCUMENT"
+    if (text.isBlank()) return null
+    if (text.contains("## 1. What I See", ignoreCase = true) || text.contains("Vision Analysis", ignoreCase = true)) return "IMAGE"
+    if (text.contains("QUIZ:", ignoreCase = true) || text.contains("KNOWLEDGE CHECK", ignoreCase = true) || text.contains("OVERVIEW:", ignoreCase = true)) return "EXPLAIN"
+    if (text.contains("diagnostic", ignoreCase = true) ||
+        text.contains("troubleshoot", ignoreCase = true) ||
+        text.contains("Check the Power", ignoreCase = true) ||
+        (text.contains("Check the", ignoreCase = true) && text.contains("temperature", ignoreCase = true)) ||
+        (text.contains("Check the", ignoreCase = true) && text.contains("compressor", ignoreCase = true)) ||
+        text.contains("FEEDBACK OBSERVATION", ignoreCase = true)
+    ) return "SOLVE"
+    if (text.contains("WRITING STUDIO", ignoreCase = true) || text.contains("Executive Summary", ignoreCase = true)) return "WRITE"
+    return null
 }
