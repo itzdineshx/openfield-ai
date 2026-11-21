@@ -120,7 +120,7 @@ class CatalogApiClient(
                                     size = obj.getString("size"),
                                     iconColorHex = obj.optLong("icon_color_hex", 0xFF1E88E5),
                                     checksumSha256 = obj.getString("checksum_sha256"),
-                                    provenance = obj.optString("provenance", "OpenField Curated Catalog"),
+                                    provenance = obj.optString("provenance", "Crux Curated Catalog"),
                                     topics = topics,
                                     downloadUrl = downloadUrl
                                 )

@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 settings.themeMode.equals("Light", ignoreCase = true) -> false
                 else -> systemInDark
             }
-            android.util.Log.d("CruxTheme", "themeMode='${settings.themeMode}', systemInDark=$systemInDark, isDark=$isDark")
+            android.util.Log.i("CruxTheme", "themeMode='${settings.themeMode}', systemInDark=$systemInDark, isDark=$isDark")
 
             OpenFieldTheme(darkTheme = isDark) {
                 Surface(

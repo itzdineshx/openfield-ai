@@ -169,7 +169,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             ScreenTopBar(
-                title = "AI Chat",
+                title = "CRUX",
                 canNavigateBack = true,
                 onNavigateBack = onNavigateBack,
                 actions = {

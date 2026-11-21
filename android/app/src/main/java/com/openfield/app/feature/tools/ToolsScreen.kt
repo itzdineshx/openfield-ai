@@ -280,7 +280,7 @@ fun ToolListItemCard(
                         color = if (tool.id in listOf("calculator", "tasks")) OpenFieldPrimaryBlue.copy(alpha = 0.09f) else OpenFieldSecondaryBackground
                     ) {
                         Text(
-                            text = if (tool.id in listOf("calculator", "tasks")) "OFFLINE ENGINE" else "ON-DEVICE AI",
+                            text = if (tool.id in listOf("calculator", "tasks")) "BUILT-IN" else "ON-DEVICE AI",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = if (tool.id in listOf("calculator", "tasks")) OpenFieldPrimaryBlue else OpenFieldSecondaryText,
                                 fontWeight = FontWeight.Bold,

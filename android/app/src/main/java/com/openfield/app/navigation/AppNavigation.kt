@@ -83,6 +83,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.openfield.app.core.components.CruxLogo
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
@@ -579,24 +580,9 @@ private fun AppDrawerContent(
                 // Brand Header Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    OpenFieldLogo(size = 28.dp, showText = true, textFontSize = 17)
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = OpenFieldPrimaryBlueLight
-                    ) {
-                        Text(
-                            text = "Gemma 4 • Offline",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = OpenFieldPrimaryBlue,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 10.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
+                    CruxLogo(size = 32.dp, showText = true, textFontSize = 18)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1016,7 +1002,7 @@ private fun AppDrawerContent(
                             modifier = Modifier.size(13.dp)
                         )
                         Text(
-                            text = "100% Offline • Zero Telemetry",
+                            text = "Private & On-Device",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = OpenFieldSecondaryText,
                                 fontSize = 11.sp,

@@ -77,12 +77,19 @@ import com.openfield.app.core.text.Markdown
 import com.openfield.app.core.theme.BubbleShapeUser
 import com.openfield.app.core.theme.OpenFieldBackground
 import com.openfield.app.core.theme.OpenFieldCardBorder
+import com.openfield.app.core.theme.OpenFieldError
+import com.openfield.app.core.theme.OpenFieldErrorBg
 import com.openfield.app.core.theme.OpenFieldMutedText
 import com.openfield.app.core.theme.OpenFieldNavyText
 import com.openfield.app.core.theme.OpenFieldPrimaryBlue
+import com.openfield.app.core.theme.OpenFieldPrimaryBlueBorder
 import com.openfield.app.core.theme.OpenFieldPrimaryBlueLight
 import com.openfield.app.core.theme.OpenFieldSecondaryBackground
 import com.openfield.app.core.theme.OpenFieldSecondaryText
+import com.openfield.app.core.theme.OpenFieldSuccess
+import com.openfield.app.core.theme.OpenFieldSuccessBg
+import com.openfield.app.core.theme.OpenFieldWarning
+import com.openfield.app.core.theme.OpenFieldWarningBg
 
 data class StepItem(
     val number: Int,
@@ -152,6 +159,7 @@ private fun UserMessage(message: String, imageUri: Any?, timestamp: String?, mod
         Surface(
             shape = BubbleShapeUser,
             color = OpenFieldPrimaryBlueLight,
+            border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder.copy(alpha = 0.45f)),
             modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
@@ -213,7 +221,7 @@ private fun AssistantMessage(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
-        OpenFieldLogo(size = 28.dp, modifier = Modifier.padding(top = 2.dp))
+        CruxLogo(size = 28.dp, modifier = Modifier.padding(top = 2.dp))
         Spacer(modifier = Modifier.width(10.dp))
 
         Column(modifier = Modifier.weight(1f)) {
@@ -569,13 +577,13 @@ fun StreamingCursor(modifier: Modifier = Modifier) {
 @Composable
 private fun ModeResultBadge(mode: String) {
     val (icon, title, subtitle) = when (mode.uppercase()) {
-        "IMAGE" -> Triple(Icons.Default.CameraAlt, "VISION ANALYSIS", "Gemma 4 Vision")
+        "IMAGE" -> Triple(Icons.Default.CameraAlt, "VISION ANALYSIS", "CRUX Vision")
         "SOLVE", "TROUBLESHOOT" -> Triple(Icons.Default.Build, "DIAGNOSTIC WORKFLOW", "Step-by-Step")
         "EXPLAIN", "LEARN" -> Triple(Icons.Default.Lightbulb, "INTERACTIVE LESSON", "Tutor")
         "WRITE" -> Triple(Icons.Default.EditNote, "WRITING STUDIO", "Draft")
         "DOCUMENT" -> Triple(Icons.Default.Description, "DOCUMENT GROUNDED", "Evidence-Based")
         "SUMMARIZE" -> Triple(Icons.Default.Description, "EXECUTIVE SUMMARY", "Key Takeaways")
-        "TRANSLATE" -> Triple(Icons.Default.Translate, "TRANSLATION", "100% Offline")
+        "TRANSLATE" -> Triple(Icons.Default.Translate, "TRANSLATION", "Multi-Language")
         else -> Triple(Icons.Default.AutoAwesome, mode, "CRUX AI")
     }
 
@@ -637,8 +645,8 @@ private fun TroubleshootResultCard(
         if (hasHazardWarning) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFFEF3C7),
-                border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.5f)),
+                color = OpenFieldWarningBg,
+                border = BorderStroke(1.dp, OpenFieldWarning.copy(alpha = 0.4f)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
@@ -651,13 +659,13 @@ private fun TroubleshootResultCard(
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Safety Alert",
-                        tint = Color(0xFFB45309),
+                        tint = OpenFieldWarning,
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
                         text = "Safety Precaution: Ensure proper safety measures before inspecting components.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFF92400E),
+                            color = OpenFieldNavyText,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 11.5.sp
                         )
@@ -835,13 +843,13 @@ private fun TutorLessonResultCard(
                             val isSelected = selectedOption == letter
                             val isCorrect = letter.equals(quizBlock.correctLetter, ignoreCase = true)
                             val containerColor = when {
-                                isSelected && isCorrect -> Color(0xFFE8F5E9)
-                                isSelected && !isCorrect -> Color(0xFFFFEBEE)
+                                isSelected && isCorrect -> OpenFieldSuccessBg
+                                isSelected && !isCorrect -> OpenFieldErrorBg
                                 else -> OpenFieldBackground
                             }
                             val borderColor = when {
-                                isSelected && isCorrect -> Color(0xFF2E7D32)
-                                isSelected && !isCorrect -> Color(0xFFC62828)
+                                isSelected && isCorrect -> OpenFieldSuccess
+                                isSelected && !isCorrect -> OpenFieldError
                                 else -> OpenFieldCardBorder
                             }
 
@@ -878,7 +886,7 @@ private fun TutorLessonResultCard(
                                         Icon(
                                             imageVector = if (isCorrect) Icons.Default.CheckCircle else Icons.Default.Cancel,
                                             contentDescription = null,
-                                            tint = if (isCorrect) Color(0xFF2E7D32) else Color(0xFFC62828),
+                                            tint = if (isCorrect) OpenFieldSuccess else OpenFieldError,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -892,7 +900,7 @@ private fun TutorLessonResultCard(
                             Text(
                                 text = if (isCorrect) "✅ Correct! ${quizBlock.why}" else "❌ Incorrect. Correct answer is ${quizBlock.correctLetter}. ${quizBlock.why}",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = if (isCorrect) Color(0xFF2E7D32) else Color(0xFFC62828),
+                                    color = if (isCorrect) OpenFieldSuccess else OpenFieldError,
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 12.sp
                                 )
@@ -1108,8 +1116,8 @@ private fun VisionResultCard(
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 shape = RoundedCornerShape(10.dp),
-                color = Color(0xFFFFFBEB),
-                border = BorderStroke(1.dp, Color(0xFFFDE68A)),
+                color = OpenFieldWarningBg,
+                border = BorderStroke(1.dp, OpenFieldWarning.copy(alpha = 0.4f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -1117,11 +1125,11 @@ private fun VisionResultCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Info, contentDescription = null, tint = OpenFieldWarning, modifier = Modifier.size(16.dp))
                     Text(
                         text = "Visual Identification Advisory: Confirm critical identifications independently.",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color(0xFF92400E),
+                            color = OpenFieldNavyText,
                             fontWeight = FontWeight.Medium,
                             fontSize = 11.5.sp
                         )

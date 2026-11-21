@@ -32,10 +32,10 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = LightCruxPalette.secondaryText,
     outline = LightCruxPalette.cardBorder,
     outlineVariant = LightCruxPalette.divider,
-    error = OpenFieldError,
+    error = LightCruxPalette.error,
     onError = LightCruxPalette.background,
-    errorContainer = OpenFieldErrorBg,
-    onErrorContainer = OpenFieldError
+    errorContainer = LightCruxPalette.errorBg,
+    onErrorContainer = LightCruxPalette.error
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -59,10 +59,10 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = ObsidianAmoledPalette.secondaryText,
     outline = ObsidianAmoledPalette.cardBorder,
     outlineVariant = ObsidianAmoledPalette.divider,
-    error = OpenFieldError,
+    error = ObsidianAmoledPalette.error,
     onError = ObsidianAmoledPalette.background,
-    errorContainer = OpenFieldErrorBg,
-    onErrorContainer = OpenFieldError
+    errorContainer = ObsidianAmoledPalette.errorBg,
+    onErrorContainer = ObsidianAmoledPalette.error
 )
 
 @Composable

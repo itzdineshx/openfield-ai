@@ -74,7 +74,7 @@ class ModelStorageManager(private val context: Context) {
             // Strictly require .litertlm extension - do not accept .bin or rename
             if (!originalName.endsWith(".litertlm", ignoreCase = true)) {
                 return@withContext Result.failure(
-                    IllegalArgumentException("Invalid artifact: '$originalName'. OpenField exclusively requires the official Gemma 4 E2B .litertlm artifact (gemma-4-E2B-it.litertlm). Arbitrary .bin or other model formats are not supported.")
+                    IllegalArgumentException("Invalid artifact: '$originalName'. Crux requires the official Gemma 4 E2B .litertlm artifact (gemma-4-E2B-it.litertlm). Arbitrary .bin or other model formats are not supported.")
                 )
             }
 

@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openfield.app.core.components.ChatMessageBubble
 import com.openfield.app.core.components.ConfirmationDialog
+import com.openfield.app.core.components.CruxLogo
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.UnifiedOmnibar
 import com.openfield.app.core.theme.OpenFieldBackground
@@ -212,43 +214,37 @@ fun HomeScreen(
                     )
                 }
 
-                // Center: Minimal Model & Offline Pill
+                // Center: Sleek CRUX Model & Engine Selector (ChatGPT Style)
                 Surface(
                     onClick = {
                         if (modelState !is ModelInstallationState.Installed) onNavigateToModelSetup()
                         else showModelDialog = true
                     },
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(18.dp),
                     color = OpenFieldSecondaryBackground,
                     border = BorderStroke(1.dp, OpenFieldCardBorder)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        CruxLogo(size = 18.dp, showText = false)
                         Text(
                             text = "CRUX",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.5.sp,
+                                fontSize = 14.sp,
+                                letterSpacing = 1.sp,
                                 color = OpenFieldNavyText
                             )
                         )
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = OpenFieldPrimaryBlueLight
-                        ) {
-                            Text(
-                                text = "Gemma 4 • Offline",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = OpenFieldPrimaryBlue,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 10.5.sp
-                                ),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Switch engine",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(17.dp)
+                        )
                     }
                 }
 
@@ -519,23 +515,23 @@ private fun ChatGptEmptyCanvas(
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
-        OpenFieldLogo(size = 56.dp, showText = false)
+        CruxLogo(size = 64.dp, showText = false)
         Spacer(modifier = Modifier.height(18.dp))
         Text(
             text = "How can I help you today?",
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 21.sp,
+                fontSize = 22.sp,
                 color = OpenFieldNavyText,
                 textAlign = TextAlign.Center
             )
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "100% On-Device AI • Private & Offline",
+            text = "Personal Intelligence • Private & Secure",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = OpenFieldSecondaryText,
-                fontSize = 12.5.sp,
+                fontSize = 13.sp,
                 textAlign = TextAlign.Center
             )
         )

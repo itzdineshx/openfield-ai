@@ -118,27 +118,12 @@ fun ProfileMenuSheet(
                                     color = OpenFieldNavyText
                                 )
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = OpenFieldPrimaryBlue.copy(alpha = 0.1f)
-                            ) {
-                                Text(
-                                    text = "OFFLINE",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = OpenFieldPrimaryBlue
-                                    ),
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                                )
-                            }
                         }
 
                         val modelLabel = when (modelState) {
-                            is com.openfield.app.feature.ai.model.ModelInstallationState.Installed -> "Gemma 4 E2B IT (On-Device)"
-                            is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading -> "Downloading AI model..."
-                            else -> "Local On-Device Engine"
+                            is com.openfield.app.feature.ai.model.ModelInstallationState.Installed -> "Crux Neural Engine (Ready)"
+                            is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading -> "Setting up AI engine..."
+                            else -> "Crux Neural Engine"
                         }
                         Text(
                             text = modelLabel,
@@ -159,8 +144,8 @@ fun ProfileMenuSheet(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = OpenFieldOfflineGreenBg,
-                        border = BorderStroke(1.dp, OpenFieldOfflineGreenText.copy(alpha = 0.2f)),
+                        color = OpenFieldSecondaryBackground,
+                        border = BorderStroke(1.dp, OpenFieldCardBorder),
                         modifier = Modifier.weight(1f)
                     ) {
                         Row(
@@ -171,15 +156,15 @@ fun ProfileMenuSheet(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(OpenFieldOfflineGreenText)
+                                    .background(OpenFieldPrimaryBlue)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "100% Offline",
+                                text = "Private & Local",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 11.sp,
-                                    color = OpenFieldOfflineGreenText
+                                    color = OpenFieldNavyText
                                 )
                             )
                         }

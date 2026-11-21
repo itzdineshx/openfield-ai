@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openfield.app.core.components.CruxLogo
 import com.openfield.app.core.components.OpenFieldLogo
 import com.openfield.app.core.components.ScreenTopBar
 import com.openfield.app.core.theme.CardShape
@@ -61,7 +62,7 @@ fun AboutScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            OpenFieldLogo(size = 72.dp)
+            CruxLogo(size = 80.dp)
 
             Spacer(modifier = Modifier.height(14.dp))
 
