@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -155,587 +156,247 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // =================================================================
-            // 1. SYSTEM & AI ENGINE
-            // =================================================================
-            SettingsSectionHeader(title = "AI Engine & Core System")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    // Offline Mode Switch
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            SettingsIconBadge(icon = Icons.Default.WifiOff)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Offline Mode",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                                Text(
-                                    text = "100% on-device local execution",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = OpenFieldSecondaryText,
-                                        fontSize = 11.5.sp
-                                    )
-                                )
-                            }
-                        }
-
-                        Switch(
-                            checked = settings.offlineMode,
-                            onCheckedChange = { repository.updateOfflineMode(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = OpenFieldPrimaryBlue
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Model Selector Row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { showModelDialog = true }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            SettingsIconBadge(icon = Icons.Default.Memory)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "Active Local Model",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                                val modelLabel = when (val s = modelState) {
-                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Installed ->
-                                        "${s.activeModel.displayName} · Installed"
-                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading ->
-                                        "Downloading ${s.progressPercent}%"
-                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Verifying ->
-                                        "Verifying checksum..."
-                                    is com.openfield.app.feature.ai.model.ModelInstallationState.Error ->
-                                        "Setup needed — tap to resolve"
-                                    else -> "Gemma 4 E2B IT (Local)"
-                                }
-                                Text(
-                                    text = modelLabel,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = OpenFieldPrimaryBlue,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                            }
-                        }
-
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                            contentDescription = null,
-                            tint = OpenFieldSecondaryText.copy(alpha = 0.45f),
-                            modifier = Modifier.size(13.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // =================================================================
-            // 2. DISPLAY & THEME (AMOLED)
-            // =================================================================
-            SettingsSectionHeader(title = "Display & Appearance")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        SettingsIconBadge(icon = Icons.Default.Lightbulb)
+            // ── AI ENGINE ──────────────────────────────────────────────────
+            SettingsSectionHeader("AI ENGINE")
+            SettingsCard {
+                // Offline Mode
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        SettingsIconBadge(icon = Icons.Default.WifiOff)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(
-                                text = "Theme & Battery Saver",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                            Text(
-                                text = "Obsidian AMOLED uses true pitch black (#000000) for OLED power saving",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontSize = 11.sp
-                                )
-                            )
+                            Text("Offline Mode", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                            Text("100% on-device execution", style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 11.sp))
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf(
-                            "Light" to "Light",
-                            "Dark (AMOLED)" to "Obsidian AMOLED",
-                            "System" to "System"
-                        ).forEach { (modeValue, displayLabel) ->
-                            val isSelected = when (modeValue) {
-                                "Dark (AMOLED)" -> settings.themeMode.contains("Dark") || settings.themeMode.contains("Obsidian") || settings.themeMode.contains("AMOLED")
-                                "Light" -> settings.themeMode == "Light"
-                                else -> settings.themeMode.contains("System") || settings.themeMode.isBlank()
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
-                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        val saveValue = when (modeValue) {
-                                            "Dark (AMOLED)" -> "Dark (AMOLED)"
-                                            "Light" -> "Light"
-                                            else -> "System Default"
-                                        }
-                                        repository.updateThemeMode(saveValue)
-                                    }
-                            ) {
-                                Text(
-                                    text = displayLabel,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color.White else OpenFieldNavyText,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 11.5.sp
-                                    ),
-                                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // =================================================================
-            // 3. AI BEHAVIOR & ON-DEVICE MEMORY
-            // =================================================================
-            SettingsSectionHeader(title = "AI Behavior & Personalization")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Text(
-                        text = "Explanation Depth",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = OpenFieldNavyText,
-                            fontSize = 13.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("Beginner", "Intermediate", "Advanced").forEach { level ->
-                            val isSelected = settings.preferredExplanationLevel.equals(level, ignoreCase = true)
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
-                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { repository.updatePreferredExplanationLevel(level) }
-                            ) {
-                                Text(
-                                    text = level,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color.White else OpenFieldNavyText,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 11.5.sp
-                                    ),
-                                    modifier = Modifier.padding(vertical = 7.dp, horizontal = 2.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Response Length",
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = OpenFieldNavyText,
-                            fontSize = 13.sp
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("Concise", "Balanced", "Detailed").forEach { len ->
-                            val isSelected = settings.preferredResponseLength.equals(len, ignoreCase = true)
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
-                                border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { repository.updatePreferredResponseLength(len) }
-                            ) {
-                                Text(
-                                    text = len,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = if (isSelected) Color.White else OpenFieldNavyText,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 11.5.sp
-                                    ),
-                                    modifier = Modifier.padding(vertical = 7.dp, horizontal = 2.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Local Memory Inspector & Control
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable {
-                                editedMemory = settings.userCustomMemory
-                                showMemoryDialog = true
-                            }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            SettingsIconBadge(icon = Icons.Default.Psychology)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = "On-Device Memory & Preferences",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = OpenFieldNavyText
-                                    )
-                                )
-                                Text(
-                                    text = if (settings.userCustomMemory.isBlank()) "Tap to teach model facts about your work" else "Custom memory context active",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = OpenFieldSecondaryText,
-                                        fontSize = 11.sp
-                                    )
-                                )
-                            }
-                        }
-
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                            contentDescription = null,
-                            tint = OpenFieldSecondaryText.copy(alpha = 0.45f),
-                            modifier = Modifier.size(13.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // =================================================================
-            // 4. STORAGE & LOCAL DATA MANAGEMENT
-            // =================================================================
-            SettingsSectionHeader(title = "Storage & Local Data")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        SettingsIconBadge(icon = Icons.Default.Storage)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Installed Knowledge & Documents",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                            Text(
-                                text = "$installedPacksCount knowledge packs · ${documents.size} personal documents",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontSize = 11.sp
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Storage visual breakdown bar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(0.80f)
-                                .height(6.dp)
-                                .background(OpenFieldPrimaryBlue)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(0.12f)
-                                .height(6.dp)
-                                .background(Color(0xFF0D9488))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(0.08f)
-                                .height(6.dp)
-                                .background(Color(0xFF94A3B8))
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(OpenFieldPrimaryBlue))
-                            Text(text = "Model: ~2.59 GB", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color(0xFF0D9488)))
-                            Text(text = "Packs & Docs", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color(0xFF94A3B8)))
-                            Text(text = "Cache", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Action Rows
-                    SettingsActionRow(
-                        icon = Icons.Default.CleaningServices,
-                        title = "Clear Cache & Temporary Files",
-                        subtitle = "Frees temporary scratch and preview bitmaps",
-                        onClick = {
-                            repository.clearAppCache(context)
-                            Toast.makeText(context, "Temporary cache cleared", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-
-                    SettingsActionRow(
-                        icon = Icons.Default.Download,
-                        title = "Export Local Backup (.json)",
-                        subtitle = "Save chats, drafts, and lessons to your storage",
-                        onClick = {
-                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
-                            exportBackupLauncher.launch("crux_backup_$timestamp.json")
-                        }
-                    )
-
-                    SettingsActionRow(
-                        icon = Icons.Default.Upload,
-                        title = "Restore from Backup",
-                        subtitle = "Restore knowledge and history from backup file",
-                        onClick = {
-                            importBackupLauncher.launch(arrayOf("application/json", "text/*"))
-                        }
-                    )
-
-                    SettingsActionRow(
-                        icon = Icons.Default.DeleteForever,
-                        title = "Clear All CRUX Data",
-                        subtitle = "Reset all chats, documents, drafts, and local indexes",
-                        tint = Color(0xFFD32F2F),
-                        onClick = { showClearAllDataDialog = true }
+                    Switch(
+                        checked = settings.offlineMode,
+                        onCheckedChange = { repository.updateOfflineMode(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = OpenFieldPrimaryBlue)
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                SettingsDivider()
 
-            // =================================================================
-            // 5. PRIVACY, ABOUT & INFERENCE DIAGNOSTICS
-            // =================================================================
-            SettingsSectionHeader(title = "App Information & Privacy")
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    SettingsActionRow(
-                        icon = Icons.Default.Info,
-                        title = "About CRUX",
-                        subtitle = "Version 1.0.0 · Apache 2.0 Open Source",
-                        onClick = onNavigateToAbout
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        SettingsIconBadge(icon = Icons.Default.Security)
+                // Active Model
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showModelDialog = true }
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        SettingsIconBadge(icon = Icons.Default.Memory)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(
-                                text = "Zero Telemetry Guarantee",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OpenFieldNavyText
-                                )
-                            )
-                            Text(
-                                text = "All prompts, images and documents remain private on this phone",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontSize = 11.sp
-                                )
-                            )
+                            Text("Active Model", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                            val modelLabel = when (val s = modelState) {
+                                is com.openfield.app.feature.ai.model.ModelInstallationState.Installed -> "${s.activeModel.displayName} · Ready"
+                                is com.openfield.app.feature.ai.model.ModelInstallationState.Downloading -> "Downloading ${s.progressPercent}%"
+                                is com.openfield.app.feature.ai.model.ModelInstallationState.Verifying -> "Verifying…"
+                                is com.openfield.app.feature.ai.model.ModelInstallationState.Error -> "Setup needed"
+                                else -> "Gemma 4 E2B IT"
+                            }
+                            Text(modelLabel, style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldPrimaryBlue, fontSize = 11.sp, fontWeight = FontWeight.Medium))
                         }
                     }
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = OpenFieldSecondaryText.copy(alpha = 0.4f), modifier = Modifier.size(12.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Minimal Live Edge Metrics Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground),
-                border = BorderStroke(1.dp, OpenFieldCardBorder)
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Speed,
-                                contentDescription = null,
-                                tint = OpenFieldPrimaryBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Hardware Inference Diagnostics",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    color = OpenFieldNavyText
-                                )
-                            )
+            // ── APPEARANCE ─────────────────────────────────────────────────
+            SettingsSectionHeader("APPEARANCE")
+            SettingsCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SettingsIconBadge(icon = Icons.Default.Lightbulb)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Theme", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    listOf("Light" to "Light", "Dark (AMOLED)" to "AMOLED", "System" to "System").forEach { (modeValue, label) ->
+                        val isSelected = when (modeValue) {
+                            "Dark (AMOLED)" -> settings.themeMode.contains("Dark") || settings.themeMode.contains("Obsidian") || settings.themeMode.contains("AMOLED")
+                            "Light" -> settings.themeMode == "Light"
+                            else -> settings.themeMode.contains("System") || settings.themeMode.isBlank()
                         }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                            modifier = Modifier.weight(1f).clickable {
+                                repository.updateThemeMode(when (modeValue) { "Dark (AMOLED)" -> "Dark (AMOLED)"; "Light" -> "Light"; else -> "System Default" })
+                            }
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else Color(0xFF94A3B8))
-                            )
                             Text(
-                                text = if (metrics.lastTokensPerSec > 0.0) "Active" else "Idle",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else OpenFieldSecondaryText,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 10.sp
-                                )
+                                text = label,
+                                style = MaterialTheme.typography.bodySmall.copy(color = if (isSelected) Color.White else OpenFieldNavyText, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, fontSize = 11.5.sp),
+                                modifier = Modifier.padding(vertical = 7.dp, horizontal = 2.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }
+                }
+            }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+            // ── AI BEHAVIOR ────────────────────────────────────────────────
+            SettingsSectionHeader("AI BEHAVIOR")
+            SettingsCard {
+                Text("Explanation Depth", style = MaterialTheme.typography.labelMedium.copy(color = OpenFieldSecondaryText, fontWeight = FontWeight.SemiBold, fontSize = 11.sp))
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    listOf("Beginner", "Intermediate", "Advanced").forEach { level ->
+                        val isSelected = settings.preferredExplanationLevel.equals(level, ignoreCase = true)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                            modifier = Modifier.weight(1f).clickable { repository.updatePreferredExplanationLevel(level) }
+                        ) {
+                            Text(text = level, style = MaterialTheme.typography.bodySmall.copy(color = if (isSelected) Color.White else OpenFieldNavyText, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, fontSize = 11.5.sp), modifier = Modifier.padding(vertical = 7.dp, horizontal = 2.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text("Response Length", style = MaterialTheme.typography.labelMedium.copy(color = OpenFieldSecondaryText, fontWeight = FontWeight.SemiBold, fontSize = 11.sp))
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    listOf("Concise", "Balanced", "Detailed").forEach { len ->
+                        val isSelected = settings.preferredResponseLength.equals(len, ignoreCase = true)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldSecondaryBackground,
+                            border = BorderStroke(1.dp, if (isSelected) OpenFieldPrimaryBlue else OpenFieldCardBorder),
+                            modifier = Modifier.weight(1f).clickable { repository.updatePreferredResponseLength(len) }
+                        ) {
+                            Text(text = len, style = MaterialTheme.typography.bodySmall.copy(color = if (isSelected) Color.White else OpenFieldNavyText, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, fontSize = 11.5.sp), modifier = Modifier.padding(vertical = 7.dp, horizontal = 2.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+                }
+
+                SettingsDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { editedMemory = settings.userCustomMemory; showMemoryDialog = true }
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        SettingsIconBadge(icon = Icons.Default.Psychology)
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("TTFT", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
+                            Text("On-Device Memory", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                            Text(if (settings.userCustomMemory.isBlank()) "Add personal context for the model" else "Custom context active", style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 11.sp))
+                        }
+                    }
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null, tint = OpenFieldSecondaryText.copy(alpha = 0.4f), modifier = Modifier.size(12.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── STORAGE ────────────────────────────────────────────────────
+            SettingsSectionHeader("STORAGE")
+            SettingsCard {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    SettingsIconBadge(icon = Icons.Default.Storage)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Local Data", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                        Text("$installedPacksCount packs · ${documents.size} docs", style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 11.sp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Storage bar
+                Row(modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp))) {
+                    Box(modifier = Modifier.weight(0.80f).height(5.dp).background(OpenFieldPrimaryBlue))
+                    Box(modifier = Modifier.weight(0.12f).height(5.dp).background(Color(0xFF0D9488)))
+                    Box(modifier = Modifier.weight(0.08f).height(5.dp).background(Color(0xFF94A3B8)))
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    listOf(OpenFieldPrimaryBlue to "Model ~2.6 GB", Color(0xFF0D9488) to "Packs & Docs", Color(0xFF94A3B8) to "Cache").forEach { (clr, lbl) ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(clr))
+                            Text(lbl, style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
+                        }
+                    }
+                }
+
+                SettingsDivider()
+
+                SettingsActionRow(icon = Icons.Default.CleaningServices, title = "Clear Cache", subtitle = "Free temporary files", onClick = { repository.clearAppCache(context); Toast.makeText(context, "Cache cleared", Toast.LENGTH_SHORT).show() })
+                SettingsActionRow(icon = Icons.Default.Download, title = "Export Backup", subtitle = "Save chats and drafts to storage", onClick = { val ts = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date()); exportBackupLauncher.launch("crux_backup_$ts.json") })
+                SettingsActionRow(icon = Icons.Default.Upload, title = "Restore Backup", subtitle = "Restore from a previous export", onClick = { importBackupLauncher.launch(arrayOf("application/json", "text/*")) })
+                SettingsActionRow(icon = Icons.Default.DeleteForever, title = "Clear All Data", subtitle = "Reset chats, docs, and local indexes", tint = Color(0xFFD32F2F), onClick = { showClearAllDataDialog = true })
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── INFO & PRIVACY ─────────────────────────────────────────────
+            SettingsSectionHeader("INFO & PRIVACY")
+            SettingsCard {
+                SettingsActionRow(icon = Icons.Default.Info, title = "About CRUX", subtitle = "v1.0.0 · Apache 2.0", onClick = onNavigateToAbout)
+                SettingsDivider()
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SettingsIconBadge(icon = Icons.Default.Security)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("Zero Telemetry", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold, color = OpenFieldNavyText))
+                        Text("Prompts, images & docs stay on this device", style = MaterialTheme.typography.bodySmall.copy(color = OpenFieldSecondaryText, fontSize = 11.sp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── DIAGNOSTICS ────────────────────────────────────────────────
+            Card(modifier = Modifier.fillMaxWidth(), shape = CardShape, colors = CardDefaults.cardColors(containerColor = OpenFieldSecondaryBackground), border = BorderStroke(0.5.dp, OpenFieldCardBorder)) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(imageVector = Icons.Default.Speed, contentDescription = null, tint = OpenFieldPrimaryBlue, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text("Inference Diagnostics", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.5.sp, color = OpenFieldNavyText))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else Color(0xFF94A3B8)))
+                            Text(if (metrics.lastTokensPerSec > 0.0) "Active" else "Idle", style = MaterialTheme.typography.labelSmall.copy(color = if (metrics.lastTokensPerSec > 0.0) OpenFieldSuccess else OpenFieldSecondaryText, fontWeight = FontWeight.Bold, fontSize = 9.5.sp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(7.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("TTFT", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 9.5.sp))
                             Text(if (metrics.lastTimeToFirstTokenMs > 0) "${metrics.lastTimeToFirstTokenMs} ms" else "—", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText))
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Generation Speed", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
+                            Text("Speed", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 9.5.sp))
                             Text(if (metrics.lastTokensPerSec > 0.0) "${metrics.lastTokensPerSec} tok/s" else "—", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText))
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("RAM Footprint", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 10.sp))
+                            Text("RAM", style = MaterialTheme.typography.labelSmall.copy(color = OpenFieldSecondaryText, fontSize = 9.5.sp))
                             Text("${metrics.currentMemoryUsedMb} MB", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = OpenFieldNavyText))
                         }
                     }
@@ -859,6 +520,26 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+@Composable
+private fun SettingsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = CardShape,
+        colors = CardDefaults.cardColors(containerColor = OpenFieldBackground),
+        border = BorderStroke(0.5.dp, OpenFieldCardBorder)
+    ) {
+        Column(modifier = Modifier.padding(12.dp), content = content)
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 8.dp))
 }
 
 @Composable

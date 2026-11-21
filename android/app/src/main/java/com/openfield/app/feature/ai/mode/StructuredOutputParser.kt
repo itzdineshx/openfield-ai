@@ -257,7 +257,7 @@ object StructuredOutputParser {
             is String -> {
                 val t = rawAnswer.trim()
                 t.toIntOrNull()
-                    ?: if (t.length == 1 && t[0].uppercaseChar() in 'A'..'H') t[0].uppercaseChar() - 'A' else null
+                    ?: (if (t.length == 1 && t[0].uppercaseChar() in 'A'..'H') t[0].uppercaseChar() - 'A' else null)
                     ?: options.indexOfFirst { it.equals(t.replace(optionPrefix, ""), ignoreCase = true) }.takeIf { it >= 0 }
                     ?: 0
             }

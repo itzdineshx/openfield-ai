@@ -138,7 +138,7 @@ fun TaskAutomationScreen(
                 FeatureHeaderCard(
                     icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
                     title = "Workflows & Checklists",
-                    subtitle = "Turn goals into action-oriented checklists and guided workflows. Plan manually or generate structured action steps using Gemma 4."
+                    subtitle = "Turn goals into action-oriented checklists and guided workflows. Plan manually or generate structured action steps using AI."
                 )
             }
 

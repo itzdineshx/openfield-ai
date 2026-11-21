@@ -155,7 +155,7 @@ class ChatController(
             if (!orchestrator.awaitReady()) {
                 chatDao.updateMessageContent(
                     assistantMsgId,
-                    "The on-device AI model isn't loaded yet. Open **AI Model Management** from the Home banner to download or load Gemma 4 E2B, then try again.",
+                    "The on-device AI model isn't loaded yet. Open **AI Model Management** to download or load the model, then try again.",
                     isComplete = true
                 )
                 _isGenerating.value = false
@@ -173,7 +173,7 @@ class ChatController(
                         )
                     }
                     mode.equals("IMAGE", ignoreCase = true) -> {
-                        val prompt = "You are Gemma 4 Vision assistant. The user is asking about visual diagnosis, image details, or camera observations:\n\n$userPrompt"
+                        val prompt = "You are an expert visual diagnosis assistant. The user is asking about visual diagnosis, image details, or camera observations:\n\n$userPrompt"
                         orchestrator.aiEngine.generateConversationStream(sessionId, prompt, ModeConfigRegistry.get(OpenFieldMode.ANALYZE_IMAGE).defaultGenConfig)
                     }
                     !knowledgeScopeId.isNullOrBlank() && crossSourceRetriever != null -> {

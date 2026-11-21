@@ -56,9 +56,9 @@ fun PrimaryButton(
         shape = shape,
         colors = ButtonDefaults.buttonColors(
             containerColor = OpenFieldPrimaryBlue,
-            contentColor = OpenFieldBackground,
+            contentColor = Color.White,
             disabledContainerColor = OpenFieldPrimaryBlue.copy(alpha = 0.4f),
-            disabledContentColor = OpenFieldBackground.copy(alpha = 0.8f)
+            disabledContentColor = Color.White.copy(alpha = 0.8f)
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,
@@ -73,7 +73,8 @@ fun PrimaryButton(
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(8.dp))
             }
@@ -82,7 +83,7 @@ fun PrimaryButton(
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
-                    color = OpenFieldBackground
+                    color = Color.White
                 )
             )
             if (trailingIcon != null) {
@@ -90,7 +91,8 @@ fun PrimaryButton(
                 Icon(
                     imageVector = trailingIcon,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
                 )
             }
         }

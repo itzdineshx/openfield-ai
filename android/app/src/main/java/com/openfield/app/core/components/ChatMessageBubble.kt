@@ -37,7 +37,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Schedule
@@ -90,6 +90,9 @@ import com.openfield.app.core.theme.OpenFieldSuccess
 import com.openfield.app.core.theme.OpenFieldSuccessBg
 import com.openfield.app.core.theme.OpenFieldWarning
 import com.openfield.app.core.theme.OpenFieldWarningBg
+import com.openfield.app.core.theme.OpenFieldUserBubbleBg
+import com.openfield.app.core.theme.OpenFieldUserBubbleText
+import com.openfield.app.core.theme.LocalCruxPalette
 
 data class StepItem(
     val number: Int,
@@ -158,8 +161,8 @@ private fun UserMessage(message: String, imageUri: Any?, timestamp: String?, mod
     ) {
         Surface(
             shape = BubbleShapeUser,
-            color = OpenFieldPrimaryBlueLight,
-            border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder.copy(alpha = 0.45f)),
+            color = OpenFieldUserBubbleBg,
+            border = BorderStroke(1.dp, if (LocalCruxPalette.current.isDark) Color(0xFF38383D) else OpenFieldPrimaryBlueBorder.copy(alpha = 0.45f)),
             modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
@@ -173,7 +176,7 @@ private fun UserMessage(message: String, imageUri: Any?, timestamp: String?, mod
                         style = MaterialTheme.typography.bodyLarge.copy(
                             fontSize = 14.5.sp,
                             lineHeight = 21.sp,
-                            color = OpenFieldNavyText
+                            color = OpenFieldUserBubbleText
                         )
                     )
                 }
@@ -726,7 +729,7 @@ private fun TroubleshootResultCard(
                     onClick = { onFollowUpAction("I completed this check, but the issue remains. What should I inspect next?") }
                 )
                 ObservationActionButton(
-                    icon = Icons.Default.HelpOutline,
+                    icon = Icons.AutoMirrored.Filled.HelpOutline,
                     label = "Need Simpler Step",
                     tint = OpenFieldPrimaryBlue,
                     onClick = { onFollowUpAction("Can you explain this step more simply or provide a safer alternative check?") }
@@ -929,7 +932,7 @@ private fun TutorLessonResultCard(
                         onClick = { onFollowUpAction("Can you give me another practical, real-world example of this?") }
                     )
                     HandoffChip(
-                        icon = Icons.Default.HelpOutline,
+                        icon = Icons.AutoMirrored.Filled.HelpOutline,
                         label = "Give Practice Question",
                         onClick = { onFollowUpAction("Give me a practice quiz question to test my understanding.") }
                     )

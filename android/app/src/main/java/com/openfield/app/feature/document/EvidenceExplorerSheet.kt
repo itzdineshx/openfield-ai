@@ -19,8 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Note
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -132,8 +132,8 @@ fun EvidenceExplorerSheet(
 private fun EvidenceCard(item: KnowledgeEvidence) {
     val icon = when (item.sourceType) {
         KnowledgeSourceType.DOCUMENT -> Icons.Default.Description
-        KnowledgeSourceType.KNOWLEDGE_PACK -> Icons.Default.MenuBook
-        else -> Icons.Default.Note
+        KnowledgeSourceType.KNOWLEDGE_PACK -> Icons.AutoMirrored.Filled.MenuBook
+        else -> Icons.AutoMirrored.Filled.Note
     }
 
     val badgeColor = when (item.sourceType) {

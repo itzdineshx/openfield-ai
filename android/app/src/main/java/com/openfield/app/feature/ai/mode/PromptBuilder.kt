@@ -1,5 +1,7 @@
 package com.openfield.app.feature.ai.mode
 
+import com.openfield.app.feature.ai.context.ContextWindowOptimizer
+
 object PromptBuilder {
 
     fun buildAskAiPrompt(
@@ -52,11 +54,12 @@ object PromptBuilder {
     }
 
     /**
-     * Bounded context limiter to avoid token bloat and CPU thermal throttling on mobile devices.
+     * Bounded context limiter using smart semantic trimming (respecting sentences and paragraphs)
+     * rather than mid-word slicing.
      */
     fun boundContext(text: String, maxChars: Int = 4000): String {
-        if (text.length <= maxChars) return text
-        return text.take(maxChars - 3) + "..."
+        val maxTokens = maxChars / 4
+        return ContextWindowOptimizer.smartTrim(text, maxTokens)
     }
 
     fun buildImageAnalysisPrompt(userQuestion: String?): String {
@@ -103,14 +106,16 @@ Describe what is visible in the image. Organize your response into the following
         excerptsWithPages: List<Pair<Int, String>>,
         question: String
     ): String {
+        // Recover 20-30% context window space by merging overlapping passages
+        val optimizedExcerpts = ContextWindowOptimizer.mergeOverlappingChunks(excerptsWithPages)
         val contextBuilder = StringBuilder()
-        for ((page, text) in excerptsWithPages) {
+        for ((page, text) in optimizedExcerpts) {
             contextBuilder.append("[Page $page]:\n")
             contextBuilder.append(text.trim())
             contextBuilder.append("\n\n")
         }
 
-        val citedPages = excerptsWithPages.map { it.first }.distinct().sorted()
+        val citedPages = optimizedExcerpts.map { it.first }.distinct().sorted()
         val pageHints = if (citedPages.isNotEmpty()) {
             "Relevant excerpt pages available: ${citedPages.joinToString(", ") { "Page $it" }}."
         } else ""

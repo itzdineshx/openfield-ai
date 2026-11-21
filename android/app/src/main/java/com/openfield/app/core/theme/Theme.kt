@@ -78,7 +78,9 @@ fun OpenFieldTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
+                @Suppress("DEPRECATION")
                 window.statusBarColor = palette.background.toArgb()
+                @Suppress("DEPRECATION")
                 window.navigationBarColor = palette.background.toArgb()
                 val insetsController = WindowCompat.getInsetsController(window, view)
                 insetsController.isAppearanceLightStatusBars = !darkTheme

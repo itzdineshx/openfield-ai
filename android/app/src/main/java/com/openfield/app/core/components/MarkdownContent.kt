@@ -1,5 +1,7 @@
 package com.openfield.app.core.components
 
+import com.openfield.app.core.text.SyntaxHighlighter
+
 import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -237,6 +239,15 @@ private fun MdQuote(text: String, style: TextStyle, accent: Color) {
 
 @Composable
 private fun MdCode(code: String) {
+    if (SvgParser.isSvg(code)) {
+        SvgDiagramCard(rawCode = code)
+        return
+    }
+    if (MermaidParser.isMermaidCode(code)) {
+        MermaidDiagramCard(rawCode = code)
+        return
+    }
+
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     var copied by remember { mutableStateOf(false) }
@@ -249,6 +260,18 @@ private fun MdCode(code: String) {
     }
 
     val lines = remember(code) { code.lines() }
+    val highlightedCode = remember(code) { SyntaxHighlighter.highlight(code) }
+    val detectedLanguage = remember(code) {
+        val trimmed = code.trim().lowercase()
+        when {
+            trimmed.startsWith("{") && trimmed.endsWith("}") -> "JSON"
+            trimmed.contains("fun ") || trimmed.contains("val ") || trimmed.contains("var ") -> "KOTLIN"
+            trimmed.contains("def ") || trimmed.contains("import ") && trimmed.contains(":") -> "PYTHON"
+            trimmed.contains("select ") && trimmed.contains("from ") -> "SQL"
+            trimmed.startsWith("#!/bin/") || trimmed.contains("sudo ") || trimmed.contains("apt ") -> "BASH"
+            else -> "CODE"
+        }
+    }
 
     Surface(
         shape = RoundedCornerShape(12.dp),
@@ -291,7 +314,7 @@ private fun MdCode(code: String) {
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "CODE",
+                        text = detectedLanguage,
                         style = TextStyle(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -350,13 +373,12 @@ private fun MdCode(code: String) {
                             )
                         }
                     }
-                    // Code text
+                    // Highlighted Code text
                     Text(
-                        text = code,
+                        text = highlightedCode,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.5.sp,
-                        lineHeight = 19.sp,
-                        color = Color(0xFFE2E8F0)
+                        lineHeight = 19.sp
                     )
                 }
             }

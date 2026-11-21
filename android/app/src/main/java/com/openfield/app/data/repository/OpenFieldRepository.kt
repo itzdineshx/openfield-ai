@@ -380,7 +380,7 @@ class OpenFieldRepository(
                         database.chatDao().getMessagesFlow(session.id).collect { msgEntities ->
                             val chatMsgs = msgEntities.map { entity ->
                                 val isModeTag = entity.stepsJson?.startsWith("MODE:") == true
-                                val mode = if (isModeTag) entity.stepsJson?.removePrefix("MODE:") else null
+                                val mode = if (isModeTag) entity.stepsJson.orEmpty().removePrefix("MODE:") else null
                                 val steps = if (!isModeTag) parseSteps(entity.stepsJson) else emptyList()
                                 ChatMessage(
                                     id = entity.id,
@@ -529,7 +529,7 @@ class OpenFieldRepository(
         return database.chatDao().getMessagesFlow(sessionId).map { entities ->
             entities.map { entity ->
                 val isModeTag = entity.stepsJson?.startsWith("MODE:") == true
-                val mode = if (isModeTag) entity.stepsJson?.removePrefix("MODE:") else null
+                val mode = if (isModeTag) entity.stepsJson.orEmpty().removePrefix("MODE:") else null
                 val steps = if (!isModeTag) parseSteps(entity.stepsJson) else emptyList()
                 ChatMessage(
                     id = entity.id,

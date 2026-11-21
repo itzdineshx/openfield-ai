@@ -101,7 +101,7 @@ fun GlobalSearchDialog(
 
     val appTools = remember {
         listOf(
-            ToolQuickMatch("Ask AI Chat", "Conversational AI assistant with Gemma 4", Icons.Default.SmartToy) {
+            ToolQuickMatch("Ask AI Chat", "Conversational AI assistant", Icons.Default.SmartToy) {
                 onDismiss()
                 onNavigateToChat("")
             },

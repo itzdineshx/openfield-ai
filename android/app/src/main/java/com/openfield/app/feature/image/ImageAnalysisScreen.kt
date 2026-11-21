@@ -427,7 +427,7 @@ private fun ImagePreview(
                         .background(OpenFieldSuccess)
                 )
                 Text(
-                    text = "Gemma 4 Vision • On-Device",
+                    text = "Vision Analysis • Ready",
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,

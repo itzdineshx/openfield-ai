@@ -442,11 +442,11 @@ private fun ChatEmptyState(onSuggestion: (String) -> Unit) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "On-Device Gemma 4 • Complete Privacy • 100% Offline",
+                text = "Private & Local AI Assistant",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = OpenFieldPrimaryBlue,
-                    fontWeight = FontWeight.SemiBold,
+                    color = OpenFieldSecondaryText,
+                    fontWeight = FontWeight.Medium,
                     fontSize = 12.sp
                 )
             )

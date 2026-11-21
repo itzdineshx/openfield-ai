@@ -128,14 +128,14 @@ object DeterministicMathEngine {
                     }
                     if (stack.isEmpty()) throw IllegalArgumentException("Mismatched parentheses")
                     stack.pop() // remove '('
-                    if (stack.isNotEmpty() && stack.peek() in listOf("sqrt", "abs", "round")) {
+                    if (stack.isNotEmpty() && stack.peek()!! in listOf("sqrt", "abs", "round")) {
                         output.add(stack.pop())
                     }
                 }
                 else -> { // Operator
                     val p = precedence(token)
                     while (stack.isNotEmpty() && stack.peek() != "(" &&
-                        (precedence(stack.peek()) > p || (precedence(stack.peek()) == p && !isRightAssociative(token)))
+                        (precedence(stack.peek()!!) > p || (precedence(stack.peek()!!) == p && !isRightAssociative(token)))
                     ) {
                         output.add(stack.pop())
                     }

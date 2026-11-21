@@ -3,6 +3,7 @@ package com.openfield.app.feature.document.rag
 import com.openfield.app.core.util.PerformanceTracker
 import com.openfield.app.data.local.dao.DocumentDao
 import com.openfield.app.data.local.entity.DocumentChunkEntity
+import com.openfield.app.feature.ai.context.ContextWindowOptimizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -18,13 +19,18 @@ class DocumentRetriever(private val documentDao: DocumentDao) {
     suspend fun retrieveRelevantChunks(
         documentId: String,
         query: String,
-        maxChunks: Int = 4
+        maxChunks: Int = 8
     ): List<RetrievedChunk> = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
-        val result = executeRetrieve(documentId, query, maxChunks)
+        val rawResults = executeRetrieve(documentId, query, maxChunks)
+        // Dynamically pack as much high-relevance evidence as fits in the context budget
+        val packed = ContextWindowOptimizer.packEvidenceChunks(
+            rawResults,
+            maxTokens = ContextWindowOptimizer.MAX_EVIDENCE_BUDGET_TOKENS
+        ) { it.text }
         val elapsed = System.currentTimeMillis() - startTime
         PerformanceTracker.recordRetrievalLatency(elapsed)
-        result
+        packed
     }
 
     private suspend fun executeRetrieve(
@@ -136,7 +142,7 @@ class DocumentRetriever(private val documentDao: DocumentDao) {
             }
         }
 
-        val scored = allChunks.map { chunk ->
+        val scored: List<Pair<DocumentChunkEntity, Float>> = allChunks.map { chunk ->
             val chunkLower = chunk.text.lowercase()
             var matches = 0
             for (word in queryWords) {
@@ -145,7 +151,7 @@ class DocumentRetriever(private val documentDao: DocumentDao) {
             val score = matches.toFloat() / queryWords.size.toFloat()
             chunk to score
         }
-            .filter { it.second > 0 }
+            .filter { it.second > 0f }
             .sortedByDescending { it.second }
             .take(maxChunks)
 

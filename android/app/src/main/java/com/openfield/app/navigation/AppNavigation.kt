@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -21,28 +21,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.PlaylistAddCheck
-import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.DrawerValue
@@ -52,10 +45,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -188,11 +177,12 @@ fun AppNavigation(
                         navController.navigate(AppRoutes.chatSessionRoute(newId))
                     }
                 },
+                onCloseDrawer = { scope.launch { drawerState.close() } },
                 repository = repository
             )
         }
     ) {
-        Scaffold { innerPadding ->
+        Scaffold(contentWindowInsets = WindowInsets(0)) { innerPadding ->
             Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -200,7 +190,8 @@ fun AppNavigation(
         ) {
             NavHost(
                 navController = navController,
-                startDestination = startDestination
+                startDestination = startDestination,
+                modifier = Modifier.fillMaxSize()
             ) {
                 // 1. Splash Screen
                 composable(AppRoutes.SPLASH) {
@@ -501,63 +492,38 @@ private fun AppDrawerContent(
     onNavigateToRoute: (String) -> Unit,
     onNavigateToChat: (String) -> Unit,
     onNewChat: () -> Unit,
+    onCloseDrawer: () -> Unit,
     repository: OpenFieldRepository = OpenFieldRepository.getInstance()
 ) {
     val focusManager = LocalFocusManager.current
     val sessions by repository.sessions.collectAsState()
     var searchFilter by remember { mutableStateOf("") }
-    var isToolsExpanded by remember { mutableStateOf(false) }
 
-    val quickModes = remember {
+    val exploreItems = remember {
         listOf(
-            DrawerFeatureItem("Vision", AppRoutes.IMAGE_ANALYSIS, Icons.Default.Image),
-            DrawerFeatureItem("Docs", AppRoutes.DOCUMENT_QA, Icons.Default.Description),
-            DrawerFeatureItem("Troubleshoot", AppRoutes.PROBLEM_SOLVER, Icons.Default.Build),
-            DrawerFeatureItem("Tutor", AppRoutes.LEARN_EXPLAIN, Icons.Default.Lightbulb),
-            DrawerFeatureItem("Writer", AppRoutes.CREATE_WRITE, Icons.Default.Edit),
+            DrawerFeatureItem("All AI Tools", AppRoutes.TOOLS, Icons.Default.Build),
             DrawerFeatureItem("Library", AppRoutes.LIBRARY, Icons.AutoMirrored.Filled.MenuBook),
-            DrawerFeatureItem("All Tools", AppRoutes.TOOLS, Icons.Default.Build)
+            DrawerFeatureItem("Tasks", AppRoutes.TASKS, Icons.AutoMirrored.Filled.PlaylistAddCheck)
         )
     }
 
-    val coreModes = remember {
+    val workspaceItems = remember {
         listOf(
-            DrawerFeatureItem("Ask AI", AppRoutes.HOME, Icons.Default.AutoAwesome, "Chat"),
+            DrawerFeatureItem("Ask AI", AppRoutes.HOME, Icons.Default.AutoAwesome),
             DrawerFeatureItem("Analyze Image", AppRoutes.IMAGE_ANALYSIS, Icons.Default.Image),
             DrawerFeatureItem("Ask Document", AppRoutes.DOCUMENT_QA, Icons.Default.Description),
             DrawerFeatureItem("Solve a Problem", AppRoutes.PROBLEM_SOLVER, Icons.Default.Build),
             DrawerFeatureItem("Learn & Explain", AppRoutes.LEARN_EXPLAIN, Icons.Default.Lightbulb),
-            DrawerFeatureItem("Create & Write Studio", AppRoutes.CREATE_WRITE, Icons.Default.Edit)
+            DrawerFeatureItem("Create & Write", AppRoutes.CREATE_WRITE, Icons.Default.Edit)
         )
     }
 
-    val workspaces = remember {
-        listOf(
-            DrawerFeatureItem("Knowledge Library", AppRoutes.LIBRARY, Icons.AutoMirrored.Filled.MenuBook, "9 Packs"),
-            DrawerFeatureItem("Workflows & Tasks", AppRoutes.TASKS, Icons.AutoMirrored.Filled.PlaylistAddCheck),
-            DrawerFeatureItem("All Saved Chats", AppRoutes.CHATS, Icons.Default.ChatBubble)
-        )
-    }
-
-    val allTools = remember {
-        listOf(
-            DrawerFeatureItem("All AI Tools", AppRoutes.TOOLS, Icons.Default.Build, "Catalog"),
-            DrawerFeatureItem("Summarize Text", AppRoutes.toolDetailRoute("summarize"), Icons.AutoMirrored.Filled.ShortText),
-            DrawerFeatureItem("Translate (15 Languages)", AppRoutes.toolDetailRoute("translate"), Icons.Default.Translate),
-            DrawerFeatureItem("Explain Concept", AppRoutes.toolDetailRoute("explain"), Icons.Default.Lightbulb),
-            DrawerFeatureItem("Reframe & Polish", AppRoutes.toolDetailRoute("reframe"), Icons.Default.AutoAwesome),
-            DrawerFeatureItem("Task Checklist", AppRoutes.TASKS, Icons.AutoMirrored.Filled.PlaylistAddCheck),
-            DrawerFeatureItem("Calculator & Units", AppRoutes.CALCULATOR, Icons.Default.Calculate)
-        )
-    }
-
-    val allSearchableItems = remember { coreModes + workspaces + allTools }
+    val allSearchableItems = remember { exploreItems + workspaceItems }
 
     val filteredFeatures = remember(searchFilter, allSearchableItems) {
         if (searchFilter.isBlank()) emptyList()
         else allSearchableItems.filter {
-            it.title.contains(searchFilter, ignoreCase = true) ||
-            (it.tag != null && it.tag.contains(searchFilter, ignoreCase = true))
+            it.title.contains(searchFilter, ignoreCase = true)
         }
     }
 
@@ -567,69 +533,84 @@ private fun AppDrawerContent(
     }
 
     ModalDrawerSheet(
-        modifier = Modifier.width(312.dp),
+        modifier = Modifier.width(304.dp),
         drawerContainerColor = OpenFieldBackground
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- 1. PINNED TOP SECTION (ChatGPT / Claude Mobile Style) ---
+            // --- PINNED HEADER ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, start = 14.dp, end = 14.dp, bottom = 6.dp)
+                    .padding(top = 14.dp, start = 14.dp, end = 10.dp, bottom = 8.dp)
             ) {
-                // Brand Header Row
+                // Brand row + Close button
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    CruxLogo(size = 32.dp, showText = true, textFontSize = 18)
+                    CruxLogo(size = 30.dp, showText = true, textFontSize = 17)
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            onCloseDrawer()
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close menu",
+                            tint = OpenFieldSecondaryText,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // + New Conversation Button (Primary CTA)
+                // New conversation CTA
                 Surface(
                     onClick = {
                         focusManager.clearFocus()
                         onNewChat()
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     color = OpenFieldPrimaryBlueLight,
                     border = BorderStroke(1.dp, OpenFieldPrimaryBlueBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
                             tint = OpenFieldPrimaryBlue,
-                            modifier = Modifier.size(19.dp)
+                            modifier = Modifier.size(17.dp)
                         )
                         Text(
                             text = "New conversation",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = OpenFieldPrimaryBlue,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.5.sp
+                                fontSize = 13.sp
                             )
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(7.dp))
 
-                // Modern Pill Search Bar (ChatGPT / Claude Style)
+                // Search pill
                 Surface(
-                    shape = RoundedCornerShape(22.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = OpenFieldSecondaryBackground,
                     border = BorderStroke(0.5.dp, OpenFieldCardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(38.dp)
+                        .height(36.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -640,20 +621,20 @@ private fun AppDrawerContent(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
-                            tint = OpenFieldSecondaryText.copy(alpha = 0.7f),
-                            modifier = Modifier.size(15.dp)
+                            tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
+                            modifier = Modifier.size(14.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(7.dp))
                         Box(
                             modifier = Modifier.weight(1f),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             if (searchFilter.isEmpty()) {
                                 Text(
-                                    text = "Search chats & tools…",
+                                    text = "Search…",
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = OpenFieldSecondaryText.copy(alpha = 0.65f),
-                                        fontSize = 12.5.sp
+                                        color = OpenFieldSecondaryText.copy(alpha = 0.55f),
+                                        fontSize = 12.sp
                                     )
                                 )
                             }
@@ -663,7 +644,7 @@ private fun AppDrawerContent(
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.bodyMedium.copy(
                                     color = OpenFieldNavyText,
-                                    fontSize = 12.5.sp
+                                    fontSize = 12.sp
                                 ),
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
@@ -676,61 +657,13 @@ private fun AppDrawerContent(
                                     searchFilter = ""
                                     focusManager.clearFocus()
                                 },
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(20.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear search",
-                                    tint = OpenFieldSecondaryText.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Quick Horizontal Modes Carousel (1-tap Thumb Access, 0 vertical bloat)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    quickModes.forEach { mode ->
-                        val isSelected = currentRoute == mode.route
-                        Surface(
-                            onClick = {
-                                focusManager.clearFocus()
-                                onNavigateToRoute(mode.route)
-                            },
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (isSelected) OpenFieldPrimaryBlueLight else OpenFieldSecondaryBackground,
-                            border = BorderStroke(
-                                0.5.dp,
-                                if (isSelected) OpenFieldPrimaryBlueBorder else OpenFieldCardBorder
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
-                            ) {
-                                Icon(
-                                    imageVector = mode.icon,
-                                    contentDescription = null,
-                                    tint = if (isSelected) OpenFieldPrimaryBlue else OpenFieldNavyText.copy(alpha = 0.75f),
+                                    contentDescription = "Clear",
+                                    tint = OpenFieldSecondaryText.copy(alpha = 0.6f),
                                     modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = mode.title,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = if (isSelected) OpenFieldPrimaryBlue else OpenFieldNavyText,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                        fontSize = 11.5.sp
-                                    )
                                 )
                             }
                         }
@@ -738,9 +671,9 @@ private fun AppDrawerContent(
                 }
             }
 
-            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 2.dp))
+            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f))
 
-            // --- 2. SCROLLABLE BODY ---
+            // --- SCROLLABLE BODY ---
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -748,9 +681,8 @@ private fun AppDrawerContent(
                     .padding(horizontal = 8.dp)
             ) {
                 if (searchFilter.isNotBlank()) {
-                    // Search active: Show ONLY filtered results
                     if (filteredFeatures.isNotEmpty()) {
-                        DrawerSectionHeader("MATCHING TOOLS & MODES")
+                        DrawerSectionHeader("TOOLS & MODES")
                         filteredFeatures.forEach { item ->
                             DrawerNavItem(
                                 label = item.title,
@@ -759,19 +691,16 @@ private fun AppDrawerContent(
                                 onClick = {
                                     focusManager.clearFocus()
                                     onNavigateToRoute(item.route)
-                                },
-                                trailingBadge = item.tag
+                                }
                             )
                         }
                     }
-
                     if (filteredSessions.isNotEmpty()) {
-                        DrawerSectionHeader("MATCHING CHATS")
+                        DrawerSectionHeader("CHATS")
                         filteredSessions.forEach { session ->
-                            val isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id)
                             DrawerChatRow(
                                 title = session.title,
-                                isSelected = isSelected,
+                                isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id),
                                 onClick = {
                                     focusManager.clearFocus()
                                     onNavigateToChat(session.id)
@@ -780,85 +709,86 @@ private fun AppDrawerContent(
                             )
                         }
                     }
-
                     if (filteredFeatures.isEmpty() && filteredSessions.isEmpty()) {
-                        Column(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 32.dp, horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No tools or chats found for \"$searchFilter\"",
+                                text = "No results for \"$searchFilter\"",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = OpenFieldSecondaryText,
-                                    fontSize = 12.sp,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    fontSize = 12.sp
                                 )
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Surface(
-                                onClick = {
-                                    searchFilter = ""
-                                    focusManager.clearFocus()
-                                },
-                                shape = RoundedCornerShape(6.dp),
-                                color = OpenFieldSecondaryBackground,
-                                border = BorderStroke(1.dp, OpenFieldCardBorder)
-                            ) {
-                                Text(
-                                    text = "Clear search",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = OpenFieldPrimaryBlue,
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 11.5.sp
-                                    ),
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                                )
-                            }
                         }
                     }
                 } else {
-                    // 1. RECENT CHATS ARE PRIMARY (ChatGPT / Claude Mobile Style)
+                    // EXPLORE section — AI Tools, Library, Tasks
+                    DrawerSectionHeader("EXPLORE")
+                    exploreItems.forEach { item ->
+                        DrawerNavItem(
+                            label = item.title,
+                            icon = item.icon,
+                            selected = currentRoute == item.route,
+                            onClick = {
+                                focusManager.clearFocus()
+                                onNavigateToRoute(item.route)
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    HorizontalDivider(
+                        color = OpenFieldCardBorder.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // WORKSPACE section — AI interaction modes
+                    DrawerSectionHeader("WORKSPACE")
+                    workspaceItems.forEach { item ->
+                        DrawerNavItem(
+                            label = item.title,
+                            icon = item.icon,
+                            selected = currentRoute == item.route,
+                            onClick = {
+                                focusManager.clearFocus()
+                                onNavigateToRoute(item.route)
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    HorizontalDivider(
+                        color = OpenFieldCardBorder.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // RECENT CHATS section
                     DrawerSectionHeader("RECENT CHATS")
-                    if (filteredSessions.isEmpty()) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = OpenFieldSecondaryBackground.copy(alpha = 0.4f),
-                            border = BorderStroke(0.5.dp, OpenFieldCardBorder.copy(alpha = 0.5f)),
+                    if (sessions.isEmpty()) {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 4.dp, vertical = 6.dp)
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "No saved conversations yet",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = OpenFieldSecondaryText,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                            Text(
+                                text = "No conversations yet. Tap + to start.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = OpenFieldSecondaryText.copy(alpha = 0.7f),
+                                    fontSize = 12.sp
                                 )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Tap + New conversation above to start",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = OpenFieldSecondaryText.copy(alpha = 0.7f),
-                                        fontSize = 10.5.sp
-                                    )
-                                )
-                            }
+                            )
                         }
                     } else {
-                        filteredSessions.forEach { session ->
-                            val isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id)
+                        sessions.forEach { session ->
                             DrawerChatRow(
                                 title = session.title,
-                                isSelected = isSelected,
+                                isSelected = currentRoute == AppRoutes.chatSessionRoute(session.id),
                                 onClick = {
                                     focusManager.clearFocus()
                                     onNavigateToChat(session.id)
@@ -868,94 +798,12 @@ private fun AppDrawerContent(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // 2. EXPLORE & WORKSPACES (Clean section below chats)
-                    DrawerSectionHeader("EXPLORE & WORKSPACES")
-
-                    DrawerNavItem(
-                        label = "All AI Tools",
-                        icon = Icons.Default.Build,
-                        selected = currentRoute == AppRoutes.TOOLS,
-                        onClick = {
-                            focusManager.clearFocus()
-                            onNavigateToRoute(AppRoutes.TOOLS)
-                        },
-                        trailingBadge = "Catalog"
-                    )
-                    DrawerNavItem(
-                        label = "Knowledge Library",
-                        icon = Icons.AutoMirrored.Filled.MenuBook,
-                        selected = currentRoute == AppRoutes.LIBRARY,
-                        onClick = {
-                            focusManager.clearFocus()
-                            onNavigateToRoute(AppRoutes.LIBRARY)
-                        },
-                        trailingBadge = "9 Packs"
-                    )
-                    DrawerNavItem(
-                        label = "Workflows & Tasks",
-                        icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                        selected = currentRoute == AppRoutes.TASKS,
-                        onClick = {
-                            focusManager.clearFocus()
-                            onNavigateToRoute(AppRoutes.TASKS)
-                        }
-                    )
-
-                    // Expandable toggle for the 6 specific tools
-                    Surface(
-                        onClick = { isToolsExpanded = !isToolsExpanded },
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color.Transparent,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isToolsExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
-                                tint = OpenFieldSecondaryText,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = if (isToolsExpanded) "Hide dedicated tools" else "Show 6 dedicated tools",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = OpenFieldSecondaryText,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 11.5.sp
-                                ),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-
-                    if (isToolsExpanded) {
-                        allTools.drop(1).forEach { tool ->
-                            DrawerNavItem(
-                                label = tool.title,
-                                icon = tool.icon,
-                                selected = currentRoute == tool.route,
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    onNavigateToRoute(tool.route)
-                                },
-                                trailingBadge = tool.tag
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            // --- 3. PINNED BOTTOM FOOTER ---
-            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.6f), modifier = Modifier.padding(vertical = 2.dp))
+            // --- PINNED FOOTER ---
+            HorizontalDivider(color = OpenFieldCardBorder.copy(alpha = 0.5f))
 
             Column(
                 modifier = Modifier
@@ -972,44 +820,27 @@ private fun AppDrawerContent(
                         onNavigateToRoute(AppRoutes.SETTINGS)
                     }
                 )
-                DrawerNavItem(
-                    label = "About CRUX",
-                    icon = Icons.Default.Info,
-                    selected = currentRoute == AppRoutes.ABOUT,
-                    onClick = {
-                        focusManager.clearFocus()
-                        onNavigateToRoute(AppRoutes.ABOUT)
-                    }
-                )
 
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = OpenFieldSecondaryBackground,
-                    border = BorderStroke(1.dp, OpenFieldCardBorder),
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = OpenFieldSecondaryText,
-                            modifier = Modifier.size(13.dp)
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = OpenFieldSecondaryText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Text(
+                        text = "Private & On-Device",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = OpenFieldSecondaryText.copy(alpha = 0.6f),
+                            fontSize = 10.5.sp
                         )
-                        Text(
-                            text = "Private & On-Device",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = OpenFieldSecondaryText,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        )
-                    }
+                    )
                 }
             }
         }
